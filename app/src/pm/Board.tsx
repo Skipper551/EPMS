@@ -1,19 +1,22 @@
 import { useState } from 'preact/hooks'
 import type { Snapshot, Status, Task } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
-import { activeBlockers, daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
+import { daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
 import { Avatar } from '../ui/ui'
+import { BlockerSummary } from '../ui/BlockerSummary'
 
 export interface BoardActions {
   open: (taskId: string) => void
   approve: (taskId: string) => void
   sendBack: (taskId: string) => void
   move: (taskId: string, status: Status) => void
+  /** Mark behind (asks for an optional note) or back on schedule. */
+  toggleBehind: (taskId: string) => void
 }
 
 const UNASSIGNED = '__nobody'
 
-export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; onImport: () => void }) {
+export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; onImport: () => void; changes: number; onUpdate: () => void }) {
   const { snap, actions } = props
   const [filter, setFilter] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -64,8 +67,17 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
         </div>
       )}
 
-      {(review.length > 0 || behind.length > 0) && (
+      {(review.length > 0 || behind.length > 0 || props.changes > 0) && (
         <div class="banners">
+          {props.changes > 0 && (
+            <div class="banner banner-accent" style={{ justifyContent: 'space-between' }}>
+              <span>
+                <strong>{props.changes === 1 ? '1 task changed' : `${props.changes} tasks changed`}</strong>
+                <span class="banner-detail"> since the last chat update</span>
+              </span>
+              <button type="button" class="btn btn-primary btn-sm" onClick={props.onUpdate}>Update the group</button>
+            </div>
+          )}
           {review.length > 0 && (
             <div class="banner banner-accent">
               <strong>{review.length === 1 ? '1 task waiting for your review' : `${review.length} tasks waiting for your review`}</strong>
@@ -134,8 +146,7 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
 
 function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; busy: boolean; dragging: boolean; onDrag: (on: boolean) => void }) {
   const { snap, task: t, actions } = props
-  const blockers = t.status === 'done' ? [] : activeBlockers(t, snap)
-  const people = t.everyone ? (t.owner ? `Led by ${memberName(snap, t.owner)}` : 'Whole group') : peopleText(snap, t)
+  const people = t.everyone ? (t.owner ? `Led by ${memberName(snap, t.owner)}` : 'No lead yet') : peopleText(snap, t)
   const faces = [t.owner, ...(t.everyone ? [] : t.helpers)].filter(Boolean).slice(0, 4)
   const overdue = t.status !== 'done' && t.due_date && t.due_date < today()
   const cls = ['tcard', t.behind && t.status !== 'done' && 'is-behind', t.status === 'done' && 'is-done', props.dragging && 'dragging'].filter(Boolean).join(' ')
@@ -166,8 +177,17 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
           </span>
           {t.due_date && <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>{formatDay(t.due_date)}</span>}
         </div>
-        {blockers.length > 0 && <div class="tcard-blocked">Blocked by {blockers.map((b) => b.label).join(', ')}</div>}
+        {t.behind && t.status !== 'done' && t.behind_note && <div class="tcard-blocked">Behind: {t.behind_note}</div>}
       </button>
+      <BlockerSummary snap={snap} task={t} variant="board" />
+      {(t.status === 'todo' || t.status === 'doing') && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-4px' }}>
+          <button type="button" class="btn-text xsmall" style={{ color: t.behind ? 'var(--warn)' : 'var(--muted)', fontSize: '12px' }} disabled={props.busy}
+            onClick={() => actions.toggleBehind(t.id)}>
+            {t.behind ? 'Back on schedule' : 'Mark behind'}
+          </button>
+        </div>
+      )}
       {t.status === 'review' && (
         <div class="tcard-review">
           <button type="button" class="btn btn-primary btn-sm" disabled={props.busy} onClick={() => actions.approve(t.id)}>Approve</button>
@@ -177,3 +197,4 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
     </article>
   )
 }
+

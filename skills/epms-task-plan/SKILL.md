@@ -107,6 +107,7 @@ Each task:
 | `description` | no | Instructions for the owner (max 5,000 characters). Becomes the task's first note, posted by the PM. |
 | `blocked_by` | no | List of `id`s of tasks in this file, or exact titles of tasks already on the EPMS board. |
 | `waiting_on` | no | List of member names the task waits on for something that isn't a task (for example "Kuba has to share the survey data"). |
+| `blocked_reason` | no | A short note for anything else the task waits on that isn't a task or a member, like "Waiting for the professor's feedback". |
 | `links` | no | Files or links: list of `{ "label": "...", "url": "https://..." }`. Only `http://` or `https://` addresses. |
 | `status` | no | Leave out for new tasks (they start in To do). Allowed: `todo`, `doing`, `review`, `done`. |
 

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { getKeys, listProjects, pmEmail, pmLogout, pmResume, updateTask, type StoreError } from '../data/store'
-import type { Project, ProjectKeys, Snapshot, Status } from '../data/types'
-import { copyText, groupLink, load, save } from '../lib/util'
+import { getKeys, listEvents, listProjects, pmEmail, pmLogout, pmResume, updateTask, type StoreError } from '../data/store'
+import type { ActivityEvent, Project, ProjectKeys, Snapshot, Status } from '../data/types'
+import { copyText, groupLink, load, memberName, save } from '../lib/util'
+import { pmChangeCount } from '../lib/summary'
 import { useSnapshot } from '../lib/useSnapshot'
 import { ChevronIcon, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { Board, type BoardActions } from './Board'
-import { SendBackDialog } from './Dialogs'
+import { BehindDialog, SendBackDialog } from './Dialogs'
+import { ChatUpdateDialog } from './ChatUpdate'
 import { Login } from './Login'
 import { NewProjectDialog, NewProjectForm } from './NewProject'
 import { ImportTasksDialog } from './ImportTasks'
@@ -44,6 +46,9 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [importOpen, setImportOpen] = useState(false)
   const [busy, setBusy] = useState<Set<string>>(new Set())
   const [author, setAuthor] = useState('')
+  const [behindFor, setBehindFor] = useState<string | null>(null)
+  const [updateOpen, setUpdateOpen] = useState(false)
+  const [events, setEvents] = useState<ActivityEvent[]>([])
 
   const { snap, error, reload, patch } = useSnapshot(projectId)
 
@@ -84,6 +89,14 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     return () => { live = false }
   }, [projectId])
 
+  // What changed since the last chat update, for the reminder on the board and the update itself.
+  useEffect(() => {
+    if (!snap || !keys || keys.project !== snap.project.id) return
+    let live = true
+    listEvents(snap.project.id, keys.last_summary_at || snap.project.created).then((ev) => live && setEvents(ev), () => {})
+    return () => { live = false }
+  }, [snap, keys?.last_summary_at, keys?.project])
+
   // Which PM member writes notes from this browser.
   useEffect(() => {
     if (!snap) return
@@ -121,6 +134,16 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       })
     },
     sendBack: (id) => setSendBack(id),
+    toggleBehind: (id) => {
+      const t = snap?.tasks.find((x) => x.id === id)
+      if (!t) return
+      if (!t.behind) return setBehindFor(id)
+      patch((s: Snapshot) => ({ ...s, tasks: s.tasks.map((x) => (x.id === id ? { ...x, behind: false, behind_note: '' } : x)) }))
+      withBusy(id, async () => {
+        await updateTask(id, { behind: false, behind_note: '' })
+        toast('Back on schedule')
+      })
+    },
     move: (id, status) => {
       setLocalStatus(id, status)
       withBusy(id, () => updateTask(id, { status }))
@@ -179,6 +202,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onPick={(id) => { choose(id); setView('board') }}
             onNew={() => setNewProjectOpen(true)}
             onSettings={() => setView('settings')}
+            onUpdate={() => setUpdateOpen(true)}
             onLogout={props.onLogout}
           />
           <span class="tag-pm">PM</span>
@@ -201,7 +225,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       {snap && view === 'board' && (
         <main class="main-board">
           {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
-          <Board snap={snap} actions={actions} busy={busy} onImport={() => setImportOpen(true)} />
+          <Board snap={snap} actions={actions} busy={busy} onImport={() => setImportOpen(true)} changes={pmChangeCount(events)} onUpdate={() => setUpdateOpen(true)} />
         </main>
       )}
 
@@ -219,6 +243,15 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
         </main>
       )}
 
+      {snap && behindFor && <BehindDialog snap={snap} taskId={behindFor} onClose={() => setBehindFor(null)} onDone={reload} />}
+      {snap && keys && updateOpen && (
+        <ChatUpdateDialog
+          snap={snap} keys={keys} events={events} pmName={memberName(snap, author)}
+          onClose={() => setUpdateOpen(false)}
+          onShared={() => { if (projectId) getKeys(projectId).then(setKeys, () => {}) }}
+          onOpenSettings={() => { setUpdateOpen(false); setView('settings') }}
+        />
+      )}
       {snap && editing && <TaskEditor snap={snap} taskId={editing.id} pmAuthorId={author} onClose={() => setEditing(null)} onSaved={reload} />}
       {snap && sendBack && <SendBackDialog snap={snap} taskId={sendBack} pmAuthorId={author} onClose={() => setSendBack(null)} onDone={reload} />}
       {snap && importOpen && <ImportTasksDialog snap={snap} pmAuthorId={author} onClose={() => setImportOpen(false)} onDone={reload} />}
@@ -238,6 +271,7 @@ function ProjectMenu(props: {
   onPick: (id: string) => void
   onNew: () => void
   onSettings: () => void
+  onUpdate: () => void
   onLogout: () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -274,6 +308,7 @@ function ProjectMenu(props: {
           ))}
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onNew)}>New project</button>
           <div class="menu-sep" />
+          <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onUpdate)}>Update the group chat</button>
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onSettings)}>Project settings</button>
           <a role="menuitem" class="menu-item" href="./epms-task-plan.zip" download onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
             Download the Claude skill

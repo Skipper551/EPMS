@@ -114,7 +114,7 @@ export function peopleText(snap: Snapshot, task: Task): string {
 // ---------- blockers ----------
 
 export interface ActiveBlocker {
-  kind: 'task' | 'member'
+  kind: 'task' | 'member' | 'custom'
   id: string
   /** For task blockers: "Find 5 sources"; for member blockers: "Ala" */
   label: string
@@ -122,7 +122,7 @@ export interface ActiveBlocker {
   member?: Member
 }
 
-/** Blockers still in force: blocking tasks that are not Done, plus mentioned members. */
+/** Blockers still in force: blocking tasks that are not Done, mentioned members, and a free-text reason. */
 export function activeBlockers(task: Task, snap: Snapshot): ActiveBlocker[] {
   const out: ActiveBlocker[] = []
   for (const id of task.blocked_by_tasks) {
@@ -133,6 +133,7 @@ export function activeBlockers(task: Task, snap: Snapshot): ActiveBlocker[] {
     const m = snap.members.find((x) => x.id === id)
     if (m) out.push({ kind: 'member', id, label: m.name, member: m })
   }
+  if (task.blocked_reason.trim()) out.push({ kind: 'custom', id: 'reason', label: task.blocked_reason.trim() })
   return out
 }
 

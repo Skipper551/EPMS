@@ -13,14 +13,16 @@ Free forever, private, no central server: each PM runs their own copy on free se
 **For the PM**
 - A board with To do, Doing, Review and Done, filtered by member
 - Tasks with a lead, optional helpers, or the whole group; due dates, blockers, files and links, notes
-- Approve finished work, or send it back with a comment; mark tasks behind schedule
+- Approve finished work, or send it back with a comment; mark tasks behind schedule in one tap, with an optional note
+- After a session on the board, post one summary of the changes to the group chat (Teams, Discord or Slack), or copy it
 - Project guidelines that members and their AIs follow
 - Import a whole task plan written with Claude, with a preview before anything is created
 - Several PMs per project if needed
 
 **For members**
 - Open the group link once, pick your name, and that device stays signed in as you
-- My tasks in due date order: start, send to review, add notes, flag blockers
+- My tasks in due date order: start, send to review, add notes, flag blockers (a task, a person, or anything else)
+- Since your last visit: what changed on your tasks while you were away
 - Who is waiting on you, the group's progress, and the PM's guidelines
 - A short first-visit tour and a one-time prompt that connects your AI to the project
 - A button to the group chat, if the PM adds one
@@ -47,7 +49,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 |---|---|
 | [`app/`](app) | The frontend (Vite, Preact, TypeScript). See [app/README.md](app/README.md) for development. |
 | [`pb_schema.json`](pb_schema.json) | The PocketBase collections and access rules, ready to import. |
-| [`pb_hooks/`](pb_hooks) | Server routes for PocketBase: claiming a name (`claim.pb.js`) and a Teams link preview test (`preview.pb.js`). |
+| [`pb_hooks/`](pb_hooks) | Server code for PocketBase: claiming a name (`claim.pb.js`), the activity log and chat updates (`events.pb.js`, with its helper `epms/events.js`), and a Teams link preview test (`preview.pb.js`). |
 | [`skills/epms-task-plan/`](skills/epms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in EPMS's import format. |
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |
@@ -57,7 +59,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 
 1. **Create a PocketBase instance.** On [PocketBase Cloud](https://pocketbasecloud.com)'s free plan you get one instance with 50 MB and 5,000 requests an hour. The free plan asks for a card to start a 0 cost subscription through Stripe; it is never charged. You can also self-host PocketBase.
 2. **Import the schema.** In the instance dashboard, go to Settings, Import collections, and paste [`pb_schema.json`](pb_schema.json).
-3. **Add the hooks.** Add [`pb_hooks/claim.pb.js`](pb_hooks/claim.pb.js) to the instance (on PocketBase Cloud, the instance's Code tab).
+3. **Add the hooks.** Add everything in [`pb_hooks/`](pb_hooks) to the instance, keeping the `epms` folder (on PocketBase Cloud, the instance's Code tab).
 4. **Build the frontend** with your instance's address:
    ```bash
    cd app

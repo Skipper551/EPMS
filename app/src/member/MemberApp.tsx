@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { claimName, currentAiKey, initMember, joinInfo, setStatus, type StoreError } from '../data/store'
-import type { JoinInfo, Snapshot, Status, Task } from '../data/types'
+import { claimName, currentAiKey, initMember, joinInfo, listEvents, setStatus, type StoreError } from '../data/store'
+import type { ActivityEvent, JoinInfo, Snapshot, Status, Task } from '../data/types'
 import { copyText, personalHash, personalLink, readFragment, type LinkParts } from '../lib/util'
 import { useSnapshot } from '../lib/useSnapshot'
 import { ChevronIcon, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { AiAgainDialog, BlockedDialog, TaskDetail } from './Dialogs'
-import { forgetSession, saveSession, sessionFor, sessions, type Session } from './memory'
+import { forgetSession, patchSession, saveSession, sessionFor, sessions, type Session } from './memory'
 import { MyTasks, Sidebar, type TaskActions } from './MyTasks'
 import { AiSetup, AiSetupContent, PickName, Tour } from './Welcome'
+import { SinceLastVisit } from './Updates'
 
 type Route =
   | { kind: 'session'; session: Session }
@@ -24,6 +25,7 @@ function route(): Route {
     const session = saveSession({
       projectId: link.projectId, memberId: link.memberId, personalKey: link.personalKey,
       ai: link.ai || (same ? known.ai : ''), name: same ? known.name : '', setupDone: same ? known.setupDone : true,
+      lastSeen: same ? known.lastSeen : undefined,
     })
     return { kind: 'session', session }
   }
@@ -112,7 +114,7 @@ function Join(props: { projectId: string; groupKey: string; onJoined: (s: Sessio
       const claim = await claimName(props.projectId, props.groupKey, memberId)
       const s = saveSession({
         projectId: props.projectId, memberId: claim.member, personalKey: claim.key, ai: claim.ai_key,
-        name: info!.project.name, setupDone: skipIntro,
+        name: info!.project.name, setupDone: skipIntro, lastSeen: new Date().toISOString(),
       })
       showPersonalHash(s)
       props.onJoined(s)
@@ -140,23 +142,38 @@ function Project(props: { session: Session; onLeave: () => void }) {
   const [detail, setDetail] = useState<{ id: string; focusNote: boolean } | null>(null)
   const [blocked, setBlocked] = useState<string | null>(null)
   const [aiOpen, setAiOpen] = useState(false)
+  // Updates newer than the last visit; the next visit starts from now.
+  const [since, setSince] = useState(() => props.session.lastSeen || new Date().toISOString())
+  const [updates, setUpdates] = useState<ActivityEvent[]>([])
+
+  useEffect(() => {
+    const s = patchSession(projectId, { lastSeen: new Date().toISOString() })
+    if (s) setSession(s)
+  }, [])
+
+  useEffect(() => {
+    if (!snap) return
+    let live = true
+    listEvents(projectId, since, session.memberId)
+      .then((ev) => live && setUpdates(ev.filter((e) => e.actor !== session.memberId)), () => {})
+    return () => { live = false }
+  }, [snap, since])
 
   useEffect(() => {
     showPersonalHash(session)
     currentAiKey(session.projectId).then((ai) => {
       if (ai && ai !== session.ai) {
-        const next = saveSession({ ...session, ai })
-        setSession(next)
-        showPersonalHash(next)
+        const next = patchSession(projectId, { ai })
+        if (next) { setSession(next); showPersonalHash(next) }
       }
     })
   }, [])
 
   useEffect(() => {
     if (!snap) return
-    document.title = `${snap.project.name} · EPMS`
-    if (snap.project.name !== session.name) setSession(saveSession({ ...session, name: snap.project.name }))
-  }, [snap?.project.name])
+    document.title = `${updates.length ? `(${updates.length}) ` : ''}${snap.project.name} · EPMS`
+    if (snap.project.name !== session.name) { const s = patchSession(projectId, { name: snap.project.name }); if (s) setSession(s) }
+  }, [snap?.project.name, updates.length])
 
   const leave = () => {
     forgetSession(projectId)
@@ -191,7 +208,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
     )
   }
 
-  const finishSetup = () => setSession(saveSession({ ...session, setupDone: true }))
+  const finishSetup = () => { const s = patchSession(projectId, { setupDone: true }); if (s) setSession(s) }
   if (!session.setupDone) {
     if (step === 'tour') return <Tour snap={snap} name={me.name} onNext={() => setStep('ai')} />
     return <AiSetup snap={snap} name={me.name} aiKey={session.ai} onDone={finishSetup} />
@@ -234,7 +251,11 @@ function Project(props: { session: Session; onLeave: () => void }) {
 
       <main style={{ width: '100%', maxWidth: '1240px', margin: '0 auto', padding: '40px var(--gutter)', display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
         {error && <div style={{ flexBasis: '100%' }}><ErrorBox error={`Couldn't refresh: ${error.message}`} /></div>}
-        <MyTasks snap={snap} me={me} busy={busy} actions={actions} aiReady={!!session.ai} />
+        <MyTasks
+          snap={snap} me={me} busy={busy} actions={actions} aiReady={!!session.ai}
+          highlight={new Set(updates.map((e) => e.task))}
+          updates={updates.length > 0 && <SinceLastVisit snap={snap} meId={me.id} events={updates} onDismiss={() => { setUpdates([]); setSince(new Date().toISOString()) }} />}
+        />
         <Sidebar snap={snap} me={me} />
       </main>
 

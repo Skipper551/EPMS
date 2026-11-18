@@ -318,3 +318,24 @@ h1, h2, h3 { margin: 0; }
 .avatars .avatar { box-shadow: 0 0 0 2px var(--surface); }
 .avatars .avatar + .avatar { margin-left: -6px; }
 .group-tag { flex: none; background: var(--accent-bg); color: var(--accent-soft); border-radius: 6px; padding: 1px 7px; font-size: 12px; font-weight: 600; }
+
+/* ---------- blocker summary ---------- */
+
+.blockers { display: flex; align-items: flex-start; gap: 10px; }
+.blockers-board { font-size: 12px; color: var(--warn); }
+.blockers-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left;
+}
+.blockers-toggle:hover span { text-decoration: underline; text-underline-offset: 2px; }
+.blockers-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.blockers-list li { display: flex; gap: 8px; align-items: baseline; color: var(--warn); }
+.blockers-list li.is-done { color: var(--muted); }
+.blockers-list li.is-done .grow { text-decoration: line-through; text-decoration-color: rgba(154, 161, 173, 0.5); }
+.blockers-mark { flex: none; width: 10px; text-align: center; }
+.blockers-meta { display: block; font-size: 11px; color: var(--warn-soft); opacity: 0.85; }
+.blockers-list li.is-done .blockers-meta { color: var(--muted); }
+.blocked-box .blockers-list li { font-size: 13px; }
+.blocked-box .blockers-meta { font-size: 12px; }
+.blocked-box .blockers-toggle svg { margin-top: 0; }
+.blockers-toggle svg { overflow: visible; }

@@ -37,7 +37,7 @@ PM page: http://localhost:5173/pm.html, log in with `pm@example.com` / `devpassw
 npm run build
 ```
 
-`dist/` is the whole app: plain HTML, JavaScript, CSS, fonts and the Claude skill zip, with relative paths, so it works from any folder. Upload the contents of `dist/` to a PocketBase Cloud frontend slot or GitHub Pages. The instance also needs the collections in `../pb_schema.json` and the hook `../pb_hooks/claim.pb.js` (PocketBase Cloud: the instance's Code tab).
+`dist/` is the whole app: plain HTML, JavaScript, CSS, fonts and the Claude skill zip, with relative paths, so it works from any folder. Upload the contents of `dist/` to a PocketBase Cloud frontend slot or GitHub Pages. The instance also needs the collections in `../pb_schema.json` and the files in `../pb_hooks/`, including its `epms` folder (PocketBase Cloud: the instance's Code tab).
 
 The instance address is baked in at build time. It defaults to the address in `src/config.ts`; another PM builds their own copy with:
 

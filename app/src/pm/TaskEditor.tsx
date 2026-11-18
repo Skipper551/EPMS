@@ -18,11 +18,11 @@ export function TaskEditor(props: {
   const [form, setForm] = useState<TaskInput>(() =>
     existing
       ? {
-          title: existing.title, owner: existing.owner, helpers: existing.helpers, everyone: existing.everyone, due_date: existing.due_date, status: existing.status, behind: existing.behind,
+          title: existing.title, owner: existing.owner, helpers: existing.helpers, everyone: existing.everyone, due_date: existing.due_date, status: existing.status, behind: existing.behind, behind_note: existing.behind_note, blocked_reason: existing.blocked_reason,
           blocked_by_tasks: existing.blocked_by_tasks, blocked_by_members: existing.blocked_by_members,
           links: existing.links.length ? existing.links : [],
         }
-      : { title: '', owner: '', helpers: [], everyone: false, due_date: '', status: 'todo', behind: false, blocked_by_tasks: [], blocked_by_members: [], links: [] },
+      : { title: '', owner: '', helpers: [], everyone: false, due_date: '', status: 'todo', behind: false, behind_note: '', blocked_reason: '', blocked_by_tasks: [], blocked_by_members: [], links: [] },
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +42,7 @@ export function TaskEditor(props: {
       .map((l) => ({ label: l.label.trim(), url: normaliseUrl(l.url) }))
       .filter((l) => l.url)
       .map((l) => ({ label: l.label || l.url.replace(/^https?:\/\//, '').slice(0, 60), url: l.url }))
-    const body: TaskInput = { ...form, title: form.title.trim(), links, helpers: form.everyone ? [] : form.helpers.filter((id) => id !== form.owner) }
+    const body: TaskInput = { ...form, title: form.title.trim(), links, blocked_reason: form.blocked_reason.trim(), behind_note: form.behind ? form.behind_note.trim() : '', helpers: form.everyone ? [] : form.helpers.filter((id) => id !== form.owner) }
     try {
       if (existing) await updateTask(existing.id, body)
       else await createTask(snap.project.id, body)
@@ -139,6 +139,11 @@ export function TaskEditor(props: {
             <span class="field-label">Schedule</span>
             <Toggle checked={form.behind} onChange={(v) => set('behind', v)} label={form.behind ? 'Behind schedule' : 'On schedule'} />
           </div>
+          {form.behind && (
+            <Field label="Note for the owner (optional)" class="span-2" help="Shown with the Behind tag and in their updates.">
+              {(id) => <input id={id} class="input" maxLength={300} value={form.behind_note} placeholder="Need this by Thursday" onInput={(e) => set('behind_note', e.currentTarget.value)} />}
+            </Field>
+          )}
         </div>
 
         <fieldset class="stack" style={{ border: 0, margin: 0, padding: 0 }}>
@@ -170,7 +175,8 @@ export function TaskEditor(props: {
             task={{ id: existing?.id ?? '', owner: form.owner }}
             tasks={form.blocked_by_tasks}
             members={form.blocked_by_members}
-            onChange={(tasks, members) => setForm((f) => ({ ...f, blocked_by_tasks: tasks, blocked_by_members: members }))}
+            reason={form.blocked_reason}
+            onChange={(tasks, members, reason) => setForm((f) => ({ ...f, blocked_by_tasks: tasks, blocked_by_members: members, blocked_reason: reason }))}
           />
         </fieldset>
 

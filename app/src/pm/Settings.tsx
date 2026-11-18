@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import {
-  aiLink, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, regenerateKey, setClaimsLocked,
+  aiLink, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, postToChat, regenerateKey, setChatWebhook, setClaimsLocked,
   updateMember, updateProject, type StoreError,
 } from '../data/store'
 import type { Member, MemberKey, ProjectKeys, Snapshot } from '../data/types'
@@ -26,6 +26,7 @@ export function Settings(props: {
       <Guidelines snap={props.snap} onChanged={props.onChanged} />
       <Members snap={props.snap} keys={props.keys} pmAuthorId={props.pmAuthorId} onPmAuthor={props.onPmAuthor} onChanged={props.onChanged} />
       <Links snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
+      <ChatUpdates snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
       <DeleteProject snap={props.snap} onDeleted={props.onDeleted} />
     </>
   )
@@ -382,6 +383,61 @@ function DeleteProject(props: { snap: Snapshot; onDeleted: () => void }) {
         <button type="submit" class="btn btn-danger btn-md" disabled={s.busy || text.trim() !== name.trim()}>Delete project</button>
       </form>
       <ErrorBox error={s.error} />
+    </section>
+  )
+}
+
+function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: (k: ProjectKeys) => void }) {
+  const { keys } = props
+  const [url, setUrl] = useState(keys?.chat_webhook ?? '')
+  const s = useSaver()
+  useEffect(() => setUrl(keys?.chat_webhook ?? ''), [keys?.id, keys?.chat_webhook])
+  const clean = url.trim()
+  const valid = !clean || /^https?:\/\/\S+$/i.test(clean)
+
+  return (
+    <section class="panel">
+      <div class="stack-sm">
+        <h2 class="eyebrow">Chat updates</h2>
+        <span class="muted small">
+          After a session on the board, "Update the group" posts one summary of your changes and what's due soon, instead of a message for every change.
+          Add a webhook to post it straight into the chat; without one you can still copy it.
+        </span>
+      </div>
+      <form
+        class="stack"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (!keys || !valid) return
+          if (await s.run(async () => props.onKeys(await setChatWebhook(keys.id, clean)), clean ? 'Chat webhook saved' : 'Chat webhook removed')) setUrl(clean)
+        }}
+      >
+        <Field label="Chat webhook address">
+          {(id) => <input id={id} class="input" type="text" inputMode="url" maxLength={2000} placeholder="https://…" value={url} onInput={(e) => setUrl(e.currentTarget.value)} />}
+        </Field>
+        {!valid && <span class="xsmall warn-text">That doesn't look like a web address. It should start with https://</span>}
+        <div class="row">
+          <button type="submit" class="btn btn-primary btn-md" disabled={!keys || s.busy || !valid || clean === (keys?.chat_webhook ?? '')}>Save</button>
+          <button
+            type="button"
+            class="btn btn-soft btn-md"
+            disabled={!keys?.chat_webhook || s.busy}
+            onClick={() => s.run(() => postToChat(props.snap.project.id, `EPMS is connected to this chat for ${props.snap.project.name}.\n\nThe PM's board updates will appear here.`), 'Test message sent')}
+          >
+            Send a test message
+          </button>
+        </div>
+        <ErrorBox error={s.error} />
+      </form>
+      <details>
+        <summary class="small" style={{ cursor: 'pointer' }}>Where do I get a webhook address?</summary>
+        <div class="stack-sm small soft" style={{ marginTop: '10px' }}>
+          <span><strong style={{ color: 'var(--text)', fontWeight: 500 }}>Teams:</strong> in the group chat, open the Workflows app (the ••• menu or Apps), pick the template that posts to a chat when a webhook request is received ("Send webhook alerts to a chat"), choose this chat, and copy the address it gives you.</span>
+          <span><strong style={{ color: 'var(--text)', fontWeight: 500 }}>Discord:</strong> Server settings, Integrations, Webhooks, New webhook, pick the channel, Copy webhook URL.</span>
+          <span><strong style={{ color: 'var(--text)', fontWeight: 500 }}>Slack:</strong> create an incoming webhook for the channel and copy its URL.</span>
+          <span class="muted xsmall">The address is stored with the project's private keys: members and AIs can't see it.</span>
+        </div>
+      </details>
     </section>
   )
 }

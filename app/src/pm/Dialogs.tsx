@@ -56,3 +56,54 @@ export function SendBackDialog(props: { snap: Snapshot; taskId: string; pmAuthor
     </Dialog>
   )
 }
+
+/** One-tap Behind from the board, with an optional note for the owner. */
+export function BehindDialog(props: { snap: Snapshot; taskId: string; onClose: () => void; onDone: () => void }) {
+  const task = props.snap.tasks.find((t) => t.id === props.taskId)
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  if (!task) return null
+
+  async function submit(e: Event) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      await updateTask(task!.id, { behind: true, behind_note: note.trim() })
+      toast('Marked behind schedule')
+      props.onDone()
+      props.onClose()
+    } catch (err) {
+      setError((err as StoreError).message)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      title="Mark behind schedule"
+      onClose={props.onClose}
+      footer={
+        <>
+          <span />
+          <div class="row">
+            <button type="button" class="btn btn-soft btn-md" onClick={props.onClose}>Cancel</button>
+            <button type="submit" form="behind-form" class="btn btn-primary btn-md" disabled={busy}>{busy ? 'Saving…' : 'Mark behind'}</button>
+          </div>
+        </>
+      }
+    >
+      <form id="behind-form" class="stack" onSubmit={submit}>
+        <p class="soft" style={{ margin: 0 }}>
+          <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{task.title}</strong>
+          {task.owner ? ` (${memberName(props.snap, task.owner)})` : ''}. They see it in their updates the next time they open EPMS.
+        </p>
+        <Field label="Note for them (optional)">
+          {(id) => <input id={id} class="input" maxLength={300} value={note} placeholder="Need this by Thursday" onInput={(e) => setNote(e.currentTarget.value)} data-autofocus />}
+        </Field>
+        <ErrorBox error={error} />
+      </form>
+    </Dialog>
+  )
+}

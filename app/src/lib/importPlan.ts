@@ -20,6 +20,7 @@ export interface PlanTask {
   description: string
   blockedBy: string[]
   waitingOn: string[]
+  blockedReason: string
   links: TaskLink[]
 }
 
@@ -156,6 +157,7 @@ export function parsePlan(text: string): ParseResult {
       description,
       blockedBy: list(r.blocked_by ?? r.depends_on ?? r.after),
       waitingOn: list(r.waiting_on ?? r.blocked_by_members),
+      blockedReason: s(r.blocked_reason).slice(0, 300),
       links: toLinks(r.links, where, warnings),
     })
   })
@@ -297,6 +299,7 @@ Rules:
 - "description" is shown to the owner as the task's first note; write it for them.
 - "blocked_by" lists ids of tasks in this file, or exact titles of tasks already on the board.
 - "waiting_on" lists member names the task waits on that aren't a task.
+- "blocked_reason" is a short note for anything else the task waits on, like "Waiting for the professor's feedback".
 - "members" only needs people who aren't in the list above.
 - Leave out "status"; new tasks start in To do.
 - Plain punctuation only: no em dashes.`
