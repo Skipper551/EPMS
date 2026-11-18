@@ -145,6 +145,10 @@
         "max": 200
       },
       {
+        "name": "is_pm",
+        "type": "bool"
+      },
+      {
         "name": "created",
         "type": "autodate",
         "onCreate": true,

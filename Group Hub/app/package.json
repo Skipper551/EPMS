@@ -1,0 +1,29 @@
+{
+  "name": "group-hub",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Group Hub: free, open-source project management for student group projects, built around the S.W.I.M.S. method.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "pb:dev": "bash scripts/dev-pocketbase.sh",
+    "test:e2e": "node tests/e2e.mjs"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0",
+    "@preact/signals": "^2.11.4",
+    "pocketbase": "^0.29.0",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.8"
+  }
+}
