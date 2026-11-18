@@ -13,7 +13,7 @@ export interface BoardActions {
 
 const UNASSIGNED = '__nobody'
 
-export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string> }) {
+export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; onImport: () => void }) {
   const { snap, actions } = props
   const [filter, setFilter] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -46,7 +46,7 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
       <div class="title-row">
         <div class="title-block">
           <h1 class="h1">Board</h1>
-          <span class="muted small">{total ? summary : 'No tasks yet. Add the first one with New task.'}</span>
+          <span class="muted small">{total ? summary : 'No tasks yet.'}</span>
         </div>
         {snap.members.length > 0 && (
           <div class="row" style={{ gap: '8px' }} role="group" aria-label="Filter by member">
@@ -56,6 +56,13 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
           </div>
         )}
       </div>
+
+      {total === 0 && (
+        <div class="hint-box" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <span>Planned the tasks with Claude? Import the whole plan at once, or add tasks one by one with New task.</span>
+          <button type="button" class="btn btn-primary btn-md" onClick={props.onImport}>Import tasks</button>
+        </div>
+      )}
 
       {(review.length > 0 || behind.length > 0) && (
         <div class="banners">

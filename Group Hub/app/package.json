@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "pb:dev": "bash scripts/dev-pocketbase.sh",
+    "skill": "bash scripts/build-skill.sh",
     "test:e2e": "node tests/e2e.mjs"
   },
   "dependencies": {

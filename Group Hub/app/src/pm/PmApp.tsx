@@ -8,6 +8,7 @@ import { Board, type BoardActions } from './Board'
 import { QuestionsDialog, SendBackDialog } from './Dialogs'
 import { Login } from './Login'
 import { NewProjectDialog, NewProjectForm } from './NewProject'
+import { ImportTasksDialog } from './ImportTasks'
 import { Settings } from './Settings'
 import { TaskEditor } from './TaskEditor'
 
@@ -41,6 +42,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [sendBack, setSendBack] = useState<string | null>(null)
   const [questionsOpen, setQuestionsOpen] = useState(false)
   const [newProjectOpen, setNewProjectOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [busy, setBusy] = useState<Set<string>>(new Set())
   const [author, setAuthor] = useState('')
 
@@ -191,6 +193,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             ? <button type="button" class="btn" onClick={() => setView('settings')} disabled={!snap}>Project settings</button>
             : <button type="button" class="btn" onClick={() => setView('board')}>Back to board</button>}
           <button type="button" class="btn" onClick={copyMemberLink} disabled={!projectId}>Copy link for Teams</button>
+          <button type="button" class="btn" onClick={() => setImportOpen(true)} disabled={!snap}>Import tasks</button>
           <button type="button" class="btn btn-primary" onClick={() => setEditing({ id: null })} disabled={!snap}>New task</button>
         </div>
       </header>
@@ -203,7 +206,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       {snap && view === 'board' && (
         <main class="main-board">
           {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
-          <Board snap={snap} actions={actions} busy={busy} />
+          <Board snap={snap} actions={actions} busy={busy} onImport={() => setImportOpen(true)} />
         </main>
       )}
 
@@ -223,6 +226,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
 
       {snap && editing && <TaskEditor snap={snap} taskId={editing.id} pmAuthorId={author} onClose={() => setEditing(null)} onSaved={reload} />}
       {snap && sendBack && <SendBackDialog snap={snap} taskId={sendBack} pmAuthorId={author} onClose={() => setSendBack(null)} onDone={reload} />}
+      {snap && importOpen && <ImportTasksDialog snap={snap} pmAuthorId={author} onClose={() => setImportOpen(false)} onDone={reload} />}
       {snap && questionsOpen && <QuestionsDialog snap={snap} onClose={() => setQuestionsOpen(false)} onChanged={reload} />}
       {newProjectOpen && (
         <NewProjectDialog
