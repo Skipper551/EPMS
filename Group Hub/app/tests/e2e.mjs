@@ -40,24 +40,36 @@ for (const [n, role, is_pm] of [['Pat', 'PM', true], ['Ala', 'Research', false],
   m[n] = (await pb.collection('members').create({ project: project.id, name: n, role, is_pm })).id
 }
 const sources = await pb.collection('tasks').create({ project: project.id, title: 'Find sources', owner: m.Ala, due_date: day(2), status: 'review' })
-await pb.collection('tasks').create({ project: project.id, title: 'Write the intro', owner: m.Jimmy, due_date: day(5), status: 'todo', blocked_by_tasks: [sources.id] })
+const intro = await pb.collection('tasks').create({ project: project.id, title: 'Write the intro', owner: m.Jimmy, due_date: day(5), status: 'todo', blocked_by_tasks: [sources.id] })
 await pb.collection('tasks').create({ project: project.id, title: 'Draft the conclusion', owner: m.Jimmy, due_date: day(8), status: 'todo' })
 const pair = await pb.collection('tasks').create({ project: project.id, title: 'Interview users', owner: m.Ala, helpers: [m.Jimmy], due_date: day(6), status: 'todo' })
 await pb.collection('tasks').create({ project: project.id, title: 'Rehearse', owner: m.Pat, everyone: true, due_date: day(15), status: 'todo' })
-const memberLink = `${APP}#p=${project.id}&key=${keys.member_key}&ai=${keys.ai_key}`
+const groupLinkUrl = `${APP}#p=${project.id}&key=${keys.member_key}`
 
 // ---------- access rules ----------
 
 const api = (path, init = {}) => fetch(`${PB}/api/collections/${path}`, init)
+const json = { 'Content-Type': 'application/json' }
+const claimApi = (member) => fetch(`${PB}/api/gh/claim/${project.id}`, { method: 'POST', headers: { ...json, 'X-Group-Key': keys.member_key }, body: JSON.stringify({ member }) })
 check('AI link reads the project without keys', (await api(`projects/records/${project.id}?ai_key=${keys.ai_key}`)).status === 200)
 check('missing key gets 404', (await api(`projects/records/${project.id}`)).status === 404)
-const patch = (id, body) => api(`tasks/records/${id}`, { method: 'PATCH', headers: { 'X-Member-Key': keys.member_key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+check('group key alone reads nothing', (await api(`projects/records/${project.id}`, { headers: { 'X-Member-Key': keys.member_key } })).status === 404)
+check('PM name cannot be claimed', (await claimApi(m.Pat)).status === 400)
+const alaClaim = await (await claimApi(m.Ala)).json()
+check('claiming returns a personal key and the AI key', alaClaim.key?.length === 40 && alaClaim.ai_key === keys.ai_key)
+check('a taken name cannot be claimed again', (await claimApi(m.Ala)).status === 400)
+const asAla = { ...json, 'X-Member-Key': alaClaim.key }
+const patch = (id, body) => api(`tasks/records/${id}`, { method: 'PATCH', headers: asAla, body: JSON.stringify(body) })
 check('member cannot mark Done', (await patch(sources.id, { status: 'done' })).status !== 200)
 check('member cannot rename a task', (await patch(sources.id, { title: 'x' })).status !== 200)
 check('member cannot change helpers', (await patch(pair.id, { helpers: [] })).status !== 200)
 check('member cannot set everyone', (await patch(pair.id, { everyone: true })).status !== 200)
-const asMember = await api(`members/records/${m.Ala}`, { method: 'PATCH', headers: { 'X-Member-Key': keys.member_key, 'Content-Type': 'application/json' }, body: '{"is_pm":true}' })
+check("member cannot move someone else's task", (await patch(intro.id, { status: 'doing' })).status !== 200)
+check('member cannot post a note as someone else', (await api('notes/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: sources.id, author: m.Jimmy, text: 'x' }) })).status !== 200)
+check('member posts a note as themselves', (await api('notes/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: sources.id, author: m.Ala, text: 'Done, see doc.' }) })).status === 200)
+const asMember = await api(`members/records/${m.Ala}`, { method: 'PATCH', headers: asAla, body: '{"is_pm":true}' })
 check('member cannot set is_pm', asMember.status !== 200)
+check('personal keys cannot be listed', ((await (await api('member_keys/records', { headers: asAla })).json()).items ?? []).length === 0)
 
 // ---------- browser ----------
 
@@ -74,11 +86,17 @@ const watch = (page) => {
   const page = await ctx.newPage()
   watch(page)
   let allKeyed = true
-  page.on('request', (r) => { if (r.url().startsWith(PB) && !r.headers()['x-member-key']) allKeyed = false })
-  await page.goto(memberLink)
+  page.on('request', (r) => {
+    if (!r.url().startsWith(PB)) return
+    const h = r.headers()
+    const ok = r.url().includes('/api/gh/join/') || r.url().includes('/api/gh/claim/') ? !!h['x-group-key'] && !h['x-member-key'] : !!h['x-member-key'] && !h['x-group-key']
+    if (!ok) allKeyed = false
+  })
+  await page.goto(groupLinkUrl)
   await page.waitForSelector('text=Which one is you?')
   const names = await page.locator('[role=radio]').allInnerTexts()
   check('name picker hides the PM', !names.some((n) => n.startsWith('Pat')) && names.length === 2, names.join())
+  check('claimed name is shown as taken', await page.locator('[role=radio]:has-text("Ala")').isDisabled())
   await page.click('[role=radio]:has-text("Jimmy")')
   await page.click('text=Continue')
   await page.click('text=Got it')
@@ -101,7 +119,26 @@ const watch = (page) => {
   await page.reload()
   await page.waitForSelector('h1:text-is("My tasks")')
   check('name remembered after reload', true)
-  check('every member request sent X-Member-Key', allKeyed)
+  check('address bar holds the personal link', page.url().includes('&me='))
+  await page.click('header .select-btn')
+  await page.click('role=menuitem[name="Copy my personal link"]')
+  const personal = await page.evaluate(() => navigator.clipboard.readText())
+  await page.goto(groupLinkUrl)
+  await page.waitForSelector('h1:text-is("My tasks")')
+  check('group link on a set-up device goes straight to My tasks', true)
+
+  // Someone else on another device can't take Jimmy, but Jimmy's personal link works there.
+  const other = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+  const p2 = await other.newPage()
+  watch(p2)
+  await p2.goto(groupLinkUrl)
+  await p2.waitForSelector('text=Which one is you?')
+  check('Jimmy is taken on another device', await p2.locator('[role=radio]:has-text("Jimmy")').isDisabled())
+  await p2.goto(personal)
+  await p2.waitForSelector('h1:text-is("My tasks")')
+  check('personal link signs in on a new device', (await p2.locator('header').innerText()).includes('Hello Jimmy'))
+  await other.close()
+  check('join requests send the group key, everything else the personal key', allKeyed)
   await ctx.close()
 }
 
@@ -127,6 +164,19 @@ const watch = (page) => {
   await page.click('button:has-text("Send back to Doing")')
   await page.waitForTimeout(500)
   check('send back returns to Doing', (await page.locator('section[aria-label="Doing"] >> text=Draft the conclusion').count()) === 1)
+
+  // Reset and lock
+  await page.click('header >> text=Project settings')
+  await page.waitForSelector('text=Set up')
+  const jimmyRow = page.locator('.list-item', { hasText: 'Jimmy' })
+  await jimmyRow.locator('button:has-text("Reset")').click()
+  await jimmyRow.locator('button.btn-danger:has-text("Reset")').click()
+  await page.waitForTimeout(500)
+  check('reset frees the name', (await (await fetch(`${PB}/api/gh/join/${project.id}`, { headers: { 'X-Group-Key': keys.member_key } })).json()).members.find((x) => x.name === 'Jimmy').claimed === false)
+  await page.click('role=switch[name="Lock the group link"]')
+  await page.waitForTimeout(400)
+  check('locked group link refuses claims', (await claimApi(m.Jimmy)).status === 403)
+  await page.click('header >> text=Back to board')
 
   // Import
   await page.click('header >> text=Import tasks')

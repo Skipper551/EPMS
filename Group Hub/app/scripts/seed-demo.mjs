@@ -48,5 +48,5 @@ await task('Rehearse the presentation', 'Malcolm', 22, 'todo', { everyone: true 
 await pb.collection('notes').create({ task: t['Format the references list'], author: m.Ala, text: 'I added the DOIs for my five sources at the bottom of the doc.' })
 
 console.log('Project:', project.id)
-console.log('Member link:', `${appBase}#p=${project.id}&key=${keys.member_key}`)
+console.log('Group link:', `${appBase}#p=${project.id}&key=${keys.member_key}`)
 console.log('AI link:', `${url}/api/collections/projects/records/${project.id}?ai_key=${keys.ai_key}&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task`)

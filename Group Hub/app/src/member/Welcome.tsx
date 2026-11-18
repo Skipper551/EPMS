@@ -2,7 +2,7 @@
 
 import { useState } from 'preact/hooks'
 import { aiLink } from '../data/store'
-import type { Snapshot } from '../data/types'
+import type { JoinInfo, Snapshot } from '../data/types'
 import { aiPrompt, copyText, joinNames, pms } from '../lib/util'
 import { ErrorBox, toast } from '../ui/ui'
 
@@ -33,31 +33,35 @@ export function WelcomeShell(props: { step: WelcomeStep; children: preact.Compon
   )
 }
 
-export function PickName(props: { snap: Snapshot; initial: string; onContinue: (id: string) => void; onSkip: (id: string) => void }) {
-  const people = props.snap.members.filter((m) => !m.is_pm)
-  const [who, setWho] = useState(people.some((m) => m.id === props.initial) ? props.initial : '')
+export function PickName(props: { join: JoinInfo; busy: boolean; error: string | null; onPick: (id: string, skipIntro: boolean) => void }) {
+  const { join } = props
+  const [who, setWho] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const pmNames = pms(props.snap).map((m) => m.name)
+  const free = join.members.filter((m) => !m.claimed)
+  const shown = error ?? props.error
 
-  const go = (fn: (id: string) => void) => () => {
+  const go = (skipIntro: boolean) => () => {
     if (!who) return setError('Pick your name first.')
-    fn(who)
+    setError(null)
+    props.onPick(who, skipIntro)
   }
 
   return (
     <WelcomeShell step="name">
       <div class="stack-sm">
-        <span class="muted small">{props.snap.project.name}</span>
+        <span class="muted small">{join.project.name}</span>
         <h1 class="h1-xl">Which one is you?</h1>
         <p class="muted" style={{ margin: 0 }}>
-          {pmNames.length ? `${joinNames(pmNames)} set this project up. ` : ''}Pick your name and you'll see your tasks.
+          {join.pms.length ? `${joinNames(join.pms)} set this project up. ` : ''}Pick your name and you'll see your tasks. This device stays signed in as you.
         </p>
       </div>
-      {people.length === 0 ? (
+      {join.locked ? (
+        <div class="error-box">The PM has locked this link because everyone has picked their name. Ask them for your personal link.</div>
+      ) : join.members.length === 0 ? (
         <div class="empty">Your PM hasn't added anyone to this project yet. Check back once they have.</div>
       ) : (
         <div role="radiogroup" aria-label="Your name" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-          {people.map((m) => {
+          {join.members.map((m) => {
             const on = who === m.id
             return (
               <button
@@ -65,30 +69,38 @@ export function PickName(props: { snap: Snapshot; initial: string; onContinue: (
                 type="button"
                 role="radio"
                 aria-checked={on}
+                disabled={m.claimed}
                 onClick={() => { setWho(m.id); setError(null) }}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', textAlign: 'left',
-                  background: on ? 'var(--accent-bg)' : 'var(--surface)', color: 'var(--text)',
+                  background: on ? 'var(--accent-bg)' : 'var(--surface)', color: 'var(--text)', opacity: m.claimed ? 0.5 : 1,
                   border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, borderRadius: '12px', padding: '16px 18px', fontSize: '15px',
                 }}
               >
                 <span style={{ fontWeight: 600 }}>{m.name}</span>
-                <span class="muted xsmall">{m.role || 'Member'}</span>
+                <span class="muted xsmall">{m.claimed ? 'Already set up' : m.role || 'Member'}</span>
               </button>
             )
           })}
         </div>
       )}
-      <ErrorBox error={error} />
-      <div class="row" style={{ gap: '20px' }}>
-        <button type="button" class="btn btn-primary btn-lg" disabled={!people.length} onClick={go(props.onContinue)}>Continue</button>
-        <button type="button" class="btn-text" disabled={!people.length} onClick={go(props.onSkip)}>Been here before? Skip straight to my tasks</button>
-      </div>
+      <ErrorBox error={shown} />
+      {!join.locked && free.length > 0 && (
+        <div class="row" style={{ gap: '20px' }}>
+          <button type="button" class="btn btn-primary btn-lg" disabled={props.busy} onClick={go(false)}>{props.busy ? 'Setting up…' : 'Continue'}</button>
+          <button type="button" class="btn-text" disabled={props.busy} onClick={go(true)}>Skip the intro, go to my tasks</button>
+        </div>
+      )}
+      {join.members.some((m) => m.claimed) && (
+        <p class="muted small" style={{ margin: 0 }}>
+          Already set up on another device? Open your personal link there (it's in the menu next to the project name) and copy it to this one, or ask the PM to reset your name.
+        </p>
+      )}
     </WelcomeShell>
   )
 }
 
-export function Tour(props: { snap: Snapshot; name: string; onBack: () => void; onNext: () => void }) {
+export function Tour(props: { snap: Snapshot; name: string; onBack?: () => void; onNext: () => void }) {
   const pmNames = pms(props.snap).map((m) => m.name)
   const approvers = pmNames.length ? joinNames(pmNames) : 'Your PM'
   const verb = pmNames.length > 1 ? 'check finished work and mark it' : 'checks finished work and marks it'
@@ -115,7 +127,7 @@ export function Tour(props: { snap: Snapshot; name: string; onBack: () => void; 
         ))}
       </ol>
       <div class="row">
-        <button type="button" class="btn btn-soft btn-lg" onClick={props.onBack}>Back</button>
+        {props.onBack && <button type="button" class="btn btn-soft btn-lg" onClick={props.onBack}>Back</button>}
         <button type="button" class="btn btn-primary btn-lg" onClick={props.onNext} data-autofocus>Got it</button>
       </div>
     </WelcomeShell>
@@ -153,7 +165,7 @@ export function AiSetupContent(props: { snap: Snapshot; name: string; aiKey: str
           </div>
         </>
       ) : (
-        <div class="error-box">This link doesn't include the AI link. Ask your PM to share the current member link from Group Hub, then open it again.</div>
+        <div class="error-box">This link doesn't include the AI link. Ask your PM to send you your personal link from Group Hub, then open it.</div>
       )}
     </>
   )

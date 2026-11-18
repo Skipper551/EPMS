@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { getKeys, listProjects, pmEmail, pmLogout, pmResume, updateTask, type StoreError } from '../data/store'
 import type { Project, ProjectKeys, Snapshot, Status } from '../data/types'
-import { copyText, load, memberLink, save } from '../lib/util'
+import { copyText, groupLink, load, save } from '../lib/util'
 import { useSnapshot } from '../lib/useSnapshot'
 import { ChevronIcon, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { Board, type BoardActions } from './Board'
@@ -63,9 +63,9 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   }
 
   function choose(id: string | null) {
+    if (id !== projectId) setKeys(null)
     setProjectId(id)
     save(LAST_PROJECT, id)
-    setKeys(null)
   }
 
   useEffect(() => {
@@ -127,13 +127,13 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     },
   }
 
-  async function copyMemberLink() {
+  async function copyGroupLink() {
     if (!projectId) return
     try {
       const k = keys ?? (await getKeys(projectId))
       setKeys(k)
-      const ok = await copyText(memberLink(projectId, k.member_key, k.ai_key))
-      toast(ok ? 'Member link copied. Paste it in the group chat.' : "Couldn't copy. Open Project settings to copy it by hand.", !ok)
+      const ok = await copyText(groupLink(projectId, k.member_key))
+      toast(ok ? 'Group link copied. Paste it in the group chat; everyone picks their name once.' : "Couldn't copy. Open Project settings to copy it by hand.", !ok)
     } catch (e) {
       toast((e as StoreError).message, true)
     }
@@ -187,7 +187,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
           {view === 'board'
             ? <button type="button" class="btn" onClick={() => setView('settings')} disabled={!snap}>Project settings</button>
             : <button type="button" class="btn" onClick={() => setView('board')}>Back to board</button>}
-          <button type="button" class="btn" onClick={copyMemberLink} disabled={!projectId}>Copy member link</button>
+          <button type="button" class="btn" onClick={copyGroupLink} disabled={!projectId}>Copy group link</button>
           <button type="button" class="btn" onClick={() => setImportOpen(true)} disabled={!snap}>Import tasks</button>
           <button type="button" class="btn btn-primary" onClick={() => setEditing({ id: null })} disabled={!snap}>New task</button>
         </div>

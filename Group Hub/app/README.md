@@ -2,7 +2,7 @@
 
 Static web app for Group Hub (see `../SPEC.md`). Vite + Preact + TypeScript, talking to one PocketBase instance with the PocketBase JS SDK. No server of its own, nothing that can bill.
 
-- `index.html` is the member page, opened from the member link.
+- `index.html` is the member page, opened from the group link or a personal link.
 - `pm.html` is the project manager (PM) page, reached only by logging in as a superuser of the instance.
 
 ## Run it locally
@@ -17,7 +17,7 @@ Start a local PocketBase with the schema imported (downloads PocketBase 0.41.1 i
 npm run pb:dev
 ```
 
-In a second terminal, seed the demo project from the design screens (prints its member link and AI link):
+In a second terminal, seed the demo project from the design screens (prints its group link and AI link):
 
 ```bash
 node scripts/seed-demo.mjs
@@ -37,7 +37,7 @@ PM page: http://localhost:5173/pm.html, log in with `pm@example.com` / `devpassw
 npm run build
 ```
 
-`dist/` is the whole app: plain HTML, JavaScript, CSS, fonts and the Claude skill zip, with relative paths, so it works from any folder. Upload the contents of `dist/` to a PocketBase Cloud frontend slot or GitHub Pages.
+`dist/` is the whole app: plain HTML, JavaScript, CSS, fonts and the Claude skill zip, with relative paths, so it works from any folder. Upload the contents of `dist/` to a PocketBase Cloud frontend slot or GitHub Pages. The instance also needs the collections in `../pb_schema.json` and the hook `../pb_hooks/claim.pb.js` (PocketBase Cloud: the instance's Code tab).
 
 The instance address is baked in at build time. It defaults to the address in `src/config.ts`; another PM builds their own copy with:
 
@@ -49,8 +49,10 @@ VITE_PB_URL=https://their-instance.example.com npm run build
 
 - `src/data/store.ts` is the only file that talks to PocketBase. Replace it to swap the backend.
 - One request loads a whole project (the same expand the AI link uses). Pages refresh when they come back into view, after every action, and every 60 seconds while visible, which keeps well under the free plan's 5,000 requests an hour.
-- Member link: `index.html#p=<project id>&key=<member key>&ai=<AI key>`. Everything after `#` stays in the browser and never reaches a server or its logs. The member key goes on every request as `X-Member-Key`. The AI key is there so the member's AI setup prompt can include the read-only AI link, since members can't read `project_keys`.
-- The browser remembers which name a member picked, per project, in localStorage, plus the projects opened on that device.
+- Group link: `index.html#p=<project id>&key=<group key>`. The PM posts it in the group chat. It is only good for picking a name, through the routes in `../pb_hooks/claim.pb.js`.
+- Picking a name creates that member's personal key. The device then uses the personal link `index.html#p=<project id>&m=<member id>&me=<personal key>&ai=<AI key>` and sends the personal key on every request as `X-Member-Key`. A name that's set up can't be picked again; the PM can reset it or send a personal link from Project settings, and lock the group link once everyone has joined.
+- Everything after `#` stays in the browser and never reaches a server or its logs. The AI key is there for the member's AI setup prompt.
+- The browser remembers which member it's signed in as, per project, in localStorage.
 - PMs are member rows with `is_pm` set. They can own tasks and write notes, but never appear in the name picker. A project can have several PMs; each logs in with their own superuser account.
 
 ## Importing tasks from Claude

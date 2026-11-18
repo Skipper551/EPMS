@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'preact/hooks'
 import {
-  aiLink, createMember, deleteMember, deleteProject, regenerateKey, updateMember, updateProject, type StoreError,
+  aiLink, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, regenerateKey, setClaimsLocked,
+  updateMember, updateProject, type StoreError,
 } from '../data/store'
-import type { Member, ProjectKeys, Snapshot } from '../data/types'
-import { copyText, memberLink, normaliseUrl } from '../lib/util'
-import { Avatar, ErrorBox, Field, toast } from '../ui/ui'
+import type { Member, MemberKey, ProjectKeys, Snapshot } from '../data/types'
+import { copyText, groupLink, normaliseUrl, personalLink } from '../lib/util'
+import { Avatar, ErrorBox, Field, Toggle, toast } from '../ui/ui'
 
 export function Settings(props: {
   snap: Snapshot
@@ -23,7 +24,7 @@ export function Settings(props: {
       </div>
       <Details snap={props.snap} onChanged={props.onChanged} />
       <Guidelines snap={props.snap} onChanged={props.onChanged} />
-      <Members snap={props.snap} pmAuthorId={props.pmAuthorId} onPmAuthor={props.onPmAuthor} onChanged={props.onChanged} />
+      <Members snap={props.snap} keys={props.keys} pmAuthorId={props.pmAuthorId} onPmAuthor={props.onPmAuthor} onChanged={props.onChanged} />
       <Links snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
       <DeleteProject snap={props.snap} onDeleted={props.onDeleted} />
     </>
@@ -119,8 +120,11 @@ function Guidelines(props: { snap: Snapshot; onChanged: () => void }) {
   )
 }
 
-function Members(props: { snap: Snapshot; pmAuthorId: string; onPmAuthor: (id: string) => void; onChanged: () => void }) {
+function Members(props: { snap: Snapshot; keys: ProjectKeys | null; pmAuthorId: string; onPmAuthor: (id: string) => void; onChanged: () => void }) {
   const { snap } = props
+  const [claims, setClaims] = useState<Map<string, MemberKey> | null>(null)
+  const loadClaims = () => listMemberKeys(snap.project.id).then(setClaims, () => setClaims(new Map()))
+  useEffect(() => { loadClaims() }, [snap.project.id, snap.members.map((m) => m.id).join()])
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
   const [isPm, setIsPm] = useState(false)
@@ -132,11 +136,11 @@ function Members(props: { snap: Snapshot; pmAuthorId: string; onPmAuthor: (id: s
       <div class="stack-sm">
         <h2 class="eyebrow">Members</h2>
         <span class="muted small">
-          PMs can own tasks but never appear in the member name picker. Each PM logs in here with their own superuser account, added in the instance dashboard.
+          Members pick their name once from the group link, and that device stays signed in as them. Nobody else can take a name that's set up. PMs never appear in the picker; each PM logs in here with their own superuser account, added in the instance dashboard.
         </span>
       </div>
       <div class="list">
-        {snap.members.map((m) => <MemberRow key={m.id} snap={snap} m={m} onChanged={props.onChanged} />)}
+        {snap.members.map((m) => <MemberRow key={m.id} snap={snap} m={m} claim={claims ? claims.get(m.id) ?? null : undefined} aiKey={props.keys?.ai_key ?? ''} onClaimsChanged={loadClaims} onChanged={props.onChanged} />)}
         {snap.members.length === 0 && <span class="muted small">No members yet.</span>}
       </div>
 
@@ -178,8 +182,9 @@ function Members(props: { snap: Snapshot; pmAuthorId: string; onPmAuthor: (id: s
   )
 }
 
-function MemberRow(props: { snap: Snapshot; m: Member; onChanged: () => void }) {
-  const { m, snap } = props
+function MemberRow(props: { snap: Snapshot; m: Member; claim: MemberKey | null | undefined; aiKey: string; onClaimsChanged: () => void; onChanged: () => void }) {
+  const { m, snap, claim } = props
+  const [confirmReset, setConfirmReset] = useState(false)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(m.name)
   const [role, setRole] = useState(m.role)
@@ -223,11 +228,40 @@ function MemberRow(props: { snap: Snapshot; m: Member; onChanged: () => void }) 
           <span style={{ fontWeight: 500 }}>
             {m.name} {m.is_pm && <span class="tag-pm" style={{ marginLeft: '6px' }}>PM</span>}
           </span>
-          <span class="muted xsmall">{[m.role, `${owned} ${owned === 1 ? 'task' : 'tasks'}`].filter(Boolean).join(' · ')}</span>
+          <span class="muted xsmall">
+            {[m.role, `${owned} ${owned === 1 ? 'task' : 'tasks'}`].filter(Boolean).join(' · ')}
+            {!m.is_pm && claim !== undefined && <> · <span style={{ color: claim ? 'var(--accent-text)' : 'var(--muted)' }}>{claim ? 'Set up' : 'Not set up yet'}</span></>}
+          </span>
         </div>
       </div>
-      {!confirm ? (
+      {confirmReset ? (
         <div class="row">
+          <span class="xsmall warn-text">Sign {m.name} out everywhere? They pick their name again from the group link, or you send them a new personal link.</span>
+          <button type="button" class="btn btn-danger btn-sm" disabled={s.busy} onClick={async () => { if (claim && await s.run(() => deleteMemberKey(claim.id), `${m.name} reset`)) { setConfirmReset(false); props.onClaimsChanged() } }}>Reset</button>
+          <button type="button" class="btn btn-soft btn-sm" onClick={() => setConfirmReset(false)}>Cancel</button>
+        </div>
+      ) : !confirm ? (
+        <div class="row">
+          {!m.is_pm && claim !== undefined && (
+            <button
+              type="button"
+              class="btn btn-soft btn-sm"
+              title="Send this privately to the member: it signs a device in as them."
+              onClick={async () => {
+                let k = claim
+                if (!k) {
+                  const ok = await s.run(async () => { k = await createMemberKey(m.id) })
+                  if (!ok || !k) return
+                  props.onClaimsChanged()
+                }
+                const copied = await copyText(personalLink(snap.project.id, m.id, k.key, props.aiKey))
+                toast(copied ? `${m.name}'s personal link copied. Send it to them privately.` : "Couldn't copy the link.", !copied)
+              }}
+            >
+              Copy personal link
+            </button>
+          )}
+          {!m.is_pm && claim && <button type="button" class="btn btn-soft btn-sm" onClick={() => setConfirmReset(true)}>Reset</button>}
           <button type="button" class="btn btn-soft btn-sm" onClick={() => setEditing(true)}>Edit</button>
           <button type="button" class="btn btn-soft btn-sm" onClick={() => setConfirm(true)}>Remove</button>
         </div>
@@ -274,6 +308,7 @@ function LinkRow(props: { label: string; help: string; url: string | null; copyL
 function Links(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: (k: ProjectKeys) => void }) {
   const { keys, snap } = props
   const [error, setError] = useState<string | null>(null)
+  const [locking, setLocking] = useState(false)
   const regen = (which: 'member_key' | 'ai_key') => async () => {
     if (!keys) return
     setError(null)
@@ -288,21 +323,42 @@ function Links(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: (k: Pr
     <section class="panel">
       <h2 class="eyebrow">Links</h2>
       <LinkRow
-        label="Member link"
-        help="Post this in the group chat. Anyone with it can see the project and act as a member, so keep it inside the group."
-        url={keys ? memberLink(snap.project.id, keys.member_key, keys.ai_key) : null}
-        copyLabel="Copy member link"
+        label="Group link"
+        help="Post this in the group chat. Each member opens it once and picks their name; after that their device is signed in as them. On its own, the link only shows the names that are still free."
+        url={keys ? groupLink(snap.project.id, keys.member_key) : null}
+        copyLabel="Copy group link"
         onRegenerate={regen('member_key')}
-        regenerateWarning="The old member link stops working straight away."
+        regenerateWarning="The old group link stops working. Members who already picked their name stay signed in."
       />
+      <div class="row">
+        <Toggle
+          checked={!!keys?.claims_locked}
+          disabled={!keys || locking}
+          label="Lock the group link"
+          accent
+          onChange={async (v) => {
+            if (!keys) return
+            setLocking(true)
+            setError(null)
+            try {
+              props.onKeys(await setClaimsLocked(keys.id, v))
+              toast(v ? 'Group link locked. Nobody new can pick a name.' : 'Group link unlocked.')
+            } catch (e) {
+              setError((e as StoreError).message)
+            }
+            setLocking(false)
+          }}
+        />
+        <span class="muted xsmall">Once everyone has picked their name. You can still send someone a personal link from Members.</span>
+      </div>
       <div style={{ borderTop: '1px solid var(--border)' }} />
       <LinkRow
         label="AI link"
-        help="Read only. Members get it inside the AI setup prompt on their first visit, so you rarely need to copy it yourself. It shows the whole project as one document, without any keys."
+        help="Read only. Members get it when they pick their name, inside the AI setup prompt, so you rarely need to copy it yourself. It shows the whole project as one document, without any keys."
         url={keys ? aiLink(snap.project.id, keys.ai_key) : null}
         copyLabel="Copy AI link"
         onRegenerate={regen('ai_key')}
-        regenerateWarning="The member link changes too. Share the new one, and every member has to set up their AI again."
+        regenerateWarning="Every member's AI loses access until they paste the AI setup prompt again (Set up my AI in their menu)."
       />
       <ErrorBox error={error} />
     </section>

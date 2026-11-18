@@ -28,7 +28,31 @@ export interface Project {
 export interface ProjectKeys {
   id: string
   project: string
+  /** The group link's key: only good for picking a name (claiming) */
   member_key: string
+  ai_key: string
+  /** When true, nobody can claim a name through the group link */
+  claims_locked: boolean
+}
+
+/** A member's personal key, created when they claim their name. */
+export interface MemberKey {
+  id: string
+  member: string
+  key: string
+}
+
+/** What the group link shows before someone has picked their name. */
+export interface JoinInfo {
+  project: { id: string; name: string }
+  locked: boolean
+  pms: string[]
+  members: { id: string; name: string; role: string; claimed: boolean }[]
+}
+
+export interface Claim {
+  member: string
+  key: string
   ai_key: string
 }
 

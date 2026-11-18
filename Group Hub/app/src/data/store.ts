@@ -7,7 +7,7 @@
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
 import { PB_URL } from '../config'
 import type {
-  Member, MemberInput, Note, Project, ProjectInput, ProjectKeys, Snapshot, Status, Task, TaskInput, TaskLink,
+  Claim, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Status, Task, TaskInput, TaskLink,
 } from './types'
 
 const SNAPSHOT_EXPAND =
@@ -28,7 +28,7 @@ export function initPm(): void {
   mode = 'pm'
 }
 
-/** Start in member mode: no session, the member key goes on every request. */
+/** Start in member mode: no session, the member's personal key goes on every request. */
 export function initMember(memberKey: string): void {
   // A memory-only auth store, so a PM session in the same browser is never sent from the member page.
   pb = new PocketBase(PB_URL, new BaseAuthStore())
@@ -137,7 +137,7 @@ function toNote(r: RecordModel): Note {
 }
 
 function toKeys(r: RecordModel): ProjectKeys {
-  return { id: r.id, project: str(r.project), member_key: str(r.member_key), ai_key: str(r.ai_key) }
+  return { id: r.id, project: str(r.project), member_key: str(r.member_key), ai_key: str(r.ai_key), claims_locked: !!r.claims_locked }
 }
 
 const byCreated = <T extends { created: string }>(a: T, b: T) => a.created.localeCompare(b.created)
@@ -317,4 +317,80 @@ export function setBlockers(id: string, blockedByTasks: string[], blockedByMembe
 
 export function addNote(taskId: string, authorId: string, text: string): Promise<Note> {
   return run(async () => toNote(await client().collection('notes').create({ task: taskId, author: authorId || '', text })))
+}
+
+// ---------- joining with the group link (no personal key yet) ----------
+
+/** A plain client for the join routes: sends the group key, never a personal key or a PM session. */
+function joinClient(groupKey: string): PocketBase {
+  const c = new PocketBase(PB_URL, new BaseAuthStore())
+  c.autoCancellation(false)
+  c.beforeSend = (url, options) => {
+    options.headers = { ...(options.headers as Record<string, string>), 'X-Group-Key': groupKey }
+    return { url, options }
+  }
+  return c
+}
+
+/** The server's own message for the join routes; they are written for people. */
+function joinError(e: unknown): StoreError {
+  if (e instanceof ClientResponseError && e.status && e.response?.message) return new StoreError(e.response.message, e.status)
+  return friendly(e)
+}
+
+export async function joinInfo(projectId: string, groupKey: string): Promise<JoinInfo> {
+  try {
+    return await joinClient(groupKey).send(`/api/gh/join/${projectId}`, { method: 'GET' })
+  } catch (e) {
+    throw joinError(e)
+  }
+}
+
+/** Take a name. Returns the personal key that signs this device in as that member. */
+export async function claimName(projectId: string, groupKey: string, memberId: string): Promise<Claim> {
+  try {
+    return await joinClient(groupKey).send(`/api/gh/claim/${projectId}`, { method: 'POST', body: { member: memberId } })
+  } catch (e) {
+    throw joinError(e)
+  }
+}
+
+// ---------- personal keys (PM) ----------
+
+function toMemberKey(r: RecordModel): MemberKey {
+  return { id: r.id, member: str(r.member), key: str(r.key) }
+}
+
+/** Personal keys of a project's members, by member id. */
+export function listMemberKeys(projectId: string): Promise<Map<string, MemberKey>> {
+  return run(async () => {
+    const list = await client().collection('member_keys').getFullList({ filter: client().filter('member.project = {:p}', { p: projectId }) })
+    return new Map(list.map((r) => [str(r.member), toMemberKey(r)]))
+  })
+}
+
+/** Make a personal key for a member who hasn't claimed their name (for example while the group link is locked). */
+export function createMemberKey(memberId: string): Promise<MemberKey> {
+  return run(async () => toMemberKey(await client().collection('member_keys').create({ member: memberId, key: randomKey() })))
+}
+
+/** Reset a claim: the member's devices stop working and the name can be picked again. */
+export function deleteMemberKey(id: string): Promise<void> {
+  return run(async () => {
+    await client().collection('member_keys').delete(id)
+  })
+}
+
+export function setClaimsLocked(keysId: string, locked: boolean): Promise<ProjectKeys> {
+  return run(async () => toKeys(await client().collection('project_keys').update(keysId, { claims_locked: locked })))
+}
+
+/** Member mode: the project's current AI key (it changes when the PM makes a new AI link). */
+export async function currentAiKey(projectId: string): Promise<string> {
+  try {
+    const r = await client().send(`/api/gh/ai/${projectId}`, { method: 'GET' })
+    return typeof r?.ai_key === 'string' ? r.ai_key : ''
+  } catch {
+    return ''
+  }
 }

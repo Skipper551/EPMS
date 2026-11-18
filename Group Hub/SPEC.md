@@ -25,11 +25,11 @@ Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Managemen
 
 ## Architecture (v1)
 
-- Backend: one PocketBase instance per PM on PocketBase Cloud's free plan (1 instance, 50 MB, 5,000 API requests/hour, never hibernates). One instance holds all of that PM's projects; each project is isolated with its own member link. PocketBase is MIT-licensed open source, so a PM can also self-host it.
+- Backend: one PocketBase instance per PM on PocketBase Cloud's free plan (1 instance, 50 MB, 5,000 API requests/hour, never hibernates). One instance holds all of that PM's projects; each project is isolated with its own group link. PocketBase is MIT-licensed open source, so a PM can also self-host it.
 - The free plan needs a $0 Stripe subscription (card on file, never charged). The PM setup screen explains this plainly.
 - Frontend: static app, hosted on PocketBase Cloud's free frontend slots or GitHub Pages.
 - Data access goes through a small storage layer so the backend can be swapped.
-- Each project has a private member link and a read-only link for AIs.
+- Each project has a group link (members pick their name once), a personal link per member, and a read-only link for AIs.
 - AIs read the project through the read-only link placed in their standing instructions. No AI writes in v1.
 - Updates reach members through the PM sharing the project link in the Teams group chat. No notifications in v1.
 
@@ -43,7 +43,7 @@ Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Managemen
 - Marks tasks behind schedule (manual only).
 
 **Member**
-- Picks their name from the member link.
+- Picks their name once from the group link; that device is then signed in as them.
 - Moves their own tasks from To do to Doing (started) and from Doing to Review (finished). Only the PM moves a task to Done.
 - Adds notes to a task.
 - Adds blockers to their own tasks, pointing at another task or mentioning another member.
@@ -61,12 +61,13 @@ Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Managemen
 
 ### Who is who
 - **PM**: logs in as the instance's superuser (the account PocketBase Cloud gives them). Superusers bypass all access rules and see hidden fields, so the PM can do everything without extra rules.
-- **Members**: no accounts. Each project has a long random `member_key`. The member link carries it in the URL fragment (`#p=<project id>&key=<member key>&ai=<ai key>`, never sent to servers or logs; the AI key is there so the member's AI setup prompt can include the AI link); the app sends it with every request as the header `X-Member-Key`.
+- **Members**: no accounts. Each project has a group link carrying a long random group key (`#p=<project id>&key=<group key>`). It is only good for picking a name: a member opens it, picks their name once, and the server creates that member's personal key. Their device then uses the personal link (`#p=<project id>&m=<member id>&me=<personal key>&ai=<ai key>`), and the app sends the personal key with every request as the header `X-Member-Key`. Everything after `#` stays in the browser, never sent to servers or logs. The AI key rides along so the member's AI setup prompt can include the AI link.
 - **AIs**: each project has a separate long random `ai_key`, used in a read-only URL. AIs can't send headers, so this key goes in the query string.
 
 ### Collections
 - **projects**: name, course, final_deadline, guidelines (text), chat_url (optional link to the group chat, shown to members as Open group chat).
-- **project_keys**: project (unique relation), member_key, ai_key. No public rules at all, so the keys can never be read through the API; other collections' rules check against it with `@collection.project_keys`. (Keys live here because PocketBase v0.41 rejects hidden fields in rules.)
+- **project_keys**: project (unique relation), member_key (the group key), ai_key, claims_locked (bool: the PM locks the group link once everyone has picked their name). No public rules at all, so the keys can never be read through the API; other collections' rules check against it with `@collection.project_keys`. (Keys live here because PocketBase v0.41 rejects hidden fields in rules.)
+- **member_keys**: member (unique relation), key (unique). One personal key per member, created when they claim their name; deleting it resets the claim. No public rules.
 - **members**: project (relation), name, role (text), is_pm (bool). PMs can own tasks but never appear in the member name picker.
 - **tasks**: project (relation), title, owner (relation to members; the lead, accountable for the task), helpers (multi relation to members; they see the task and can start it or send it to review), everyone (bool; whole-group task shown on every member's page), due_date, status (select: todo, doing, review, done), behind (bool, PM only), blocked_by_tasks (multi relation to tasks), blocked_by_members (multi relation to members), links (JSON list of {label, url}).
 - **notes**: task (relation), author (relation to members), text.
@@ -74,9 +75,9 @@ Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Managemen
 Every record also gets PocketBase's automatic id, created and updated timestamps.
 
 ### Access rules (members and AIs; PM bypasses as superuser)
-- **Read anything in a project** (projects, members, tasks, notes): allowed when that project's row in project_keys has a member_key matching `@request.headers.x_member_key`, or an ai_key matching `@request.query.ai_key`.
-- **tasks, update**: member key matches, AND the only fields sent are status, blocked_by_tasks and blocked_by_members, AND the new status is doing or review (never done). Title, owner, helpers, everyone, dates, behind and links stay PM-only.
-- **notes, create**: member key matches through the task's project.
+- **Read anything in a project** (projects, members, tasks, notes): allowed when a member_keys row has a key matching `@request.headers.x_member_key` and its member belongs to that project, or the project's ai_key matches `@request.query.ai_key`. The group key alone reads nothing.
+- **tasks, update**: personal key matches, AND that member leads or helps on the task, AND the only fields sent are status, blocked_by_tasks and blocked_by_members, AND the new status is doing or review (never done). Title, owner, helpers, everyone, dates, behind and links stay PM-only.
+- **notes, create**: personal key matches through the task's project, AND the note's author is that member.
 - **Everything else** (creating, deleting or editing projects, members, tasks): superuser only, i.e. no public rule.
 
 ### The AI link
@@ -85,8 +86,13 @@ One URL returns the whole project as a single JSON document, using PocketBase's 
 No JavaScript needed to read it, so Claude's and ChatGPT's link fetchers can use it. It can't write, because ai_key appears in no write rule.
 
 ### Known limits of this design
-- Members aren't authenticated as individuals, so the server can't stop one member editing another member's task status or posting as someone else. Within a group of 3 to 7 classmates this is accepted; every change is timestamped.
-- Anyone with the member link can read and make member-level edits. If a link leaks, the PM regenerates member_key from the PM view.
+- Members are identified by a personal key per device, not a password. Whoever has someone's personal link acts as them; the PM resets it from Members, which signs that member out everywhere.
+- The group link only lets someone take a name that is still free. Once everyone has picked, the PM locks it. If it leaks before then, the PM makes a new group link.
+
+### Claiming a name (pb_hooks/claim.pb.js)
+- `GET /api/gh/join/<project>` with header `X-Group-Key`: the non-PM members, which are taken, PM names, and whether the link is locked.
+- `POST /api/gh/claim/<project>` with header `X-Group-Key` and `{ member }`: refuses PMs, taken names and locked links; otherwise creates the member's personal key and returns it with the AI key.
+- `GET /api/gh/ai/<project>` with header `X-Member-Key`: the current AI key, so devices pick up a new AI link.
 ### Tested on the live instance (PocketBase v0.41.1, 2026-11-18)
 All passed: AI link returns the whole project (members, tasks, notes, questions) and contains no keys; wrong or missing key gets 404; project_keys can't be read even with valid keys; member can move a task to Review but not Done, and can't change its title; the AI key can't write; member can add notes and questions but can't pre-answer a question or create tasks; one project's member key sees nothing of another project. Claude's web fetcher read the AI link and summarised members, tasks, blockers, notes and the open question correctly.
 
@@ -97,8 +103,8 @@ Later change: Ask the PM and the questions collection were dropped (groups use t
 Screens are on the design canvas: https://claude.ai/artifact/UG853jZTSu7BzvwMfaFofy (Member: My tasks, PM board, First visit and AI setup). Dark first, calm and minimal, laptop first. Inter for body, Space Grotesk for headings. Ground #0F1115, surfaces #171A21, borders #23262E, text #E8EAED, muted #9AA1AD, one accent blue #6CA0FF; orange #F2B880 means blocked or behind (no red/green pairs).
 
 Decisions from design review:
-- The PM never appears in the member name picker. The PM view is reached only through the PocketBase superuser login, never through the member link.
-- The browser remembers which member picked their name (localStorage), so returning members on the same device go straight to My tasks. The name screen also has a "Been here before? Skip straight to my tasks" link for new devices.
+- The PM never appears in the member name picker. The PM view is reached only through the PocketBase superuser login, never through the group or personal links.
+- The browser remembers which member it is signed in as (localStorage, one per project), so returning members go straight to My tasks. A name that's already set up can't be picked again; on a new device the member opens their personal link (copied from the menu on their first device) or asks the PM to reset their name.
 
 ## Teams link previews (tested 2026-11-18)
 
@@ -141,7 +147,7 @@ PocketBase JS hooks work on the free plan (instance Code tab in the PocketBase C
 
 - Files alongside this spec: pb_schema.json (the collections as imported on the live instance, PocketBase v0.41.1) and preview.pb.js (the working Teams preview hook).
 - Instance: https://j4sam3zmm0y2s0q.pwz5.pocketbasecloud.com (currently empty apart from the collections).
-- Frontend: static app, deployable to a PocketBase Cloud free frontend slot or GitHub Pages; talks to PocketBase with its JS SDK. Member requests send the X-Member-Key header; the member link carries the project id, member key and AI key in the URL fragment.
+- Frontend: static app, deployable to a PocketBase Cloud free frontend slot or GitHub Pages; talks to PocketBase with its JS SDK. Member requests send the personal key in the X-Member-Key header; links carry the project id and keys in the URL fragment. The claim routes live in pb_hooks/claim.pb.js and must be added to the instance (Code tab) alongside the schema.
 - The AI link format (tested with Claude and ChatGPT): /api/collections/projects/records/<id>?ai_key=<key>&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task
 - Keep the storage access behind one small module so the backend can be swapped.
 - Open source, free forever: no paid services, nothing that can bill.
