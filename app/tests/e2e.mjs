@@ -1,0 +1,206 @@
+// End-to-end check against a LOCAL PocketBase (npm run pb:dev) and the dev server
+// (VITE_PB_URL=http://127.0.0.1:8090 npm run dev). Never point this at your live instance.
+//
+// Needs Playwright with Chromium:  npm i -D playwright && npx playwright install chromium
+// Run:                             npm run test:e2e
+
+import { createRequire } from 'node:module'
+import PocketBase from 'pocketbase'
+
+const require = createRequire(import.meta.url)
+const { chromium } = require('playwright')
+
+const PB = process.env.PB_URL || 'http://127.0.0.1:8090'
+const APP = process.env.APP_URL || 'http://localhost:5173/'
+const EMAIL = process.env.PB_EMAIL || 'pm@example.com'
+const PASSWORD = process.env.PB_PASSWORD || 'devpassword123'
+
+if (!/127\.0\.0\.1|localhost/.test(PB)) {
+  console.error('Refusing to run against a non-local PocketBase:', PB)
+  process.exit(1)
+}
+
+let failures = 0
+const check = (name, ok, detail = '') => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail && !ok ? `: ${detail}` : ''}`)
+  if (!ok) failures++
+}
+
+// ---------- seed a fresh project ----------
+
+const pb = new PocketBase(PB)
+pb.autoCancellation(false)
+await pb.collection('_superusers').authWithPassword(EMAIL, PASSWORD)
+const day = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) + ' 12:00:00.000Z' }
+const name = `E2E ${Date.now()}`
+const project = await pb.collection('projects').create({ name, course: 'Testing', final_deadline: day(20), guidelines: 'Be kind.', chat_url: 'https://example.com/chat' })
+const keys = await pb.collection('project_keys').create({ project: project.id })
+const m = {}
+for (const [n, role, is_pm] of [['Pat', 'PM', true], ['Ala', 'Research', false], ['Jimmy', 'Writing', false]]) {
+  m[n] = (await pb.collection('members').create({ project: project.id, name: n, role, is_pm })).id
+}
+const sources = await pb.collection('tasks').create({ project: project.id, title: 'Find sources', owner: m.Ala, due_date: day(2), status: 'review' })
+const intro = await pb.collection('tasks').create({ project: project.id, title: 'Write the intro', owner: m.Jimmy, due_date: day(5), status: 'todo', blocked_by_tasks: [sources.id] })
+await pb.collection('tasks').create({ project: project.id, title: 'Draft the conclusion', owner: m.Jimmy, due_date: day(8), status: 'todo' })
+const pair = await pb.collection('tasks').create({ project: project.id, title: 'Interview users', owner: m.Ala, helpers: [m.Jimmy], due_date: day(6), status: 'todo' })
+await pb.collection('tasks').create({ project: project.id, title: 'Rehearse', owner: m.Pat, everyone: true, due_date: day(15), status: 'todo' })
+const groupLinkUrl = `${APP}#p=${project.id}&key=${keys.member_key}`
+
+// ---------- access rules ----------
+
+const api = (path, init = {}) => fetch(`${PB}/api/collections/${path}`, init)
+const json = { 'Content-Type': 'application/json' }
+const claimApi = (member) => fetch(`${PB}/api/gh/claim/${project.id}`, { method: 'POST', headers: { ...json, 'X-Group-Key': keys.member_key }, body: JSON.stringify({ member }) })
+check('AI link reads the project without keys', (await api(`projects/records/${project.id}?ai_key=${keys.ai_key}`)).status === 200)
+check('missing key gets 404', (await api(`projects/records/${project.id}`)).status === 404)
+check('group key alone reads nothing', (await api(`projects/records/${project.id}`, { headers: { 'X-Member-Key': keys.member_key } })).status === 404)
+check('PM name cannot be claimed', (await claimApi(m.Pat)).status === 400)
+const alaClaim = await (await claimApi(m.Ala)).json()
+check('claiming returns a personal key and the AI key', alaClaim.key?.length === 40 && alaClaim.ai_key === keys.ai_key)
+check('a taken name cannot be claimed again', (await claimApi(m.Ala)).status === 400)
+const asAla = { ...json, 'X-Member-Key': alaClaim.key }
+const patch = (id, body) => api(`tasks/records/${id}`, { method: 'PATCH', headers: asAla, body: JSON.stringify(body) })
+check('member cannot mark Done', (await patch(sources.id, { status: 'done' })).status !== 200)
+check('member cannot rename a task', (await patch(sources.id, { title: 'x' })).status !== 200)
+check('member cannot change helpers', (await patch(pair.id, { helpers: [] })).status !== 200)
+check('member cannot set everyone', (await patch(pair.id, { everyone: true })).status !== 200)
+check("member cannot move someone else's task", (await patch(intro.id, { status: 'doing' })).status !== 200)
+check('member cannot post a note as someone else', (await api('notes/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: sources.id, author: m.Jimmy, text: 'x' }) })).status !== 200)
+check('member posts a note as themselves', (await api('notes/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: sources.id, author: m.Ala, text: 'Done, see doc.' }) })).status === 200)
+const asMember = await api(`members/records/${m.Ala}`, { method: 'PATCH', headers: asAla, body: '{"is_pm":true}' })
+check('member cannot set is_pm', asMember.status !== 200)
+check('personal keys cannot be listed', ((await (await api('member_keys/records', { headers: asAla })).json()).items ?? []).length === 0)
+
+// ---------- browser ----------
+
+const browser = await chromium.launch()
+const errors = []
+const watch = (page) => {
+  page.on('pageerror', (e) => errors.push(e.message))
+  page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()))
+}
+
+// Member
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, permissions: ['clipboard-read', 'clipboard-write'] })
+  const page = await ctx.newPage()
+  watch(page)
+  let allKeyed = true
+  page.on('request', (r) => {
+    if (!r.url().startsWith(PB)) return
+    const h = r.headers()
+    const ok = r.url().includes('/api/gh/join/') || r.url().includes('/api/gh/claim/') ? !!h['x-group-key'] && !h['x-member-key'] : !!h['x-member-key'] && !h['x-group-key']
+    if (!ok) allKeyed = false
+  })
+  await page.goto(groupLinkUrl)
+  await page.waitForSelector('text=Which one is you?')
+  const names = await page.locator('[role=radio]').allInnerTexts()
+  check('name picker hides the PM', !names.some((n) => n.startsWith('Pat')) && names.length === 2, names.join())
+  check('claimed name is shown as taken', await page.locator('[role=radio]:has-text("Ala")').isDisabled())
+  await page.click('[role=radio]:has-text("Jimmy")')
+  await page.click('text=Continue')
+  await page.click('text=Got it')
+  await page.click('text=Copy instructions')
+  const prompt = await page.evaluate(() => navigator.clipboard.readText())
+  check('AI prompt has the real AI link', prompt.includes(`records/${project.id}?ai_key=${keys.ai_key}`))
+  await page.click('text=Go to my tasks')
+  await page.waitForSelector('h1:text-is("My tasks")')
+  check('group chat button links to the chat', (await page.locator('header a:has-text("Open group chat")').getAttribute('href')) === 'https://example.com/chat')
+  check('blocked task shows its blocker', (await page.locator('article', { hasText: 'Write the intro' }).locator('.blocked-box').count()) === 1)
+  const card = page.locator('article', { hasText: 'Draft the conclusion' })
+  await card.locator('button:has-text("Start")').click()
+  await card.locator('button:has-text("Send to review")').click()
+  await page.waitForTimeout(400)
+  check('member moves a task to Review', (await card.locator('.pill').innerText()) === 'Review')
+  const helping = page.locator('article', { hasText: 'Interview users' })
+  check('helper sees the task and can start it', (await helping.innerText()).includes('Helping Ala') && (await helping.locator('button:has-text("Start")').count()) === 1)
+  const group = page.locator('article', { hasText: 'Rehearse' })
+  check('whole-group task shows, only the lead moves it', (await group.innerText()).includes('Whole group, led by Pat') && (await group.locator('button:has-text("Start")').count()) === 0)
+  await page.reload()
+  await page.waitForSelector('h1:text-is("My tasks")')
+  check('name remembered after reload', true)
+  check('address bar holds the personal link', page.url().includes('&me='))
+  await page.click('header .select-btn')
+  await page.click('role=menuitem[name="Copy my personal link"]')
+  const personal = await page.evaluate(() => navigator.clipboard.readText())
+  await page.goto(groupLinkUrl)
+  await page.waitForSelector('h1:text-is("My tasks")')
+  check('group link on a set-up device goes straight to My tasks', true)
+
+  // Someone else on another device can't take Jimmy, but Jimmy's personal link works there.
+  const other = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+  const p2 = await other.newPage()
+  watch(p2)
+  await p2.goto(groupLinkUrl)
+  await p2.waitForSelector('text=Which one is you?')
+  check('Jimmy is taken on another device', await p2.locator('[role=radio]:has-text("Jimmy")').isDisabled())
+  await p2.goto(personal)
+  await p2.waitForSelector('h1:text-is("My tasks")')
+  check('personal link signs in on a new device', (await p2.locator('header').innerText()).includes('Hello Jimmy'))
+  await other.close()
+  check('join requests send the group key, everything else the personal key', allKeyed)
+  await ctx.close()
+}
+
+// PM
+{
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  const page = await ctx.newPage()
+  watch(page)
+  await page.goto(`${APP}pm.html`)
+  await page.fill('input[type=email]', EMAIL)
+  await page.fill('input[type=password]', PASSWORD)
+  await page.click('button[type=submit]')
+  await page.waitForSelector('h1:text-is("Board")')
+  await page.click('header .select-btn')
+  await page.locator('role=menuitem', { hasText: name }).click()
+  await page.waitForSelector('section[aria-label="Review"] >> text=Draft the conclusion')
+  await page.locator('article', { hasText: 'Find sources' }).locator('button:has-text("Approve")').click()
+  await page.waitForTimeout(500)
+  check('approve moves to Done', (await page.locator('section[aria-label="Done"] >> text=Find sources').count()) === 1)
+  check('blocker clears when the blocking task is Done', (await page.locator('article', { hasText: 'Write the intro' }).locator('.tcard-blocked').count()) === 0)
+  await page.locator('article', { hasText: 'Draft the conclusion' }).locator('button:has-text("Send back")').click()
+  await page.fill('role=dialog >> textarea', 'Shorter, please.')
+  await page.click('button:has-text("Send back to Doing")')
+  await page.waitForTimeout(500)
+  check('send back returns to Doing', (await page.locator('section[aria-label="Doing"] >> text=Draft the conclusion').count()) === 1)
+
+  // Reset and lock
+  await page.click('header >> text=Project settings')
+  await page.waitForSelector('text=Set up')
+  const jimmyRow = page.locator('.list-item', { hasText: 'Jimmy' })
+  await jimmyRow.locator('button:has-text("Reset")').click()
+  await jimmyRow.locator('button.btn-danger:has-text("Reset")').click()
+  await page.waitForTimeout(500)
+  check('reset frees the name', (await (await fetch(`${PB}/api/gh/join/${project.id}`, { headers: { 'X-Group-Key': keys.member_key } })).json()).members.find((x) => x.name === 'Jimmy').claimed === false)
+  await page.click('role=switch[name="Lock the group link"]')
+  await page.waitForTimeout(400)
+  check('locked group link refuses claims', (await claimApi(m.Jimmy)).status === 403)
+  await page.click('header >> text=Back to board')
+
+  // Import
+  await page.click('header >> text=Import tasks')
+  await page.fill('#import-text', 'Here you go:\n```json\n' + JSON.stringify({
+    format: 'epms-tasks', version: 1,
+    tasks: [
+      { id: 'a', title: 'Collect data', owner: 'ala', due: day(6).slice(0, 10), description: 'Steps here.' },
+      { id: 'b', title: 'Make charts', owner: 'Newbie', blocked_by: ['a'] },
+      { title: 'Write the intro', owner: 'Jimmy' },
+    ],
+  }) + '\n```')
+  await page.click('button:has-text("Preview")')
+  await page.click('button:has-text("Import 2 tasks")')
+  await page.waitForSelector('role=dialog', { state: 'detached' })
+  await page.waitForTimeout(400)
+  const charts = await page.locator('article', { hasText: 'Make charts' }).innerText()
+  check('import creates tasks, members and blockers', charts.includes('Newbie') && charts.includes('Blocked by Collect data'), charts)
+  check('import skips duplicates', (await page.locator('article h3:text-is("Write the intro")').count()) === 1)
+  await ctx.close()
+}
+
+await browser.close()
+check('no console errors', errors.length === 0, errors.join(' | '))
+
+await pb.collection('projects').delete(project.id)
+console.log(failures ? `\n${failures} failed` : '\nAll passed')
+process.exit(failures ? 1 : 0)
