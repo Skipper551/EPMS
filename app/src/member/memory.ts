@@ -14,6 +14,8 @@ export interface Session {
   name: string
   setupDone: boolean
   lastOpened: number
+  /** When this device last showed the member's updates (ISO); updates newer than this are new */
+  lastSeen?: string
 }
 
 export function sessions(): Session[] {
@@ -39,4 +41,10 @@ export function saveSession(s: Omit<Session, 'lastOpened'>): Session {
 
 export function forgetSession(projectId: string): void {
   save(SESSIONS, JSON.stringify(sessions().filter((x) => x.projectId !== projectId)))
+}
+
+/** Change some fields of the stored session, keeping everything else as stored now. */
+export function patchSession(projectId: string, patch: Partial<Omit<Session, 'projectId' | 'lastOpened'>>): Session | null {
+  const current = sessionFor(projectId)
+  return current ? saveSession({ ...current, ...patch }) : null
 }

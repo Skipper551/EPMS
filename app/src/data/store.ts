@@ -7,7 +7,7 @@
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
 import { PB_URL } from '../config'
 import type {
-  Claim, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Status, Task, TaskInput, TaskLink,
+  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Status, Task, TaskInput, TaskLink,
 } from './types'
 
 const SNAPSHOT_EXPAND =
@@ -127,7 +127,8 @@ function toTask(r: RecordModel): Task {
   return {
     id: r.id, project: str(r.project), title: str(r.title), owner: str(r.owner), helpers: ids(r.helpers), everyone: !!r.everyone,
     due_date: dateOnly(r.due_date),
-    status, behind: !!r.behind, blocked_by_tasks: ids(r.blocked_by_tasks), blocked_by_members: ids(r.blocked_by_members),
+    status, behind: !!r.behind, behind_note: str(r.behind_note), blocked_by_tasks: ids(r.blocked_by_tasks), blocked_by_members: ids(r.blocked_by_members),
+    blocked_reason: str(r.blocked_reason),
     links: toLinks(r.links), created: str(r.created), updated: str(r.updated),
   }
 }
@@ -137,7 +138,8 @@ function toNote(r: RecordModel): Note {
 }
 
 function toKeys(r: RecordModel): ProjectKeys {
-  return { id: r.id, project: str(r.project), member_key: str(r.member_key), ai_key: str(r.ai_key), claims_locked: !!r.claims_locked }
+  return { id: r.id, project: str(r.project), member_key: str(r.member_key), ai_key: str(r.ai_key), claims_locked: !!r.claims_locked,
+    chat_webhook: str(r.chat_webhook), last_summary_at: str(r.last_summary_at) }
 }
 
 const byCreated = <T extends { created: string }>(a: T, b: T) => a.created.localeCompare(b.created)
@@ -306,10 +308,12 @@ export function setStatus(id: string, status: Status): Promise<Task> {
   return run(async () => toTask(await client().collection('tasks').update(id, { status })))
 }
 
-/** Member or PM: replace a task's blockers. Sends nothing but the two blocker fields. */
-export function setBlockers(id: string, blockedByTasks: string[], blockedByMembers: string[]): Promise<Task> {
+/** Member or PM: replace a task's blockers. Sends nothing but the blocker fields. */
+export function setBlockers(id: string, blockedByTasks: string[], blockedByMembers: string[], blockedReason: string): Promise<Task> {
   return run(async () =>
-    toTask(await client().collection('tasks').update(id, { blocked_by_tasks: blockedByTasks, blocked_by_members: blockedByMembers })),
+    toTask(await client().collection('tasks').update(id, {
+      blocked_by_tasks: blockedByTasks, blocked_by_members: blockedByMembers, blocked_reason: blockedReason,
+    })),
   )
 }
 
@@ -393,4 +397,51 @@ export async function currentAiKey(projectId: string): Promise<string> {
   } catch {
     return ''
   }
+}
+
+// ---------- activity log ----------
+
+/** PocketBase date-time form, for filters: "2026-11-18 20:00:00.000Z". */
+function pbTime(iso: string): string {
+  return new Date(iso).toISOString().replace('T', ' ')
+}
+
+function toEvent(r: RecordModel): ActivityEvent {
+  return {
+    id: r.id, task: str(r.task), kind: str(r.kind) as EventKind, actor: str(r.actor), by_pm: !!r.by_pm,
+    targets: ids(r.targets), text: str(r.text), created: str(r.created),
+  }
+}
+
+/** Events in a project since a moment (ISO), newest first. With forMember, only the ones about that member. */
+export function listEvents(projectId: string, sinceIso: string, forMember = ''): Promise<ActivityEvent[]> {
+  return run(async () => {
+    const c = client()
+    const parts = [c.filter('project = {:p}', { p: projectId })]
+    if (sinceIso) parts.push(c.filter('created > {:t}', { t: pbTime(sinceIso) }))
+    if (forMember) parts.push(c.filter('targets.id ?= {:m}', { m: forMember }))
+    const page = await c.collection('events').getList(1, 200, { filter: parts.join(' && '), sort: '-created' })
+    return page.items.map(toEvent)
+  })
+}
+
+// ---------- chat updates (PM) ----------
+
+export function setChatWebhook(keysId: string, url: string): Promise<ProjectKeys> {
+  return run(async () => toKeys(await client().collection('project_keys').update(keysId, { chat_webhook: url })))
+}
+
+/** Post the PM's update to the group chat; the server sends it to the webhook and records the time. */
+export async function postToChat(projectId: string, text: string): Promise<void> {
+  try {
+    await client().send(`/api/gh/chat/${projectId}`, { method: 'POST', body: { text } })
+  } catch (e) {
+    if (e instanceof ClientResponseError && e.response?.message && e.status === 400) throw new StoreError(e.response.message, 400)
+    throw friendly(e)
+  }
+}
+
+/** Record that the PM shared an update some other way (copied it into the chat). */
+export function markUpdateShared(keysId: string): Promise<ProjectKeys> {
+  return run(async () => toKeys(await client().collection('project_keys').update(keysId, { last_summary_at: pbTime(new Date().toISOString()) })))
 }

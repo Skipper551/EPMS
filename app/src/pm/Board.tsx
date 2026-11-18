@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import type { Snapshot, Status, Task } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
-import { activeBlockers, daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
+import { type ActiveBlocker, activeBlockers, daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
 import { Avatar } from '../ui/ui'
 
 export interface BoardActions {
@@ -9,11 +9,13 @@ export interface BoardActions {
   approve: (taskId: string) => void
   sendBack: (taskId: string) => void
   move: (taskId: string, status: Status) => void
+  /** Mark behind (asks for an optional note) or back on schedule. */
+  toggleBehind: (taskId: string) => void
 }
 
 const UNASSIGNED = '__nobody'
 
-export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; onImport: () => void }) {
+export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; onImport: () => void; changes: number; onUpdate: () => void }) {
   const { snap, actions } = props
   const [filter, setFilter] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -64,8 +66,17 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
         </div>
       )}
 
-      {(review.length > 0 || behind.length > 0) && (
+      {(review.length > 0 || behind.length > 0 || props.changes > 0) && (
         <div class="banners">
+          {props.changes > 0 && (
+            <div class="banner banner-accent" style={{ justifyContent: 'space-between' }}>
+              <span>
+                <strong>{props.changes === 1 ? '1 task changed' : `${props.changes} tasks changed`}</strong>
+                <span class="banner-detail"> since the last chat update</span>
+              </span>
+              <button type="button" class="btn btn-primary btn-sm" onClick={props.onUpdate}>Update the group</button>
+            </div>
+          )}
           {review.length > 0 && (
             <div class="banner banner-accent">
               <strong>{review.length === 1 ? '1 task waiting for your review' : `${review.length} tasks waiting for your review`}</strong>
@@ -166,8 +177,17 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
           </span>
           {t.due_date && <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>{formatDay(t.due_date)}</span>}
         </div>
-        {blockers.length > 0 && <div class="tcard-blocked">Blocked by {blockers.map((b) => b.label).join(', ')}</div>}
+        {t.behind && t.status !== 'done' && t.behind_note && <div class="tcard-blocked">Behind: {t.behind_note}</div>}
+        {blockedText(blockers) && <div class="tcard-blocked">{blockedText(blockers)}</div>}
       </button>
+      {(t.status === 'todo' || t.status === 'doing') && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-4px' }}>
+          <button type="button" class="btn-text xsmall" style={{ color: t.behind ? 'var(--warn)' : 'var(--muted)', fontSize: '12px' }} disabled={props.busy}
+            onClick={() => actions.toggleBehind(t.id)}>
+            {t.behind ? 'Back on schedule' : 'Mark behind'}
+          </button>
+        </div>
+      )}
       {t.status === 'review' && (
         <div class="tcard-review">
           <button type="button" class="btn btn-primary btn-sm" disabled={props.busy} onClick={() => actions.approve(t.id)}>Approve</button>
@@ -176,4 +196,11 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
       )}
     </article>
   )
+}
+
+/** "Blocked by Find 5 sources, Ala. Waiting for the professor's feedback" */
+function blockedText(blockers: ActiveBlocker[]): string {
+  const named = blockers.filter((b) => b.kind !== 'custom').map((b) => b.label)
+  const custom = blockers.find((b) => b.kind === 'custom')
+  return [named.length ? `Blocked by ${named.join(', ')}` : '', custom ? (named.length ? custom.label : `Blocked: ${custom.label}`) : ''].filter(Boolean).join('. ')
 }

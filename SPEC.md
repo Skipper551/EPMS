@@ -55,7 +55,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 - **Task**: title, lead (owner), helpers, whole-group flag, due date, status, behind schedule (flag set by PM), blocked by (tasks and/or members), files or links, notes.
 - **Status**: To do, Doing, Review, Done.
 - **Note**: author, text, timestamp.
-- **Blocker**: on a task; points at another task or a member; added by PM or the task's owner; cleared when the other task is Done or when removed.
+- **Blocker**: on a task; points at another task, a member, or free text for anything else ("waiting for the professor's feedback"); added by the PM or the task's lead or helpers; a task blocker clears when that task is Done, the others when removed.
 
 ## Database (PocketBase, design draft)
 
@@ -78,6 +78,7 @@ Every record also gets PocketBase's automatic id, created and updated timestamps
 - **Read anything in a project** (projects, members, tasks, notes): allowed when a member_keys row has a key matching `@request.headers.x_member_key` and its member belongs to that project, or the project's ai_key matches `@request.query.ai_key`. The group key alone reads nothing.
 - **tasks, update**: personal key matches, AND that member leads or helps on the task, AND the only fields sent are status, blocked_by_tasks and blocked_by_members, AND the new status is doing or review (never done). Title, owner, helpers, everyone, dates, behind and links stay PM-only.
 - **notes, create**: personal key matches through the task's project, AND the note's author is that member.
+- **events**: read like tasks; nobody can create, edit or delete them through the API. Only the server's hooks write them.
 - **Everything else** (creating, deleting or editing projects, members, tasks): superuser only, i.e. no public rule.
 
 ### The AI link
@@ -88,6 +89,13 @@ No JavaScript needed to read it, so Claude's and ChatGPT's link fetchers can use
 ### Known limits of this design
 - Members are identified by a personal key per device, not a password. Whoever has someone's personal link acts as them; the PM resets it from Members, which signs that member out everywhere.
 - The group link only lets someone take a name that is still free. Once everyone has picked, the PM locks it. If it leaks before then, the PM makes a new group link.
+
+### Updates and notifications (pb_hooks/events.pb.js)
+- No push notifications or email: both need paid or account-based services. Members see updates in the app; the group chat carries the PM's summaries.
+- Every change to a task, and every note, is recorded in **events** by a server hook: who did it (member, or the PM as superuser), who it concerns (the task's lead and helpers), and any text (a Behind note, a note's text, a custom blocker). Kinds: created, assigned, helper_added, started, submitted, sent_back, approved, behind, on_schedule, blocked, unblocked, note.
+- Members get **Since your last visit** at the top of My tasks (events about them since this device last opened the project), highlighted task cards, and a count in the tab title.
+- The PM marks a task **behind** with one tap on the board, with an optional note for the owner (tasks.behind_note, PM only).
+- **Chat updates**: rather than a message per change, the PM posts one summary after a session on the board ("Update the group"): approved, sent back, behind, back on schedule, new tasks, changed hands, due in the next 7 days, final deadline. The board shows how many tasks changed since the last update. The summary is editable before sending. It posts through a webhook stored in project_keys.chat_webhook (Teams Workflows, Discord or Slack; never readable by members or AIs) via `POST /api/gh/chat/<project>` (superuser only), or the PM copies it. project_keys.last_summary_at marks where the next summary starts.
 
 ### Claiming a name (pb_hooks/claim.pb.js)
 - `GET /api/gh/join/<project>` with header `X-Group-Key`: the non-PM members, which are taken, PM names, and whether the link is locked.

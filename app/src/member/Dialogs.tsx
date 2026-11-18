@@ -53,7 +53,7 @@ export function TaskDetail(props: {
         <span class="muted small">{peopleText(snap, t)}</span>
       </div>
 
-      {(blockerTasks.length > 0 || blockerMembers.length > 0) && (
+      {(blockerTasks.length > 0 || blockerMembers.length > 0 || !!t.blocked_reason) && (
         <section class="stack-sm">
           <h3 class="eyebrow">Blocked by</h3>
           {blockerTasks.map((b) => (
@@ -63,6 +63,7 @@ export function TaskDetail(props: {
             </div>
           ))}
           {blockerMembers.map((n) => <div key={n} class="blocked-box"><BlockedIcon /><span>Waiting on {n}</span></div>)}
+          {t.blocked_reason && <div class="blocked-box"><BlockedIcon /><span>{t.blocked_reason}</span></div>}
         </section>
       )}
 
@@ -109,21 +110,22 @@ export function BlockedDialog(props: { snap: Snapshot; me: Member; taskId: strin
   const t = props.snap.tasks.find((x) => x.id === props.taskId)
   const [tasks, setTasks] = useState<string[]>(t?.blocked_by_tasks ?? [])
   const [members, setMembers] = useState<string[]>(t?.blocked_by_members ?? [])
+  const [reason, setReason] = useState(t?.blocked_reason ?? '')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   if (!t) return null
 
-  const changed = tasks.join() !== t.blocked_by_tasks.join() || members.join() !== t.blocked_by_members.join()
+  const changed = tasks.join() !== t.blocked_by_tasks.join() || members.join() !== t.blocked_by_members.join() || reason.trim() !== t.blocked_reason
 
   async function save(e: Event) {
     e.preventDefault()
     setBusy(true)
     setError(null)
     try {
-      if (changed) await setBlockers(t!.id, tasks, members)
+      if (changed) await setBlockers(t!.id, tasks, members, reason.trim())
       if (note.trim()) await addNote(t!.id, props.me.id, note.trim())
-      toast(tasks.length || members.length ? 'Blocker saved. The PM can see it.' : 'Blockers cleared')
+      toast(tasks.length || members.length || reason.trim() ? 'Blocker saved. The PM can see it.' : 'Blockers cleared')
       props.onChanged()
       props.onClose()
     } catch (err) {
@@ -150,7 +152,7 @@ export function BlockedDialog(props: { snap: Snapshot; me: Member; taskId: strin
         <p class="soft small" style={{ margin: 0 }}>
           What is <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{t.title}</strong> waiting on? The PM sees it on the board, and it clears by itself once the other task is done.
         </p>
-        <BlockerPicker snap={props.snap} task={t} tasks={tasks} members={members} onChange={(a, b) => { setTasks(a); setMembers(b) }} />
+        <BlockerPicker snap={props.snap} task={t} tasks={tasks} members={members} reason={reason} onChange={(a, b, c) => { setTasks(a); setMembers(b); setReason(c) }} />
         <Field label="Anything to add? (optional)" help="Posted as a note on the task.">
           {(id) => <textarea id={id} class="textarea" rows={2} maxLength={5000} value={note} onInput={(e) => setNote(e.currentTarget.value)} />}
         </Field>

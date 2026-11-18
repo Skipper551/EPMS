@@ -6,6 +6,7 @@
 
 import { createRequire } from 'node:module'
 import PocketBase from 'pocketbase'
+import http from 'node:http'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -26,6 +27,13 @@ const check = (name, ok, detail = '') => {
   if (!ok) failures++
 }
 
+// ---------- a stand-in for the Teams webhook ----------
+
+const posted = []
+const receiver = http.createServer((req, res) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => { posted.push(b); res.writeHead(202); res.end() }) })
+await new Promise((r) => receiver.listen(0, '127.0.0.1', r))
+const webhook = `http://127.0.0.1:${receiver.address().port}/teams`
+
 // ---------- seed a fresh project ----------
 
 const pb = new PocketBase(PB)
@@ -34,7 +42,7 @@ await pb.collection('_superusers').authWithPassword(EMAIL, PASSWORD)
 const day = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) + ' 12:00:00.000Z' }
 const name = `E2E ${Date.now()}`
 const project = await pb.collection('projects').create({ name, course: 'Testing', final_deadline: day(20), guidelines: 'Be kind.', chat_url: 'https://example.com/chat' })
-const keys = await pb.collection('project_keys').create({ project: project.id })
+const keys = await pb.collection('project_keys').create({ project: project.id, chat_webhook: webhook })
 const m = {}
 for (const [n, role, is_pm] of [['Pat', 'PM', true], ['Ala', 'Research', false], ['Jimmy', 'Writing', false]]) {
   m[n] = (await pb.collection('members').create({ project: project.id, name: n, role, is_pm })).id
@@ -69,6 +77,10 @@ check('member cannot post a note as someone else', (await api('notes/records', {
 check('member posts a note as themselves', (await api('notes/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: sources.id, author: m.Ala, text: 'Done, see doc.' }) })).status === 200)
 const asMember = await api(`members/records/${m.Ala}`, { method: 'PATCH', headers: asAla, body: '{"is_pm":true}' })
 check('member cannot set is_pm', asMember.status !== 200)
+check('member sets a custom blocker on their task', (await patch(sources.id, { blocked_reason: 'Library closed' })).status === 200)
+check('member cannot set a behind note', (await patch(sources.id, { behind_note: 'x' })).status !== 200)
+await patch(sources.id, { blocked_reason: '' })
+check('members can read events but not write them', (await api('events/records', { method: 'POST', headers: asAla, body: JSON.stringify({ project: project.id, kind: 'approved' }) })).status !== 200)
 check('personal keys cannot be listed', ((await (await api('member_keys/records', { headers: asAla })).json()).items ?? []).length === 0)
 
 // ---------- browser ----------
@@ -80,7 +92,8 @@ const watch = (page) => {
   page.on('console', (msg) => msg.type() === 'error' && errors.push(msg.text()))
 }
 
-// Member
+// Member (the context stays open for a second visit at the end)
+let memberPage
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, permissions: ['clipboard-read', 'clipboard-write'] })
   const page = await ctx.newPage()
@@ -139,7 +152,13 @@ const watch = (page) => {
   check('personal link signs in on a new device', (await p2.locator('header').innerText()).includes('Hello Jimmy'))
   await other.close()
   check('join requests send the group key, everything else the personal key', allKeyed)
-  await ctx.close()
+  const interview = page.locator('article', { hasText: 'Interview users' })
+  await interview.locator('button:has-text("I\'m blocked")').click()
+  await page.getByLabel('Something else').fill('Waiting for interview slots')
+  await page.click('role=dialog >> button:has-text("Save")')
+  await page.waitForTimeout(400)
+  check('custom blocker shows on the task', (await interview.locator('.blocked-box').innerText()).includes('Waiting for interview slots'))
+  memberPage = page
 }
 
 // PM
@@ -164,6 +183,33 @@ const watch = (page) => {
   await page.click('button:has-text("Send back to Doing")')
   await page.waitForTimeout(500)
   check('send back returns to Doing', (await page.locator('section[aria-label="Doing"] >> text=Draft the conclusion').count()) === 1)
+
+  check('custom blocker shows on the board', (await page.locator('article', { hasText: 'Interview users' }).innerText()).includes('Blocked: Waiting for interview slots'))
+
+  // One-tap Behind, then one chat update for the whole session
+  await page.locator('article', { hasText: 'Write the intro' }).locator('button:has-text("Mark behind")').click()
+  await page.fill('role=dialog >> input', 'Need this by Thursday')
+  await page.click('role=dialog >> button:has-text("Mark behind")')
+  await page.waitForTimeout(600)
+  check('Behind tag and note on the card', (await page.locator('article', { hasText: 'Write the intro' }).innerText()).includes('Behind: Need this by Thursday'))
+  await page.reload()
+  await page.waitForSelector('text=since the last chat update')
+  check('board reminds the PM to update the group', true)
+  await page.click('button:has-text("Update the group")')
+  const draft = await page.locator('#update-text').inputValue()
+  check('summary lists approved, sent back and behind', draft.includes('Approved\n- Find sources') && draft.includes('Sent back for changes\n- Draft the conclusion') && draft.includes('Write the intro (Jimmy): Need this by Thursday'), draft)
+  await page.click('button:has-text("Post to chat")')
+  await page.waitForSelector('role=dialog', { state: 'detached' })
+  check('one update posted to the chat as a Teams card', posted.length === 1 && posted[0].includes('AdaptiveCard') && posted[0].includes('Behind schedule'))
+  await page.waitForTimeout(400)
+  check('reminder clears after posting', (await page.locator('text=since the last chat update').count()) === 0)
+
+  // The member's second visit shows what changed while they were away.
+  await memberPage.reload()
+  await memberPage.waitForSelector('text=Since your last visit')
+  const since = await memberPage.locator('section[aria-label="Since your last visit"]').innerText()
+  check('member sees behind with the note since their last visit', since.includes('marked Write the intro behind schedule: "Need this by Thursday"'), since)
+  check('tab title counts the updates', /^\(\d+\) /.test(await memberPage.title()))
 
   // Reset and lock
   await page.click('header >> text=Project settings')
@@ -199,6 +245,7 @@ const watch = (page) => {
 }
 
 await browser.close()
+receiver.close()
 check('no console errors', errors.length === 0, errors.join(' | '))
 
 await pb.collection('projects').delete(project.id)

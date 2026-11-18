@@ -78,6 +78,8 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
           due_date: row.task.due,
           status: row.task.status,
           behind: false,
+          behind_note: '',
+          blocked_reason: row.task.blockedReason,
           blocked_by_tasks: row.blockers.flatMap((b) => (b.kind === 'board' ? [b.id] : [])),
           blocked_by_members: [...new Set(row.waitingOn.map(personId).filter(Boolean))],
           links: row.task.links,

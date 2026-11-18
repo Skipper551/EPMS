@@ -15,13 +15,14 @@ function blockerSentence(snap: Snapshot, t: Task): string {
   return activeBlockers(t, snap)
     .map((b) => {
       if (b.kind === 'member') return `Waiting on ${b.label}`
+      if (b.kind === 'custom') return `Waiting: ${b.label}`
       const owner = b.task?.owner ? memberName(snap, b.task.owner) : ''
       return `Waiting on ${owner ? `${owner}: ` : ''}${b.label} (${STATUS_LABEL[b.task!.status].toLowerCase()})`
     })
     .join('. ')
 }
 
-export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean }) {
+export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean; highlight: Set<string>; updates: preact.ComponentChildren }) {
   const { snap, me, actions } = props
   const [showDone, setShowDone] = useState(false)
   const mine = snap.tasks.filter((t) => involvement(t, me.id)).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
@@ -41,11 +42,13 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
         <span class="muted small">{summary}</span>
       </div>
 
+      {props.updates}
+
       {open.length === 0 && (
         <div class="empty">{mine.length ? 'All your tasks are done. Nice work.' : 'No tasks for you yet. Your PM will add them here.'}</div>
       )}
 
-      {open.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} />)}
+      {open.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} fresh={props.highlight.has(t.id)} />)}
 
       <div class="hint-box">
         <SparkIcon />
@@ -60,14 +63,14 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
           <button type="button" class="btn-text" style={{ alignSelf: 'flex-start', color: 'var(--muted)' }} aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
             {showDone ? 'Hide' : 'Show'} {done.length} done {done.length === 1 ? 'task' : 'tasks'}
           </button>
-          {showDone && done.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={false} actions={actions} />)}
+          {showDone && done.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={false} actions={actions} fresh={props.highlight.has(t.id)} />)}
         </div>
       )}
     </section>
   )
 }
 
-function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean; actions: TaskActions }) {
+function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean; actions: TaskActions; fresh: boolean }) {
   const { snap, task: t, actions } = props
   const notes = snap.notes.filter((n) => n.task === t.id)
   const fromOthers = notes.filter((n) => n.author !== props.me.id)
@@ -96,7 +99,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
     t.status === 'doing' ? 'Send to review' : null
 
   return (
-    <article class="card stack" style={{ opacity: t.status === 'done' ? 0.7 : 1 }}>
+    <article class="card stack" style={{ opacity: t.status === 'done' ? 0.7 : 1, borderColor: props.fresh ? 'var(--accent)' : undefined }}>
       <div class="row-between" style={{ alignItems: 'flex-start' }}>
         <div class="stack-sm grow" style={{ gap: '4px' }}>
           <h2 style={{ fontSize: '17px', fontWeight: 600 }}>
@@ -105,10 +108,15 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
           <span class={overdue ? 'small warn-text' : 'muted small'}>{meta}{overdue ? ' · overdue' : ''}</span>
         </div>
         <div class="row" style={{ gap: '8px' }}>
+          {props.fresh && <span class="group-tag">Updated</span>}
           {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
           <StatusPill status={t.status} />
         </div>
       </div>
+
+      {t.behind && t.status !== 'done' && t.behind_note && (
+        <div class="blocked-box"><span>Behind schedule: {t.behind_note}</span></div>
+      )}
 
       {blocked && (
         <div class="blocked-box"><BlockedIcon /><span>{blocked}</span></div>
