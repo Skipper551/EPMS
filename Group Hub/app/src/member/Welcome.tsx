@@ -3,7 +3,7 @@
 import { useState } from 'preact/hooks'
 import { aiLink } from '../data/store'
 import type { Snapshot } from '../data/types'
-import { aiPrompt, copyText, joinNames, pms, type AiKind } from '../lib/util'
+import { aiPrompt, copyText, joinNames, pms } from '../lib/util'
 import { ErrorBox, toast } from '../ui/ui'
 
 export type WelcomeStep = 'name' | 'tour' | 'ai'
@@ -95,7 +95,7 @@ export function Tour(props: { snap: Snapshot; name: string; onBack: () => void; 
   const tour = [
     { title: 'My tasks is your home', body: 'Everything you need to do, in order. Start a task when you begin, send it to review when you finish.' },
     { title: 'Blockers tell you who you are waiting on', body: 'If someone else has to finish first, you will see it. If you are stuck, press "I\'m blocked" and the PM sees it.' },
-    { title: 'The PM approves', body: `${approvers} ${verb} done. Questions go through "Ask the PM", not the group chat.` },
+    { title: 'The PM approves', body: `${approvers} ${verb} done. For questions, use the group chat as usual.` },
   ]
   return (
     <WelcomeShell step="tour">
@@ -124,23 +124,14 @@ export function Tour(props: { snap: Snapshot; name: string; onBack: () => void; 
 
 /** The AI setup content, used on the first visit and again from the project menu. */
 export function AiSetupContent(props: { snap: Snapshot; name: string; aiKey: string }) {
-  const [ai, setAi] = useState<AiKind>('claude')
   const [copied, setCopied] = useState(false)
-  const app = ai === 'claude' ? 'Claude' : 'ChatGPT'
   const folder = props.snap.project.course || props.snap.project.name
   const prompt = props.aiKey ? aiPrompt(props.name, props.snap.project.name, aiLink(props.snap.project.id, props.aiKey)) : ''
 
   return (
     <>
-      <div class="row" style={{ gap: '8px' }} role="tablist" aria-label="Which AI do you use">
-        {(['claude', 'chatgpt'] as AiKind[]).map((id) => (
-          <button key={id} type="button" role="tab" class="chip" aria-selected={ai === id} onClick={() => { setAi(id); setCopied(false) }} style={{ padding: '7px 16px', fontSize: '14px' }}>
-            {id === 'claude' ? 'Claude' : 'ChatGPT'}
-          </button>
-        ))}
-      </div>
       <ol class="stack-sm small soft" style={{ margin: 0, paddingLeft: '20px' }}>
-        <li>In {app}, create a Project called "{folder}".</li>
+        <li>In Claude or ChatGPT, create a Project called "{folder}".</li>
         <li>Open its instructions and paste the text below.</li>
         <li>Ask about the group project in any chat inside that Project.</li>
       </ol>

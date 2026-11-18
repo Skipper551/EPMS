@@ -7,11 +7,11 @@
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
 import { PB_URL } from '../config'
 import type {
-  Member, MemberInput, Note, Project, ProjectInput, ProjectKeys, Question, Snapshot, Status, Task, TaskInput, TaskLink,
+  Member, MemberInput, Note, Project, ProjectInput, ProjectKeys, Snapshot, Status, Task, TaskInput, TaskLink,
 } from './types'
 
 const SNAPSHOT_EXPAND =
-  'members_via_project,tasks_via_project,questions_via_project,tasks_via_project.notes_via_task'
+  'members_via_project,tasks_via_project,tasks_via_project.notes_via_task'
 
 let pb: PocketBase | null = null
 let mode: 'pm' | 'member' | null = null
@@ -135,13 +135,6 @@ function toNote(r: RecordModel): Note {
   return { id: r.id, task: str(r.task), author: str(r.author), text: str(r.text), created: str(r.created) }
 }
 
-function toQuestion(r: RecordModel): Question {
-  return {
-    id: r.id, project: str(r.project), author: str(r.author), text: str(r.text), answer: str(r.answer),
-    created: str(r.created), updated: str(r.updated),
-  }
-}
-
 function toKeys(r: RecordModel): ProjectKeys {
   return { id: r.id, project: str(r.project), member_key: str(r.member_key), ai_key: str(r.ai_key) }
 }
@@ -163,7 +156,7 @@ export function aiLink(projectId: string, aiKey: string): string {
 
 // ---------- whole project ----------
 
-/** Load a project with its members, tasks, notes and questions in one request. */
+/** Load a project with its members, tasks and notes in one request. */
 export function loadSnapshot(projectId: string): Promise<Snapshot> {
   return run(async () => {
     const r = await client().collection('projects').getOne(projectId, { expand: SNAPSHOT_EXPAND })
@@ -176,7 +169,6 @@ export function loadSnapshot(projectId: string): Promise<Snapshot> {
       members: ((ex.members_via_project ?? []) as RecordModel[]).map(toMember).sort(byCreated),
       tasks: taskRecords.map(toTask).sort(byCreated),
       notes: notes.sort(byCreated),
-      questions: ((ex.questions_via_project ?? []) as RecordModel[]).map(toQuestion).sort(byCreated),
     }
   })
 }
@@ -324,20 +316,4 @@ export function setBlockers(id: string, blockedByTasks: string[], blockedByMembe
 
 export function addNote(taskId: string, authorId: string, text: string): Promise<Note> {
   return run(async () => toNote(await client().collection('notes').create({ task: taskId, author: authorId || '', text })))
-}
-
-// ---------- questions ----------
-
-export function askQuestion(projectId: string, authorId: string, text: string): Promise<Question> {
-  return run(async () => toQuestion(await client().collection('questions').create({ project: projectId, author: authorId, text })))
-}
-
-export function answerQuestion(id: string, answer: string): Promise<Question> {
-  return run(async () => toQuestion(await client().collection('questions').update(id, { answer })))
-}
-
-export function deleteQuestion(id: string): Promise<void> {
-  return run(async () => {
-    await client().collection('questions').delete(id)
-  })
 }

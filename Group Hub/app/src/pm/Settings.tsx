@@ -313,7 +313,7 @@ function DeleteProject(props: { snap: Snapshot; onDeleted: () => void }) {
     <section class="panel" style={{ borderColor: 'var(--warn-border)' }}>
       <div class="stack-sm">
         <h2 class="eyebrow">Delete project</h2>
-        <span class="muted small">Removes the project with all its members, tasks, notes and questions. This can't be undone.</span>
+        <span class="muted small">Removes the project with all its members, tasks and notes. This can't be undone.</span>
       </div>
       <form class="row" style={{ alignItems: 'flex-end' }} onSubmit={async (e) => { e.preventDefault(); if (await s.run(() => deleteProject(props.snap.project.id), 'Project deleted')) props.onDeleted() }}>
         <div class="grow" style={{ minWidth: '220px' }}>

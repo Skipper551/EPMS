@@ -4,7 +4,7 @@ import type { Snapshot, Status, Task } from '../data/types'
 import { readMemberFragment, type MemberLinkParts } from '../lib/util'
 import { useSnapshot } from '../lib/useSnapshot'
 import { ChevronIcon, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
-import { AiAgainDialog, AskPmDialog, BlockedDialog, TaskDetail } from './Dialogs'
+import { AiAgainDialog, BlockedDialog, TaskDetail } from './Dialogs'
 import { forgetProject, loadChoice, rememberedProjects, rememberProject, saveChoice, type Choice } from './memory'
 import { MyTasks, Sidebar, type TaskActions } from './MyTasks'
 import { AiSetup, AiSetupContent, PickName, Tour, type WelcomeStep } from './Welcome'
@@ -74,7 +74,6 @@ function Project(props: { link: MemberLinkParts }) {
   const [busy, setBusy] = useState<Set<string>>(new Set())
   const [detail, setDetail] = useState<{ id: string; focusNote: boolean } | null>(null)
   const [blocked, setBlocked] = useState<string | null>(null)
-  const [askOpen, setAskOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
 
   const setChoice = (c: Choice | null) => { saveChoice(projectId, c); setChoiceState(c) }
@@ -162,10 +161,7 @@ function Project(props: { link: MemberLinkParts }) {
             onAi={() => setAiOpen(true)}
           />
         </div>
-        <div class="row" style={{ gap: '12px' }}>
-          <span class="muted small">You're <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
-          <button type="button" class="btn" onClick={() => setAskOpen(true)}>Ask the PM</button>
-        </div>
+        <span class="muted small">Hello <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
       </header>
 
       <main style={{ width: '100%', maxWidth: '1240px', margin: '0 auto', padding: '40px var(--gutter)', display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
@@ -181,7 +177,6 @@ function Project(props: { link: MemberLinkParts }) {
         />
       )}
       {blocked && <BlockedDialog snap={snap} me={me} taskId={blocked} onClose={() => setBlocked(null)} onChanged={reload} />}
-      {askOpen && <AskPmDialog snap={snap} me={me} onClose={() => setAskOpen(false)} onChanged={reload} />}
       {aiOpen && (
         <AiAgainDialog onClose={() => setAiOpen(false)}>
           <p class="muted" style={{ margin: 0 }}>Paste this once and your AI will always know the project. Then ask it things like "what should I do next?"</p>

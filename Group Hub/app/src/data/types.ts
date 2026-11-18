@@ -70,24 +70,12 @@ export interface Note {
   created: string
 }
 
-export interface Question {
-  id: string
-  project: string
-  /** member id or '' */
-  author: string
-  text: string
-  answer: string
-  created: string
-  updated: string
-}
-
 /** Everything in one project, loaded in a single request. */
 export interface Snapshot {
   project: Project
   members: Member[]
   tasks: Task[]
   notes: Note[]
-  questions: Question[]
 }
 
 export interface ProjectInput {

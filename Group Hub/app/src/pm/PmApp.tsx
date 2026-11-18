@@ -5,7 +5,7 @@ import { copyText, load, memberLink, save } from '../lib/util'
 import { useSnapshot } from '../lib/useSnapshot'
 import { ChevronIcon, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { Board, type BoardActions } from './Board'
-import { QuestionsDialog, SendBackDialog } from './Dialogs'
+import { SendBackDialog } from './Dialogs'
 import { Login } from './Login'
 import { NewProjectDialog, NewProjectForm } from './NewProject'
 import { ImportTasksDialog } from './ImportTasks'
@@ -40,7 +40,6 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [keys, setKeys] = useState<ProjectKeys | null>(null)
   const [editing, setEditing] = useState<{ id: string | null } | null>(null)
   const [sendBack, setSendBack] = useState<string | null>(null)
-  const [questionsOpen, setQuestionsOpen] = useState(false)
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [busy, setBusy] = useState<Set<string>>(new Set())
@@ -167,7 +166,6 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     )
   }
 
-  const openQuestions = snap ? snap.questions.filter((q) => !q.answer.trim()).length : 0
   const current = projects.find((p) => p.id === projectId)
 
   return (
@@ -186,9 +184,6 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
           <span class="tag-pm">PM</span>
         </div>
         <div class="header-actions">
-          <button type="button" class="btn" onClick={() => setQuestionsOpen(true)} disabled={!snap}>
-            Questions {openQuestions > 0 && <span class="badge">{openQuestions}</span>}
-          </button>
           {view === 'board'
             ? <button type="button" class="btn" onClick={() => setView('settings')} disabled={!snap}>Project settings</button>
             : <button type="button" class="btn" onClick={() => setView('board')}>Back to board</button>}
@@ -227,7 +222,6 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       {snap && editing && <TaskEditor snap={snap} taskId={editing.id} pmAuthorId={author} onClose={() => setEditing(null)} onSaved={reload} />}
       {snap && sendBack && <SendBackDialog snap={snap} taskId={sendBack} pmAuthorId={author} onClose={() => setSendBack(null)} onDone={reload} />}
       {snap && importOpen && <ImportTasksDialog snap={snap} pmAuthorId={author} onClose={() => setImportOpen(false)} onDone={reload} />}
-      {snap && questionsOpen && <QuestionsDialog snap={snap} onClose={() => setQuestionsOpen(false)} onChanged={reload} />}
       {newProjectOpen && (
         <NewProjectDialog
           onClose={() => setNewProjectOpen(false)}

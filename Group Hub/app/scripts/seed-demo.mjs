@@ -45,9 +45,7 @@ await task('Draft the conclusion', 'Jimmy', 16, 'todo')
 await task('Rehearse the presentation', 'Malcolm', 22, 'todo')
 
 await pb.collection('notes').create({ task: t['Format the references list'], author: m.Ala, text: 'I added the DOIs for my five sources at the bottom of the doc.' })
-await pb.collection('questions').create({ project: project.id, author: m.Kuba, text: 'Should the survey be in English or Polish?' })
-await pb.collection('questions').create({ project: project.id, author: m.Ola, text: 'Can I use the university slide template?' })
 
 console.log('Project:', project.id)
 console.log('Member link:', `${appBase}#p=${project.id}&key=${keys.member_key}`)
-console.log('AI link:', `${url}/api/collections/projects/records/${project.id}?ai_key=${keys.ai_key}&expand=members_via_project,tasks_via_project,questions_via_project,tasks_via_project.notes_via_task`)
+console.log('AI link:', `${url}/api/collections/projects/records/${project.id}?ai_key=${keys.ai_key}&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task`)

@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { addNote, askQuestion, setBlockers, type StoreError } from '../data/store'
+import { addNote, setBlockers, type StoreError } from '../data/store'
 import type { Member, Snapshot, Task } from '../data/types'
 import { formatDay, memberName, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
@@ -156,54 +156,6 @@ export function BlockedDialog(props: { snap: Snapshot; me: Member; taskId: strin
         </Field>
         <ErrorBox error={error} />
       </form>
-    </Dialog>
-  )
-}
-
-export function AskPmDialog(props: { snap: Snapshot; me: Member; onClose: () => void; onChanged: () => void }) {
-  const [text, setText] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const mine = props.snap.questions.filter((q) => q.author === props.me.id).reverse()
-
-  async function send(e: Event) {
-    e.preventDefault()
-    setBusy(true)
-    setError(null)
-    try {
-      await askQuestion(props.snap.project.id, props.me.id, text.trim())
-      setText('')
-      toast('Question sent to the PM')
-      props.onChanged()
-    } catch (err) {
-      setError((err as StoreError).message)
-    }
-    setBusy(false)
-  }
-
-  return (
-    <Dialog title="Ask the PM" onClose={props.onClose} wide>
-      <form class="stack" onSubmit={send}>
-        <Field label="Your question" help="The PM answers here. Answers show up the next time you open this.">
-          {(id) => <textarea id={id} class="textarea" rows={3} maxLength={5000} required value={text} onInput={(e) => setText(e.currentTarget.value)} data-autofocus />}
-        </Field>
-        <ErrorBox error={error} />
-        <div><button type="submit" class="btn btn-primary btn-md" disabled={busy || !text.trim()}>{busy ? 'Sending…' : 'Send question'}</button></div>
-      </form>
-      {mine.length > 0 && (
-        <section class="stack">
-          <h3 class="eyebrow">Your questions</h3>
-          {mine.map((q) => (
-            <article key={q.id} class="card card-tight stack-sm">
-              <span class="note-meta">You · {when(q.created)}</span>
-              <span class="pre-wrap">{q.text}</span>
-              {q.answer.trim()
-                ? <div class="note" style={{ marginTop: '6px' }}><span class="note-meta">Answer</span><span class="pre-wrap">{q.answer}</span></div>
-                : <span class="muted xsmall">Not answered yet</span>}
-            </article>
-          ))}
-        </section>
-      )}
     </Dialog>
   )
 }
