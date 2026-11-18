@@ -275,6 +275,9 @@ function ProjectMenu(props: {
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onNew)}>New project</button>
           <div class="menu-sep" />
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onSettings)}>Project settings</button>
+          <a role="menuitem" class="menu-item" href="./group-hub-task-plan.zip" download onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
+            Download the Claude skill
+          </a>
           <div class="menu-sep" />
           <span class="menu-label" style={{ overflowWrap: 'anywhere' }}>Logged in as {pmEmail()}</span>
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onLogout)}>Log out</button>
