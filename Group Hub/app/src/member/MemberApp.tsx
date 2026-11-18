@@ -161,7 +161,10 @@ function Project(props: { link: MemberLinkParts }) {
             onAi={() => setAiOpen(true)}
           />
         </div>
-        <span class="muted small">Hello <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
+        <div class="row" style={{ gap: '12px' }}>
+          <span class="muted small">Hello <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
+          {snap.project.chat_url && <a class="btn" href={snap.project.chat_url} target="_blank" rel="noopener noreferrer">Open group chat</a>}
+        </div>
       </header>
 
       <main style={{ width: '100%', maxWidth: '1240px', margin: '0 auto', padding: '40px var(--gutter)', display: 'flex', flexWrap: 'wrap', gap: '40px' }}>

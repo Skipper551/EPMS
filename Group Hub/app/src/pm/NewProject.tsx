@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { createMember, createProject, deleteProject, type StoreError } from '../data/store'
 import type { Project } from '../data/types'
 import { Dialog, ErrorBox, Field } from '../ui/ui'
+import { normaliseUrl } from '../lib/util'
 
 /** "Ala, Research" or "Ala - Research" per line → { name, role } */
 function parseMembers(text: string): { name: string; role: string }[] {
@@ -20,6 +21,7 @@ export function NewProjectForm(props: { onCreated: (p: Project) => void; onCance
   const [name, setName] = useState('')
   const [course, setCourse] = useState('')
   const [deadline, setDeadline] = useState('')
+  const [chat, setChat] = useState('')
   const [pmName, setPmName] = useState('')
   const [members, setMembers] = useState('')
   const [busy, setBusy] = useState(false)
@@ -31,7 +33,7 @@ export function NewProjectForm(props: { onCreated: (p: Project) => void; onCance
     setError(null)
     let project: Project | null = null
     try {
-      project = await createProject({ name: name.trim(), course: course.trim(), final_deadline: deadline, guidelines: '' })
+      project = await createProject({ name: name.trim(), course: course.trim(), final_deadline: deadline, guidelines: '', chat_url: normaliseUrl(chat) })
       await createMember(project.id, { name: pmName.trim(), role: 'PM', is_pm: true })
       for (const m of parseMembers(members)) await createMember(project.id, { ...m, is_pm: false })
       props.onCreated(project)
@@ -55,6 +57,9 @@ export function NewProjectForm(props: { onCreated: (p: Project) => void; onCance
         </Field>
         <Field label="Final deadline">
           {(id) => <input id={id} class="input" type="date" value={deadline} onInput={(e) => setDeadline(e.currentTarget.value)} />}
+        </Field>
+        <Field label="Group chat link (optional)" class="span-2" help="Teams, WhatsApp, Discord or any other chat. Members get an Open group chat button.">
+          {(id) => <input id={id} class="input" type="text" inputMode="url" placeholder="https://…" maxLength={2000} value={chat} onInput={(e) => setChat(e.currentTarget.value)} />}
         </Field>
         <Field label="Your name" class="span-2" help="You appear in the group as the PM. You can own tasks, but you never show up in the member name picker.">
           {(id) => <input id={id} class="input" required maxLength={100} value={pmName} onInput={(e) => setPmName(e.currentTarget.value)} />}

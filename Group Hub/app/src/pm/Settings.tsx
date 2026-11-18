@@ -3,7 +3,7 @@ import {
   aiLink, createMember, deleteMember, deleteProject, regenerateKey, updateMember, updateProject, type StoreError,
 } from '../data/store'
 import type { Member, ProjectKeys, Snapshot } from '../data/types'
-import { copyText, memberLink } from '../lib/util'
+import { copyText, memberLink, normaliseUrl } from '../lib/util'
 import { Avatar, ErrorBox, Field, toast } from '../ui/ui'
 
 export function Settings(props: {
@@ -55,9 +55,10 @@ function Details(props: { snap: Snapshot; onChanged: () => void }) {
   const [name, setName] = useState(p.name)
   const [course, setCourse] = useState(p.course)
   const [deadline, setDeadline] = useState(p.final_deadline)
+  const [chat, setChat] = useState(p.chat_url)
   const s = useSaver()
-  useEffect(() => { setName(p.name); setCourse(p.course); setDeadline(p.final_deadline) }, [p.id])
-  const dirty = name !== p.name || course !== p.course || deadline !== p.final_deadline
+  useEffect(() => { setName(p.name); setCourse(p.course); setDeadline(p.final_deadline); setChat(p.chat_url) }, [p.id])
+  const dirty = name !== p.name || course !== p.course || deadline !== p.final_deadline || chat !== p.chat_url
 
   return (
     <section class="panel">
@@ -66,13 +67,16 @@ function Details(props: { snap: Snapshot; onChanged: () => void }) {
         class="stack-lg"
         onSubmit={async (e) => {
           e.preventDefault()
-          if (await s.run(() => updateProject(p.id, { name: name.trim(), course: course.trim(), final_deadline: deadline }), 'Details saved')) props.onChanged()
+          if (await s.run(() => updateProject(p.id, { name: name.trim(), course: course.trim(), final_deadline: deadline, chat_url: normaliseUrl(chat) }), 'Details saved')) props.onChanged()
         }}
       >
         <div class="form-grid">
           <Field label="Project name" class="span-2">{(id) => <input id={id} class="input" required maxLength={200} value={name} onInput={(e) => setName(e.currentTarget.value)} />}</Field>
           <Field label="Course">{(id) => <input id={id} class="input" maxLength={200} value={course} onInput={(e) => setCourse(e.currentTarget.value)} />}</Field>
           <Field label="Final deadline">{(id) => <input id={id} class="input" type="date" value={deadline} onInput={(e) => setDeadline(e.currentTarget.value)} />}</Field>
+          <Field label="Group chat link (optional)" class="span-2" help="Teams, WhatsApp, Discord or any other chat. Members get an Open group chat button.">
+            {(id) => <input id={id} class="input" type="text" inputMode="url" placeholder="https://…" maxLength={2000} value={chat} onInput={(e) => setChat(e.currentTarget.value)} />}
+          </Field>
         </div>
         <ErrorBox error={s.error} />
         <div><button type="submit" class="btn btn-primary btn-md" disabled={s.busy || !dirty || !name.trim()}>Save details</button></div>

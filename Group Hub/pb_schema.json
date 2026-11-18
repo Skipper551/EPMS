@@ -41,6 +41,12 @@
         "max": 20000
       },
       {
+        "name": "chat_url",
+        "type": "url",
+        "exceptDomains": [],
+        "onlyDomains": []
+      },
+      {
         "name": "created",
         "type": "autodate",
         "onCreate": true,

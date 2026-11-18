@@ -19,6 +19,8 @@ export interface Project {
   /** YYYY-MM-DD or '' */
   final_deadline: string
   guidelines: string
+  /** Optional link to the group's chat (Teams, WhatsApp, Discord…), or '' */
+  chat_url: string
   created: string
   updated: string
 }
@@ -87,6 +89,7 @@ export interface ProjectInput {
   course: string
   final_deadline: string
   guidelines: string
+  chat_url?: string
 }
 
 export interface MemberInput {

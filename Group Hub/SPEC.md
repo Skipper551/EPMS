@@ -65,7 +65,7 @@ Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Managemen
 - **AIs**: each project has a separate long random `ai_key`, used in a read-only URL. AIs can't send headers, so this key goes in the query string.
 
 ### Collections
-- **projects**: name, course, final_deadline, guidelines (text).
+- **projects**: name, course, final_deadline, guidelines (text), chat_url (optional link to the group chat, shown to members as Open group chat).
 - **project_keys**: project (unique relation), member_key, ai_key. No public rules at all, so the keys can never be read through the API; other collections' rules check against it with `@collection.project_keys`. (Keys live here because PocketBase v0.41 rejects hidden fields in rules.)
 - **members**: project (relation), name, role (text), is_pm (bool). PMs can own tasks but never appear in the member name picker.
 - **tasks**: project (relation), title, owner (relation to members; the lead, accountable for the task), helpers (multi relation to members; they see the task and can start it or send it to review), everyone (bool; whole-group task shown on every member's page), due_date, status (select: todo, doing, review, done), behind (bool, PM only), blocked_by_tasks (multi relation to tasks), blocked_by_members (multi relation to members), links (JSON list of {label, url}).

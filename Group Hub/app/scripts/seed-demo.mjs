@@ -18,6 +18,7 @@ const project = await pb.collection('projects').create({
   name: 'Innovation Management · Group 2',
   course: 'Innovation Management',
   final_deadline: day(24),
+  chat_url: 'https://teams.microsoft.com/',
   guidelines: 'APA 7 for all references. Keep your section under 600 words. Send things to review by Thursday evening so I can merge on Friday.',
 })
 const keys = await pb.collection('project_keys').create({ project: project.id })

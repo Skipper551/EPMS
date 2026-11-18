@@ -2,15 +2,9 @@ import { useState } from 'preact/hooks'
 import { addNote, createTask, deleteTask, updateTask, type StoreError } from '../data/store'
 import type { Snapshot, Status, TaskInput, TaskLink } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
-import { memberName, when } from '../lib/util'
+import { memberName, normaliseUrl, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
 import { CloseIcon, Dialog, ErrorBox, Field, Toggle, toast } from '../ui/ui'
-
-function normaliseUrl(u: string): string {
-  const v = u.trim()
-  if (!v) return ''
-  return /^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`
-}
 
 export function TaskEditor(props: {
   snap: Snapshot

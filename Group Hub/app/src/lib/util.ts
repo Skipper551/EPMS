@@ -148,6 +148,13 @@ export function waitingOn(snap: Snapshot, opts: { taskIds?: string[]; memberId?:
 
 // ---------- links ----------
 
+/** Adds https:// to an address typed without it; '' stays ''. */
+export function normaliseUrl(u: string): string {
+  const v = u.trim()
+  if (!v) return ''
+  return /^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`
+}
+
 /** Member link: the project id, member key and AI key ride in the fragment, so they never reach a server or its logs.
  *  The AI key is there so the member's AI setup prompt can include the read-only AI link
  *  (members can't read project_keys themselves). */

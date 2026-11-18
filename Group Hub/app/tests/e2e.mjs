@@ -33,7 +33,7 @@ pb.autoCancellation(false)
 await pb.collection('_superusers').authWithPassword(EMAIL, PASSWORD)
 const day = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) + ' 12:00:00.000Z' }
 const name = `E2E ${Date.now()}`
-const project = await pb.collection('projects').create({ name, course: 'Testing', final_deadline: day(20), guidelines: 'Be kind.' })
+const project = await pb.collection('projects').create({ name, course: 'Testing', final_deadline: day(20), guidelines: 'Be kind.', chat_url: 'https://example.com/chat' })
 const keys = await pb.collection('project_keys').create({ project: project.id })
 const m = {}
 for (const [n, role, is_pm] of [['Pat', 'PM', true], ['Ala', 'Research', false], ['Jimmy', 'Writing', false]]) {
@@ -87,6 +87,7 @@ const watch = (page) => {
   check('AI prompt has the real AI link', prompt.includes(`records/${project.id}?ai_key=${keys.ai_key}`))
   await page.click('text=Go to my tasks')
   await page.waitForSelector('h1:text-is("My tasks")')
+  check('group chat button links to the chat', (await page.locator('header a:has-text("Open group chat")').getAttribute('href')) === 'https://example.com/chat')
   check('blocked task shows its blocker', (await page.locator('article', { hasText: 'Write the intro' }).locator('.blocked-box').count()) === 1)
   const card = page.locator('article', { hasText: 'Draft the conclusion' })
   await card.locator('button:has-text("Start")').click()

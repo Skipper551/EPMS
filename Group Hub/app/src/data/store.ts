@@ -106,7 +106,7 @@ const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typ
 function toProject(r: RecordModel): Project {
   return {
     id: r.id, name: str(r.name), course: str(r.course), final_deadline: dateOnly(r.final_deadline),
-    guidelines: str(r.guidelines), created: str(r.created), updated: str(r.updated),
+    guidelines: str(r.guidelines), chat_url: str(r.chat_url), created: str(r.created), updated: str(r.updated),
   }
 }
 
