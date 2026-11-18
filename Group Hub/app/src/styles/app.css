@@ -307,3 +307,11 @@ h1, h2, h3 { margin: 0; }
   .overlay { padding: 16px 8px; }
   .hint-box { padding: 14px 16px; }
 }
+
+.toggle-accent[aria-checked='true'] { border-color: var(--accent); color: var(--accent-soft); background: var(--accent-bg); }
+.toggle-accent[aria-checked='true'] .knob { background: var(--accent); }
+
+.avatars { display: inline-flex; align-items: center; }
+.avatars .avatar { box-shadow: 0 0 0 2px var(--surface); }
+.avatars .avatar + .avatar { margin-left: -6px; }
+.group-tag { flex: none; background: var(--accent-bg); color: var(--accent-soft); border-radius: 6px; padding: 1px 7px; font-size: 12px; font-weight: 600; }

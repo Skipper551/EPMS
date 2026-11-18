@@ -52,7 +52,7 @@ Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Managemen
 
 - **Project**: name, course, final deadline, guidelines (PM-written text), members, tasks, created date.
 - **Member**: name, role in the group (free text), PM flag (a project can have more than one PM).
-- **Task**: title, owner, due date, status, behind schedule (flag set by PM), blocked by (tasks and/or members), files or links, notes.
+- **Task**: title, lead (owner), helpers, whole-group flag, due date, status, behind schedule (flag set by PM), blocked by (tasks and/or members), files or links, notes.
 - **Status**: To do, Doing, Review, Done.
 - **Note**: author, text, timestamp.
 - **Blocker**: on a task; points at another task or a member; added by PM or the task's owner; cleared when the other task is Done or when removed.
@@ -68,14 +68,14 @@ Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Managemen
 - **projects**: name, course, final_deadline, guidelines (text).
 - **project_keys**: project (unique relation), member_key, ai_key. No public rules at all, so the keys can never be read through the API; other collections' rules check against it with `@collection.project_keys`. (Keys live here because PocketBase v0.41 rejects hidden fields in rules.)
 - **members**: project (relation), name, role (text), is_pm (bool). PMs can own tasks but never appear in the member name picker.
-- **tasks**: project (relation), title, owner (relation to members), due_date, status (select: todo, doing, review, done), behind (bool, PM only), blocked_by_tasks (multi relation to tasks), blocked_by_members (multi relation to members), links (JSON list of {label, url}).
+- **tasks**: project (relation), title, owner (relation to members; the lead, accountable for the task), helpers (multi relation to members; they see the task and can start it or send it to review), everyone (bool; whole-group task shown on every member's page), due_date, status (select: todo, doing, review, done), behind (bool, PM only), blocked_by_tasks (multi relation to tasks), blocked_by_members (multi relation to members), links (JSON list of {label, url}).
 - **notes**: task (relation), author (relation to members), text.
 
 Every record also gets PocketBase's automatic id, created and updated timestamps.
 
 ### Access rules (members and AIs; PM bypasses as superuser)
 - **Read anything in a project** (projects, members, tasks, notes): allowed when that project's row in project_keys has a member_key matching `@request.headers.x_member_key`, or an ai_key matching `@request.query.ai_key`.
-- **tasks, update**: member key matches, AND the only fields sent are status, blocked_by_tasks and blocked_by_members, AND the new status is doing or review (never done). Title, owner, dates, behind and links stay PM-only.
+- **tasks, update**: member key matches, AND the only fields sent are status, blocked_by_tasks and blocked_by_members, AND the new status is doing or review (never done). Title, owner, helpers, everyone, dates, behind and links stay PM-only.
 - **notes, create**: member key matches through the task's project.
 - **Everything else** (creating, deleting or editing projects, members, tasks): superuser only, i.e. no public rule.
 

@@ -42,6 +42,8 @@ for (const [n, role, is_pm] of [['Pat', 'PM', true], ['Ala', 'Research', false],
 const sources = await pb.collection('tasks').create({ project: project.id, title: 'Find sources', owner: m.Ala, due_date: day(2), status: 'review' })
 await pb.collection('tasks').create({ project: project.id, title: 'Write the intro', owner: m.Jimmy, due_date: day(5), status: 'todo', blocked_by_tasks: [sources.id] })
 await pb.collection('tasks').create({ project: project.id, title: 'Draft the conclusion', owner: m.Jimmy, due_date: day(8), status: 'todo' })
+const pair = await pb.collection('tasks').create({ project: project.id, title: 'Interview users', owner: m.Ala, helpers: [m.Jimmy], due_date: day(6), status: 'todo' })
+await pb.collection('tasks').create({ project: project.id, title: 'Rehearse', owner: m.Pat, everyone: true, due_date: day(15), status: 'todo' })
 const memberLink = `${APP}#p=${project.id}&key=${keys.member_key}&ai=${keys.ai_key}`
 
 // ---------- access rules ----------
@@ -52,6 +54,8 @@ check('missing key gets 404', (await api(`projects/records/${project.id}`)).stat
 const patch = (id, body) => api(`tasks/records/${id}`, { method: 'PATCH', headers: { 'X-Member-Key': keys.member_key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 check('member cannot mark Done', (await patch(sources.id, { status: 'done' })).status !== 200)
 check('member cannot rename a task', (await patch(sources.id, { title: 'x' })).status !== 200)
+check('member cannot change helpers', (await patch(pair.id, { helpers: [] })).status !== 200)
+check('member cannot set everyone', (await patch(pair.id, { everyone: true })).status !== 200)
 const asMember = await api(`members/records/${m.Ala}`, { method: 'PATCH', headers: { 'X-Member-Key': keys.member_key, 'Content-Type': 'application/json' }, body: '{"is_pm":true}' })
 check('member cannot set is_pm', asMember.status !== 200)
 
@@ -89,6 +93,10 @@ const watch = (page) => {
   await card.locator('button:has-text("Send to review")').click()
   await page.waitForTimeout(400)
   check('member moves a task to Review', (await card.locator('.pill').innerText()) === 'Review')
+  const helping = page.locator('article', { hasText: 'Interview users' })
+  check('helper sees the task and can start it', (await helping.innerText()).includes('Helping Ala') && (await helping.locator('button:has-text("Start")').count()) === 1)
+  const group = page.locator('article', { hasText: 'Rehearse' })
+  check('whole-group task shows, only the lead moves it', (await group.innerText()).includes('Whole group, led by Pat') && (await group.locator('button:has-text("Start")').count()) === 0)
   await page.reload()
   await page.waitForSelector('h1:text-is("My tasks")')
   check('name remembered after reload', true)

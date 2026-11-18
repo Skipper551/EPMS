@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import type { Snapshot, Status, Task } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
-import { activeBlockers, daysLeftText, dueKey, formatDay, memberName, today } from '../lib/util'
+import { activeBlockers, daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
 import { Avatar } from '../ui/ui'
 
 export interface BoardActions {
@@ -31,9 +31,9 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
   const review = snap.tasks.filter((t) => t.status === 'review')
   const behind = snap.tasks.filter((t) => t.behind && t.status !== 'done')
   const who = (t: Task) => memberName(snap, t.owner) || 'Nobody'
-  const hasUnassigned = snap.tasks.some((t) => !t.owner)
+  const hasUnassigned = snap.tasks.some((t) => !t.owner && !t.helpers.length && !t.everyone)
 
-  const visible = snap.tasks.filter((t) => !filter || (filter === UNASSIGNED ? !t.owner : t.owner === filter))
+  const visible = snap.tasks.filter((t) => !filter || (filter === UNASSIGNED ? !t.owner && !t.helpers.length && !t.everyone : !!involvement(t, filter)))
 
   const filters: { id: string | null; label: string }[] = [
     { id: null, label: 'Everyone' },
@@ -135,7 +135,8 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
 function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; busy: boolean; dragging: boolean; onDrag: (on: boolean) => void }) {
   const { snap, task: t, actions } = props
   const blockers = t.status === 'done' ? [] : activeBlockers(t, snap)
-  const owner = memberName(snap, t.owner)
+  const people = t.everyone ? (t.owner ? `Led by ${memberName(snap, t.owner)}` : 'Whole group') : peopleText(snap, t)
+  const faces = [t.owner, ...(t.everyone ? [] : t.helpers)].filter(Boolean).slice(0, 4)
   const overdue = t.status !== 'done' && t.due_date && t.due_date < today()
   const cls = ['tcard', t.behind && t.status !== 'done' && 'is-behind', t.status === 'done' && 'is-done', props.dragging && 'dragging'].filter(Boolean).join(' ')
 
@@ -153,12 +154,15 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
       <button type="button" class="tcard-open" onClick={() => actions.open(t.id)} aria-label={`Edit task: ${t.title}`}>
         <div class="tcard-title-row">
           <h3>{t.title}</h3>
-          {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
+          <span class="row" style={{ gap: '6px', flexWrap: 'nowrap' }}>
+            {t.everyone && <span class="group-tag">Everyone</span>}
+            {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
+          </span>
         </div>
         <div class="tcard-meta">
           <span class="tcard-owner">
-            {t.owner ? <Avatar snap={snap} memberId={t.owner} /> : null}
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner || 'Nobody yet'}</span>
+            {faces.length > 0 && <span class="avatars">{faces.map((id) => <Avatar key={id} snap={snap} memberId={id} />)}</span>}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={people}>{people}</span>
           </span>
           {t.due_date && <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>{formatDay(t.due_date)}</span>}
         </div>

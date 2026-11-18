@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import { addNote, setBlockers, type StoreError } from '../data/store'
 import type { Member, Snapshot, Task } from '../data/types'
-import { formatDay, memberName, when } from '../lib/util'
+import { canMove, formatDay, memberName, peopleText, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
 import { BlockedIcon, Dialog, ErrorBox, Field, StatusPill, toast } from '../ui/ui'
 
@@ -25,7 +25,7 @@ export function TaskDetail(props: {
   const notes = snap.notes.filter((n) => n.task === t.id)
   const blockerTasks = t.blocked_by_tasks.map((id) => snap.tasks.find((x) => x.id === id)).filter((x): x is Task => !!x)
   const blockerMembers = t.blocked_by_members.map((id) => memberName(snap, id)).filter(Boolean)
-  const mine = t.owner === props.me.id
+  const mine = canMove(t, props.me.id)
   const primary = mine ? (t.status === 'todo' ? 'Start' : t.status === 'doing' ? 'Send to review' : null) : null
 
   async function post(e: Event) {
@@ -50,7 +50,7 @@ export function TaskDetail(props: {
         <StatusPill status={t.status} />
         {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
         <span class="muted small">{t.due_date ? `Due ${formatDay(t.due_date)}` : 'No due date'}</span>
-        <span class="muted small">Owner: {memberName(snap, t.owner) || 'nobody yet'}</span>
+        <span class="muted small">{peopleText(snap, t)}</span>
       </div>
 
       {(blockerTasks.length > 0 || blockerMembers.length > 0) && (

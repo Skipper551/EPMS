@@ -169,7 +169,7 @@
     "listRule": "(@collection.project_keys:k.project ?= project && @collection.project_keys:k.member_key ?= @request.headers.x_member_key) || (@collection.project_keys:k.project ?= project && @collection.project_keys:k.ai_key ?= @request.query.ai_key)",
     "viewRule": "(@collection.project_keys:k.project ?= project && @collection.project_keys:k.member_key ?= @request.headers.x_member_key) || (@collection.project_keys:k.project ?= project && @collection.project_keys:k.ai_key ?= @request.query.ai_key)",
     "createRule": null,
-    "updateRule": "(@collection.project_keys:k.project ?= project && @collection.project_keys:k.member_key ?= @request.headers.x_member_key) && @request.body.project:isset = false && @request.body.title:isset = false && @request.body.owner:isset = false && @request.body.due_date:isset = false && @request.body.behind:isset = false && @request.body.links:isset = false && (@request.body.status:isset = false || @request.body.status = 'doing' || @request.body.status = 'review')",
+    "updateRule": "(@collection.project_keys:k.project ?= project && @collection.project_keys:k.member_key ?= @request.headers.x_member_key) && @request.body.project:isset = false && @request.body.title:isset = false && @request.body.owner:isset = false && @request.body.due_date:isset = false && @request.body.behind:isset = false && @request.body.links:isset = false && @request.body.helpers:isset = false && @request.body.everyone:isset = false && (@request.body.status:isset = false || @request.body.status = 'doing' || @request.body.status = 'review')",
     "deleteRule": null,
     "fields": [
       {
@@ -203,6 +203,17 @@
         "collectionId": "pbc_ghmembers",
         "maxSelect": 1,
         "cascadeDelete": false
+      },
+      {
+        "name": "helpers",
+        "type": "relation",
+        "collectionId": "pbc_ghmembers",
+        "maxSelect": 10,
+        "cascadeDelete": false
+      },
+      {
+        "name": "everyone",
+        "type": "bool"
       },
       {
         "name": "due_date",

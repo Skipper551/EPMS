@@ -38,11 +38,11 @@ await task('Find 5 sources', 'Ala', 2, 'review')
 await task('Survey questions', 'Kuba', 3, 'review')
 await task('Competitor research', 'Ola', 2, 'doing', { behind: true })
 await task('Format the references list', 'Jimmy', 8, 'doing', { links: [{ label: 'References.docx', url: 'https://example.com/references' }] })
-await task('Interview two users', 'Ala', 9, 'doing')
+await task('Interview two users', 'Ala', 9, 'doing', { helpers: [m.Kuba] })
 await task('Write the introduction', 'Jimmy', 12, 'todo', { blocked_by_tasks: [t['Find 5 sources']], links: [{ label: 'Report draft', url: 'https://example.com/draft' }] })
 await task('Build the slides', 'Ola', 19, 'todo', { blocked_by_tasks: [t['Write the introduction']] })
 await task('Draft the conclusion', 'Jimmy', 16, 'todo')
-await task('Rehearse the presentation', 'Malcolm', 22, 'todo')
+await task('Rehearse the presentation', 'Malcolm', 22, 'todo', { everyone: true })
 
 await pb.collection('notes').create({ task: t['Format the references list'], author: m.Ala, text: 'I added the DOIs for my five sources at the bottom of the doc.' })
 

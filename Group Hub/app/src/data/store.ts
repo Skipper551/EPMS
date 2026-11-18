@@ -125,7 +125,8 @@ function toLinks(v: unknown): TaskLink[] {
 function toTask(r: RecordModel): Task {
   const status = (['todo', 'doing', 'review', 'done'] as Status[]).includes(r.status) ? (r.status as Status) : 'todo'
   return {
-    id: r.id, project: str(r.project), title: str(r.title), owner: str(r.owner), due_date: dateOnly(r.due_date),
+    id: r.id, project: str(r.project), title: str(r.title), owner: str(r.owner), helpers: ids(r.helpers), everyone: !!r.everyone,
+    due_date: dateOnly(r.due_date),
     status, behind: !!r.behind, blocked_by_tasks: ids(r.blocked_by_tasks), blocked_by_members: ids(r.blocked_by_members),
     links: toLinks(r.links), created: str(r.created), updated: str(r.updated),
   }

@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import type { Member, Snapshot, Task } from '../data/types'
 import { STATUS_LABEL } from '../data/types'
-import { activeBlockers, dueKey, formatDay, memberName, today, waitingOn } from '../lib/util'
+import { activeBlockers, canMove, dueKey, formatDay, involvement, joinNames, memberName, today, waitingOn } from '../lib/util'
 import { BlockedIcon, SparkIcon, StatusPill } from '../ui/ui'
 
 export interface TaskActions {
@@ -24,7 +24,7 @@ function blockerSentence(snap: Snapshot, t: Task): string {
 export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean }) {
   const { snap, me, actions } = props
   const [showDone, setShowDone] = useState(false)
-  const mine = snap.tasks.filter((t) => t.owner === me.id).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
+  const mine = snap.tasks.filter((t) => involvement(t, me.id)).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
   const open = mine.filter((t) => t.status !== 'done')
   const done = mine.filter((t) => t.status === 'done')
   const nextDue = open.find((t) => t.due_date && t.status !== 'review')
@@ -76,13 +76,22 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
   const blocked = t.status !== 'done' ? blockerSentence(snap, t) : ''
   const overdue = t.status !== 'done' && t.status !== 'review' && t.due_date && t.due_date < today()
 
+  const role = involvement(t, props.me.id)
+  const lead = memberName(snap, t.owner)
+  const others = t.helpers.filter((id) => id !== props.me.id).map((id) => memberName(snap, id)).filter(Boolean)
+  const withText =
+    t.everyone ? (lead && role !== 'lead' ? `Whole group, led by ${lead}` : 'Whole group') :
+    role === 'helper' ? `Helping ${[lead, ...others].filter(Boolean).length ? joinNames([lead, ...others].filter(Boolean)) : 'out'}` :
+    others.length ? `With ${joinNames(others)}` : ''
+  const movable = canMove(t, props.me.id)
   const meta = [
+    withText,
     t.due_date ? `Due ${formatDay(t.due_date)}` : 'No due date',
     fromOthers.length === 1 && `1 note from ${memberName(snap, fromOthers[0].author) || 'the PM'}`,
     fromOthers.length > 1 && `${fromOthers.length} notes`,
   ].filter(Boolean).join(' · ')
 
-  const primary =
+  const primary = !movable ? null :
     t.status === 'todo' ? 'Start' :
     t.status === 'doing' ? 'Send to review' : null
 
@@ -120,8 +129,9 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
             </button>
           )}
           {t.status === 'review' && <span class="muted small">Waiting for the PM to approve</span>}
+          {!movable && t.status !== 'review' && <span class="muted small">{lead ? `${lead} moves this one` : 'The PM moves this one'}</span>}
           <button type="button" class="btn btn-soft btn-md" onClick={() => actions.openDetail(t, true)}>Add a note</button>
-          {t.status !== 'review' && <button type="button" class="btn btn-soft btn-md" onClick={() => actions.blocked(t)}>I'm blocked</button>}
+          {movable && t.status !== 'review' && <button type="button" class="btn btn-soft btn-md" onClick={() => actions.blocked(t)}>I'm blocked</button>}
           {t.links.length > 0 && (
             <span class="row" style={{ marginLeft: 'auto', gap: '14px' }}>
               {t.links.slice(0, 2).map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" class="small">{l.label}</a>)}
@@ -138,20 +148,20 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
 
 export function Sidebar(props: { snap: Snapshot; me: Member }) {
   const { snap, me } = props
-  const mineIds = snap.tasks.filter((t) => t.owner === me.id && t.status !== 'done').map((t) => t.id)
-  const waiting = waitingOn(snap, { taskIds: mineIds, memberId: me.id }).filter((t) => t.owner !== me.id)
+  const mineIds = snap.tasks.filter((t) => canMove(t, me.id) && t.status !== 'done').map((t) => t.id)
+  const waiting = waitingOn(snap, { taskIds: mineIds, memberId: me.id }).filter((t) => !canMove(t, me.id))
   const total = snap.tasks.length
   const done = snap.tasks.filter((t) => t.status === 'done').length
   const pct = total ? Math.round((done / total) * 100) : 0
   const people = snap.members
     .map((m) => {
-      const tasks = snap.tasks.filter((t) => t.owner === m.id)
+      const tasks = snap.tasks.filter((t) => canMove(t, m.id))
       return { m, total: tasks.length, done: tasks.filter((t) => t.status === 'done').length }
     })
     .filter((p) => p.total > 0)
 
   const why = (t: Task) => {
-    const mine = t.blocked_by_tasks.map((id) => snap.tasks.find((x) => x.id === id)).filter((x): x is Task => !!x && x.owner === me.id && x.status !== 'done')
+    const mine = t.blocked_by_tasks.map((id) => snap.tasks.find((x) => x.id === id)).filter((x): x is Task => !!x && canMove(x, me.id) && x.status !== 'done')
     if (mine.length) return `Needs ${mine.map((x) => x.title).join(' and ')} first`
     return 'Waiting on you'
   }

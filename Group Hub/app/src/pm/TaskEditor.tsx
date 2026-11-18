@@ -24,11 +24,11 @@ export function TaskEditor(props: {
   const [form, setForm] = useState<TaskInput>(() =>
     existing
       ? {
-          title: existing.title, owner: existing.owner, due_date: existing.due_date, status: existing.status, behind: existing.behind,
+          title: existing.title, owner: existing.owner, helpers: existing.helpers, everyone: existing.everyone, due_date: existing.due_date, status: existing.status, behind: existing.behind,
           blocked_by_tasks: existing.blocked_by_tasks, blocked_by_members: existing.blocked_by_members,
           links: existing.links.length ? existing.links : [],
         }
-      : { title: '', owner: '', due_date: '', status: 'todo', behind: false, blocked_by_tasks: [], blocked_by_members: [], links: [] },
+      : { title: '', owner: '', helpers: [], everyone: false, due_date: '', status: 'todo', behind: false, blocked_by_tasks: [], blocked_by_members: [], links: [] },
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,7 +48,7 @@ export function TaskEditor(props: {
       .map((l) => ({ label: l.label.trim(), url: normaliseUrl(l.url) }))
       .filter((l) => l.url)
       .map((l) => ({ label: l.label || l.url.replace(/^https?:\/\//, '').slice(0, 60), url: l.url }))
-    const body: TaskInput = { ...form, title: form.title.trim(), links }
+    const body: TaskInput = { ...form, title: form.title.trim(), links, helpers: form.everyone ? [] : form.helpers.filter((id) => id !== form.owner) }
     try {
       if (existing) await updateTask(existing.id, body)
       else await createTask(snap.project.id, body)
@@ -121,9 +121,9 @@ export function TaskEditor(props: {
         </Field>
 
         <div class="form-grid">
-          <Field label="Owner">
+          <Field label="Lead" help="The one person accountable. They start it and send it to review.">
             {(id) => (
-              <select id={id} class="select" value={form.owner} onChange={(e) => set('owner', e.currentTarget.value)}>
+              <select id={id} class="select" value={form.owner} onChange={(e) => { const v = e.currentTarget.value; setForm((f) => ({ ...f, owner: v, helpers: f.helpers.filter((h) => h !== v) })) }}>
                 <option value="">Nobody yet</option>
                 {snap.members.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}{m.is_pm ? ' (PM)' : ''}</option>
@@ -146,6 +146,28 @@ export function TaskEditor(props: {
             <Toggle checked={form.behind} onChange={(v) => set('behind', v)} label={form.behind ? 'Behind schedule' : 'On schedule'} />
           </div>
         </div>
+
+        <fieldset class="stack" style={{ border: 0, margin: 0, padding: 0 }}>
+          <legend class="eyebrow" style={{ marginBottom: '10px' }}>Working with</legend>
+          <div class="row">
+            <Toggle checked={form.everyone} onChange={(v) => set('everyone', v)} label="Whole group" accent />
+            <span class="muted xsmall">{form.everyone ? 'Shows on every member\'s page, including people added later.' : 'For things like rehearsals or reading the final draft.'}</span>
+          </div>
+          {!form.everyone && (
+            <div class="stack-sm">
+              <span class="field-label" id="helpers-label">Helpers</span>
+              <div class="row" style={{ gap: '8px' }} role="group" aria-labelledby="helpers-label">
+                {snap.members.filter((m) => m.id !== form.owner).map((m) => (
+                  <button key={m.id} type="button" class="chip" aria-pressed={form.helpers.includes(m.id)}
+                    onClick={() => set('helpers', form.helpers.includes(m.id) ? form.helpers.filter((h) => h !== m.id) : [...form.helpers, m.id])}>
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+              <span class="field-help">Helpers see the task on their page and can start it or send it to review too.</span>
+            </div>
+          )}
+        </fieldset>
 
         <fieldset class="stack" style={{ border: 0, margin: 0, padding: 0 }}>
           <legend class="eyebrow" style={{ marginBottom: '10px' }}>Blocked by</legend>

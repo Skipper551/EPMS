@@ -39,6 +39,27 @@
       "blocked_by": [
         "find-sources"
       ]
+    },
+    {
+      "id": "interviews",
+      "title": "Interview two users",
+      "owner": "Ala",
+      "helpers": [
+        "Kuba"
+      ],
+      "due": "2026-11-27",
+      "description": "Ala leads and takes notes, Kuba asks the questions. Done when both interview notes are in the shared folder."
+    },
+    {
+      "id": "rehearse",
+      "title": "Rehearse the presentation",
+      "owner": "Malcolm",
+      "everyone": true,
+      "due": "2026-12-10",
+      "description": "Full run-through with slides, timed. Everyone presents their own part.",
+      "blocked_by": [
+        "write-intro"
+      ]
     }
   ]
 }

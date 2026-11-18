@@ -83,6 +83,34 @@ export function joinNames(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 }
 
+// ---------- who works on a task ----------
+
+export type Involvement = 'lead' | 'helper' | 'everyone' | null
+
+/** How a member is involved in a task: lead (owner), helper, or only as part of a whole-group task. */
+export function involvement(task: Task, memberId: string): Involvement {
+  if (!memberId) return null
+  if (task.owner === memberId) return 'lead'
+  if (task.helpers.includes(memberId)) return 'helper'
+  if (task.everyone) return 'everyone'
+  return null
+}
+
+/** Lead and helpers can start a task and send it to review; the rest of the group can't. */
+export const canMove = (task: Task, memberId: string) => {
+  const i = involvement(task, memberId)
+  return i === 'lead' || i === 'helper'
+}
+
+/** "Ala", "Ala with Ola", "Ala with Ola and Kuba", "Everyone, led by Malcolm" */
+export function peopleText(snap: Snapshot, task: Task): string {
+  const lead = memberName(snap, task.owner)
+  if (task.everyone) return lead ? `Everyone, led by ${lead}` : 'Everyone'
+  const helpers = task.helpers.map((id) => memberName(snap, id)).filter(Boolean)
+  if (!lead) return helpers.length ? joinNames(helpers) : 'Nobody yet'
+  return helpers.length ? `${lead} with ${joinNames(helpers)}` : lead
+}
+
 // ---------- blockers ----------
 
 export interface ActiveBlocker {

@@ -22,7 +22,9 @@ Group Hub is a free project management app for student group projects run with t
 ## Planning guidance
 
 - 3 to 7 members is typical. Give every member tasks; the PM usually takes coordination, merging and final checks.
-- Split work into tasks a person can finish in a few days. A task should have one owner.
+- Split work into tasks a person can finish in a few days. Every task has one lead (`owner`), the person accountable for it.
+- Collaborative work: when two or three people genuinely have to do something together (an interview pair, co-writing a section), give it a lead and list the others in `helpers`. Prefer splitting into separate tasks when the work can be divided; shared tasks without one accountable person tend to stall.
+- Whole-group work (rehearsing the presentation, everyone reading the final draft, a group meeting): set `"everyone": true` with a lead, usually the PM, and no helpers.
 - Order work with blockers: a task that can't start until another is done lists it in `blocked_by`. Avoid long chains when tasks could run in parallel.
 - Due dates: leave a buffer before the final deadline for merging, proofreading and rehearsal. Put review-heavy tasks earlier.
 - Descriptions are read by the task owner as the first note on their task. Write them for that person: what to do, in a few concrete steps, and what "done" looks like. Respect the PM's guidelines (citation style, word limits, tone).
@@ -59,6 +61,23 @@ Group Hub is a free project management app for student group projects run with t
       "due": "2026-11-30",
       "description": "Using Ala's sources, write a 400 to 600 word introduction that sets out the research question.",
       "blocked_by": ["find-sources"]
+    },
+    {
+      "id": "interviews",
+      "title": "Interview two users",
+      "owner": "Ala",
+      "helpers": ["Kuba"],
+      "due": "2026-11-27",
+      "description": "Ala leads and takes notes, Kuba asks the questions. Done when both interview notes are in the shared folder."
+    },
+    {
+      "id": "rehearse",
+      "title": "Rehearse the presentation",
+      "owner": "Malcolm",
+      "everyone": true,
+      "due": "2026-12-10",
+      "description": "Full run-through with slides, timed. Everyone presents their own part.",
+      "blocked_by": ["write-intro"]
     }
   ]
 }
@@ -81,7 +100,9 @@ Each task:
 |---|---|---|
 | `id` | recommended | Short lowercase reference, unique within the file, like `find-sources`. Used by other tasks' `blocked_by`. |
 | `title` | yes | Max 300 characters; aim for under 80. |
-| `owner` | no | One member's name, spelled exactly as in Group Hub. Leave out if unassigned. |
+| `owner` | no | The lead: one member's name, spelled exactly as in Group Hub, accountable for the task. Leave out if unassigned. |
+| `helpers` | no | Other members working on the task with the lead. They see it on their page and can start it or send it to review. |
+| `everyone` | no | `true` for a whole-group task: it shows on every member's page. Give it a lead and no helpers. |
 | `due` | no | Date as `YYYY-MM-DD`. No times. |
 | `description` | no | Instructions for the owner (max 5,000 characters). Becomes the task's first note, posted by the PM. |
 | `blocked_by` | no | List of `id`s of tasks in this file, or exact titles of tasks already on the Group Hub board. |
@@ -101,7 +122,8 @@ Each task:
 - [ ] Valid JSON: double quotes, no trailing commas, no comments.
 - [ ] `"format": "group-hub-tasks"` and `"version": 1` at the top.
 - [ ] Every task has a `title`; every `id` is unique.
-- [ ] Every `owner` and `waiting_on` name is spelled exactly as the PM gave it.
+- [ ] Every `owner`, `helpers` and `waiting_on` name is spelled exactly as the PM gave it; the lead isn't also listed as a helper.
+- [ ] `everyone` tasks have a lead and no helpers.
 - [ ] Every `blocked_by` entry is an `id` in this file or an exact existing title; no task blocks itself; no cycles.
 - [ ] Every `due` is `YYYY-MM-DD` and on or before the final deadline.
 - [ ] No em dashes anywhere.

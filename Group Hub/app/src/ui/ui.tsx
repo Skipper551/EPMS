@@ -108,9 +108,9 @@ export function ErrorBox(props: { error: string | null }) {
   return props.error ? <div class="error-box" role="alert">{props.error}</div> : null
 }
 
-export function Toggle(props: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
+export function Toggle(props: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean; accent?: boolean }) {
   return (
-    <button type="button" role="switch" aria-checked={props.checked} class="toggle" disabled={props.disabled} onClick={() => props.onChange(!props.checked)}>
+    <button type="button" role="switch" aria-checked={props.checked} class={props.accent ? 'toggle toggle-accent' : 'toggle'} disabled={props.disabled} onClick={() => props.onChange(!props.checked)}>
       <span class="knob" aria-hidden="true" />
       {props.label}
     </button>

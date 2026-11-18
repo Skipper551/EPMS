@@ -13,6 +13,8 @@ export interface PlanTask {
   ref: string
   title: string
   owner: string
+  helpers: string[]
+  everyone: boolean
   due: string
   status: Status
   description: string
@@ -145,7 +147,9 @@ export function parsePlan(text: string): ParseResult {
     tasks.push({
       ref,
       title: title.slice(0, 300),
-      owner: s(r.owner ?? r.assignee ?? r.assigned_to),
+      owner: s(r.owner ?? r.lead ?? r.assignee ?? r.assigned_to),
+      helpers: list(r.helpers ?? r.with),
+      everyone: r.everyone === true || r.whole_group === true,
       due: toDate(r.due ?? r.due_date ?? r.deadline, where, warnings),
       status: status ?? 'todo',
       description,
@@ -174,6 +178,7 @@ export type BlockerMatch =
 export interface PreviewRow {
   task: PlanTask
   owner: OwnerMatch
+  helpers: OwnerMatch[]
   blockers: BlockerMatch[]
   waitingOn: OwnerMatch[]
   duplicate: boolean
@@ -227,6 +232,7 @@ export function previewPlan(plan: Plan, snap: Snapshot): Preview {
     return {
       task: t,
       owner: matchPerson(t.owner),
+      helpers: t.everyone ? [] : t.helpers.map(matchPerson),
       blockers,
       waitingOn: t.waitingOn.map(matchPerson),
       duplicate: boardByTitle.has(norm(t.title)),
@@ -270,6 +276,7 @@ Format: one JSON code block, nothing else in it.
       "id": "find-sources",
       "title": "Find 5 sources",
       "owner": "Ala",
+      "helpers": [],
       "due": "2026-11-20",
       "description": "What to do, step by step, and what done looks like.",
       "blocked_by": [],
@@ -282,7 +289,9 @@ Format: one JSON code block, nothing else in it.
 Rules:
 - "title" is required and short (under 80 characters), starting with a verb.
 - "id" is a short lowercase reference, unique in the file, used by other tasks' "blocked_by".
-- "owner" is one member's name exactly as listed above, or leave it out.
+- "owner" is the lead: one member's name exactly as listed above, accountable for the task. Leave it out if unassigned.
+- "helpers" lists other members working on it. Use only when the work can't sensibly be split into separate tasks.
+- "everyone": true makes it a whole-group task (rehearsals, reading the final draft); give it a lead, usually the PM, and no helpers.
 - "due" is YYYY-MM-DD, on or before the final deadline.
 - "description" is shown to the owner as the task's first note; write it for them.
 - "blocked_by" lists ids of tasks in this file, or exact titles of tasks already on the board.

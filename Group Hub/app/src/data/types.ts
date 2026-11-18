@@ -48,8 +48,12 @@ export interface Task {
   id: string
   project: string
   title: string
-  /** member id or '' */
+  /** Lead: the one member accountable for the task. Member id or '' */
   owner: string
+  /** Other members working on it */
+  helpers: string[]
+  /** Whole-group task: shows on every member's page */
+  everyone: boolean
   /** YYYY-MM-DD or '' */
   due_date: string
   status: Status
@@ -94,6 +98,8 @@ export interface MemberInput {
 export interface TaskInput {
   title: string
   owner: string
+  helpers: string[]
+  everyone: boolean
   due_date: string
   status: Status
   behind: boolean
