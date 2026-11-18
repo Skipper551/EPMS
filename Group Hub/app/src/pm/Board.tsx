@@ -1,0 +1,175 @@
+import { useState } from 'preact/hooks'
+import type { Snapshot, Status, Task } from '../data/types'
+import { STATUSES, STATUS_LABEL } from '../data/types'
+import { activeBlockers, daysLeftText, dueKey, formatDay, memberName, today } from '../lib/util'
+import { Avatar } from '../ui/ui'
+
+export interface BoardActions {
+  open: (taskId: string) => void
+  approve: (taskId: string) => void
+  sendBack: (taskId: string) => void
+  move: (taskId: string, status: Status) => void
+}
+
+const UNASSIGNED = '__nobody'
+
+export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; onImport: () => void }) {
+  const { snap, actions } = props
+  const [filter, setFilter] = useState<string | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dropCol, setDropCol] = useState<Status | null>(null)
+
+  const total = snap.tasks.length
+  const done = snap.tasks.filter((t) => t.status === 'done').length
+  const deadline = snap.project.final_deadline
+  const summary = [
+    `${done} of ${total} done`,
+    deadline && `final deadline ${formatDay(deadline)}`,
+    deadline && daysLeftText(deadline),
+  ].filter(Boolean).join(' · ')
+
+  const review = snap.tasks.filter((t) => t.status === 'review')
+  const behind = snap.tasks.filter((t) => t.behind && t.status !== 'done')
+  const who = (t: Task) => memberName(snap, t.owner) || 'Nobody'
+  const hasUnassigned = snap.tasks.some((t) => !t.owner)
+
+  const visible = snap.tasks.filter((t) => !filter || (filter === UNASSIGNED ? !t.owner : t.owner === filter))
+
+  const filters: { id: string | null; label: string }[] = [
+    { id: null, label: 'Everyone' },
+    ...snap.members.map((m) => ({ id: m.id, label: m.name })),
+    ...(hasUnassigned ? [{ id: UNASSIGNED, label: 'Nobody yet' }] : []),
+  ]
+
+  return (
+    <>
+      <div class="title-row">
+        <div class="title-block">
+          <h1 class="h1">Board</h1>
+          <span class="muted small">{total ? summary : 'No tasks yet.'}</span>
+        </div>
+        {snap.members.length > 0 && (
+          <div class="row" style={{ gap: '8px' }} role="group" aria-label="Filter by member">
+            {filters.map((f) => (
+              <button key={f.label} type="button" class="chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>{f.label}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {total === 0 && (
+        <div class="hint-box" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <span>Planned the tasks with Claude? Import the whole plan at once, or add tasks one by one with New task.</span>
+          <button type="button" class="btn btn-primary btn-md" onClick={props.onImport}>Import tasks</button>
+        </div>
+      )}
+
+      {(review.length > 0 || behind.length > 0) && (
+        <div class="banners">
+          {review.length > 0 && (
+            <div class="banner banner-accent">
+              <strong>{review.length === 1 ? '1 task waiting for your review' : `${review.length} tasks waiting for your review`}</strong>
+              <span class="banner-detail">{review.map((t) => `${who(t)} · ${t.title}`).join(', ')}</span>
+            </div>
+          )}
+          {behind.length > 0 && (
+            <div class="banner banner-warn">
+              <strong>{behind.length} behind schedule</strong>
+              <span class="banner-detail">{behind.map((t) => `${who(t)} · ${t.title}`).join(', ')}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div class="board-scroll">
+        <div class="board">
+          {STATUSES.map((status) => {
+            const cards = visible.filter((t) => t.status === status).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
+            return (
+              <section
+                key={status}
+                class={dropCol === status ? 'column drop' : 'column'}
+                aria-label={STATUS_LABEL[status]}
+                onDragOver={(e) => {
+                  if (!dragId) return
+                  e.preventDefault()
+                  if (dropCol !== status) setDropCol(status)
+                }}
+                onDragLeave={(e) => {
+                  if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setDropCol(null)
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const id = dragId
+                  setDragId(null)
+                  setDropCol(null)
+                  const t = id && snap.tasks.find((x) => x.id === id)
+                  if (t && t.status !== status) actions.move(t.id, status)
+                }}
+              >
+                <div class="column-head">
+                  <h2>{STATUS_LABEL[status]}</h2>
+                  <span class="muted xsmall">{cards.length}</span>
+                </div>
+                {cards.length === 0 && <div class="column-empty">{status === 'review' ? 'Nothing to review' : 'Empty'}</div>}
+                {cards.map((t) => (
+                  <TaskCard
+                    key={t.id}
+                    snap={snap}
+                    task={t}
+                    actions={actions}
+                    busy={props.busy.has(t.id)}
+                    dragging={dragId === t.id}
+                    onDrag={(on) => setDragId(on ? t.id : null)}
+                  />
+                ))}
+              </section>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; busy: boolean; dragging: boolean; onDrag: (on: boolean) => void }) {
+  const { snap, task: t, actions } = props
+  const blockers = t.status === 'done' ? [] : activeBlockers(t, snap)
+  const owner = memberName(snap, t.owner)
+  const overdue = t.status !== 'done' && t.due_date && t.due_date < today()
+  const cls = ['tcard', t.behind && t.status !== 'done' && 'is-behind', t.status === 'done' && 'is-done', props.dragging && 'dragging'].filter(Boolean).join(' ')
+
+  return (
+    <article
+      class={cls}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer?.setData('text/plain', t.id)
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+        props.onDrag(true)
+      }}
+      onDragEnd={() => props.onDrag(false)}
+    >
+      <button type="button" class="tcard-open" onClick={() => actions.open(t.id)} aria-label={`Edit task: ${t.title}`}>
+        <div class="tcard-title-row">
+          <h3>{t.title}</h3>
+          {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
+        </div>
+        <div class="tcard-meta">
+          <span class="tcard-owner">
+            {t.owner ? <Avatar snap={snap} memberId={t.owner} /> : null}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner || 'Nobody yet'}</span>
+          </span>
+          {t.due_date && <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>{formatDay(t.due_date)}</span>}
+        </div>
+        {blockers.length > 0 && <div class="tcard-blocked">Blocked by {blockers.map((b) => b.label).join(', ')}</div>}
+      </button>
+      {t.status === 'review' && (
+        <div class="tcard-review">
+          <button type="button" class="btn btn-primary btn-sm" disabled={props.busy} onClick={() => actions.approve(t.id)}>Approve</button>
+          <button type="button" class="btn btn-soft btn-sm" disabled={props.busy} onClick={() => actions.sendBack(t.id)}>Send back</button>
+        </div>
+      )}
+    </article>
+  )
+}
