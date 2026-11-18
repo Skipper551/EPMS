@@ -1,8 +1,8 @@
 {
-  "name": "group-hub",
+  "name": "epms",
   "private": true,
   "version": "0.1.0",
-  "description": "Group Hub: free, open-source project management for student group projects, built around the S.W.I.M.S. method.",
+  "description": "EPMS: free, open-source project management for student group projects, built around the Swim method.",
   "license": "MIT",
   "type": "module",
   "scripts": {

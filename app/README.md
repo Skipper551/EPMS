@@ -1,6 +1,6 @@
-# Group Hub frontend
+# EPMS frontend
 
-Static web app for Group Hub (see `../SPEC.md`). Vite + Preact + TypeScript, talking to one PocketBase instance with the PocketBase JS SDK. No server of its own, nothing that can bill.
+Static web app for EPMS (see `../SPEC.md`). Vite + Preact + TypeScript, talking to one PocketBase instance with the PocketBase JS SDK. No server of its own, nothing that can bill.
 
 - `index.html` is the member page, opened from the group link or a personal link.
 - `pm.html` is the project manager (PM) page, reached only by logging in as a superuser of the instance.
@@ -45,6 +45,10 @@ The instance address is baked in at build time. It defaults to the address in `s
 VITE_PB_URL=https://their-instance.example.com npm run build
 ```
 
+## Version
+
+The version at the bottom of every page comes from `version` in `package.json`. Bump it before each release, for example with `npm version patch` (0.1.0 to 0.1.1) or `npm version minor` (0.1.0 to 0.2.0).
+
 ## How it fits together
 
 - `src/data/store.ts` is the only file that talks to PocketBase. Replace it to swap the backend.
@@ -57,9 +61,9 @@ VITE_PB_URL=https://their-instance.example.com npm run build
 
 ## Importing tasks from Claude
 
-The PM board has **Import tasks**. Plan the tasks with Claude, then paste Claude's `group-hub-tasks` JSON (or upload the file). Group Hub shows a preview, matches owners by name, offers to add new members, skips tasks already on the board, links blockers, and adds each description as the task's first note.
+The PM board has **Import tasks**. Plan the tasks with Claude, then paste Claude's `epms-tasks` JSON (or upload the file). EPMS shows a preview, matches owners by name, offers to add new members, skips tasks already on the board, links blockers, and adds each description as the task's first note.
 
-The format and planning workflow live in the Claude skill at `../skills/group-hub-task-plan/SKILL.md`. After editing it, rebuild the downloadable zip:
+The format and planning workflow live in the Claude skill at `../skills/epms-task-plan/SKILL.md`. After editing it, rebuild the downloadable zip:
 
 ```bash
 npm run skill

@@ -24,7 +24,7 @@ export function Login(props: { onDone: () => void }) {
   return (
     <div class="app">
       <header class="header">
-        <span class="logo">Group Hub</span>
+        <span class="logo">EPMS</span>
         <span class="tag-pm">PM</span>
       </header>
       <main class="main-center">
@@ -57,7 +57,7 @@ export function Login(props: { onDone: () => void }) {
             <summary style={{ cursor: 'pointer', fontWeight: 500 }}>Setting up for the first time?</summary>
             <div class="stack small soft" style={{ marginTop: '12px' }}>
               <p style={{ margin: 0 }}>
-                Group Hub keeps each PM's projects in their own PocketBase instance. PocketBase is free, open source software.
+                EPMS keeps each PM's projects in their own PocketBase instance. PocketBase is free, open source software.
               </p>
               <p style={{ margin: 0 }}>
                 PocketBase Cloud's free plan asks for a card to start a free subscription through Stripe. The subscription costs 0 and the card is never charged. You get one instance with 50 MB of storage, which is plenty for many group projects.
@@ -65,7 +65,7 @@ export function Login(props: { onDone: () => void }) {
               <p style={{ margin: 0 }}>
                 The email and password you set for the instance's superuser are what you use here. If your group has more than one PM, each PM gets their own superuser account from the instance dashboard.
               </p>
-              <p class="muted xsmall" style={{ margin: 0, overflowWrap: 'anywhere' }}>This copy of Group Hub talks to {backendUrl}</p>
+              <p class="muted xsmall" style={{ margin: 0, overflowWrap: 'anywhere' }}>This copy of EPMS talks to {backendUrl}</p>
             </div>
           </details>
         </div>

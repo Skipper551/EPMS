@@ -1,14 +1,14 @@
-# Group Hub: spec (draft 1)
+# EPMS: spec (draft 1)
 
-Working title. Open source, openly vibe coded, free forever for students.
+EPMS: Educational Project Management Software (name work in progress, likely to stay for the foreseeable future). Previously called Group Hub. Open source, openly vibe coded, free forever for students.
 
 ## What it is
 
 A project management web app for university group projects of 3 to 7 people, run by one project manager (PM). It replaces Microsoft Loop tables with a clean interface: every member sees their own tasks and what they're waiting on, and the PM manages the board. Every member's AI (Claude or ChatGPT) can read the live project and the PM's guidelines, so members can ask their AI how to do their task and what's going on.
 
-## The S.W.I.M.S. method
+## The Swim method
 
-Group Hub is built around S.W.I.M.S., the Student Workgroup Integrated Management System (the Swim method). SWIMS is an ambigram: rotated 180 degrees it still reads SWIMS, which is the idea for its logo animation.
+EPMS is built around the Swim method: the Swim Education Project Management Method (name work in progress). It replaces the earlier name S.W.I.M.S. (Student Workgroup Integrated Management System), along with the SWIMS ambigram logo idea that went with it.
 
 - Every group has a PM.
 - The PM accepts that the extra work and effort of managing the project is the price of a good grade.
@@ -141,7 +141,7 @@ PocketBase JS hooks work on the free plan (instance Code tab in the PocketBase C
 - Do Claude and ChatGPT reliably read a link in standing instructions?
 - Do Kozminski students get ChatGPT Edu?
 - Teams link preview: does a static GitHub Pages link show a useful card?
-- Name.
+- Final names for the app (EPMS for now) and the method (the Swim method for now).
 
 ## Handoff notes for building
 

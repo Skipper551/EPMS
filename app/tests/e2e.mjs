@@ -181,7 +181,7 @@ const watch = (page) => {
   // Import
   await page.click('header >> text=Import tasks')
   await page.fill('#import-text', 'Here you go:\n```json\n' + JSON.stringify({
-    format: 'group-hub-tasks', version: 1,
+    format: 'epms-tasks', version: 1,
     tasks: [
       { id: 'a', title: 'Collect data', owner: 'ala', due: day(6).slice(0, 10), description: 'Steps here.' },
       { id: 'b', title: 'Make charts', owner: 'Newbie', blocked_by: ['a'] },

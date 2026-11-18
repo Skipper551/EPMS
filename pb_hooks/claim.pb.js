@@ -1,5 +1,5 @@
 /// <reference path="../pb_data/types.d.ts" />
-// Group Hub: claim your name once.
+// EPMS: claim your name once.
 //
 // The group link carries the project's group key (project_keys.member_key). It is only good for these two routes:
 //   GET  /api/gh/join/{project}   list the members, which names are taken, and whether joining is locked

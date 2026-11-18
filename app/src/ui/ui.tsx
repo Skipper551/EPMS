@@ -151,3 +151,8 @@ export const SparkIcon = () => (
 export function Loading(props: { text?: string }) {
   return <div class="loading">{props.text ?? 'Loading…'}</div>
 }
+
+/** Small line at the bottom of every page with the app version. */
+export function VersionFooter() {
+  return <footer class="version">EPMS v{__APP_VERSION__}</footer>
+}

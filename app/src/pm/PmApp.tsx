@@ -149,7 +149,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     return (
       <div class="app">
         <header class="header">
-          <div class="header-side"><span class="logo">Group Hub</span><span class="tag-pm">PM</span></div>
+          <div class="header-side"><span class="logo">EPMS</span><span class="tag-pm">PM</span></div>
           <button type="button" class="btn btn-soft" onClick={props.onLogout}>Log out</button>
         </header>
         <main class="main-center">
@@ -172,7 +172,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     <div class="app">
       <header class="header">
         <div class="header-side">
-          <span class="logo">Group Hub</span>
+          <span class="logo">EPMS</span>
           <ProjectMenu
             projects={projects}
             current={current ?? null}
@@ -275,7 +275,7 @@ function ProjectMenu(props: {
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onNew)}>New project</button>
           <div class="menu-sep" />
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onSettings)}>Project settings</button>
-          <a role="menuitem" class="menu-item" href="./group-hub-task-plan.zip" download onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
+          <a role="menuitem" class="menu-item" href="./epms-task-plan.zip" download onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
             Download the Claude skill
           </a>
           <div class="menu-sep" />

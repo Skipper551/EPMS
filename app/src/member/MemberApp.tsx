@@ -64,7 +64,7 @@ export function MemberApp() {
 function Shell(props: { children: preact.ComponentChildren }) {
   return (
     <div class="app">
-      <header class="header"><span class="logo">Group Hub</span></header>
+      <header class="header"><span class="logo">EPMS</span></header>
       <main class="main-center"><div class="center-col">{props.children}</div></main>
     </div>
   )
@@ -78,7 +78,7 @@ function NoLink() {
       <p class="muted" style={{ margin: 0 }}>
         {broken
           ? 'Part of the link is missing. Copy the whole link from the group chat and open it again.'
-          : "Group Hub opens from the link your PM posts in the group chat. Open that link on this device and you'll go straight to your project. After that, this page remembers it."}
+          : "EPMS opens from the link your PM posts in the group chat. Open that link on this device and you'll go straight to your project. After that, this page remembers it."}
       </p>
       <p class="muted small" style={{ margin: 0 }}>Are you the PM? <a href="./pm.html">Log in to your board</a></p>
     </Shell>
@@ -154,7 +154,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
 
   useEffect(() => {
     if (!snap) return
-    document.title = `${snap.project.name} · Group Hub`
+    document.title = `${snap.project.name} · EPMS`
     if (snap.project.name !== session.name) setSession(saveSession({ ...session, name: snap.project.name }))
   }, [snap?.project.name])
 
@@ -223,7 +223,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
     <div class="app">
       <header class="header">
         <div class="header-side">
-          <span class="logo">Group Hub</span>
+          <span class="logo">EPMS</span>
           <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} />
         </div>
         <div class="row" style={{ gap: '12px' }}>

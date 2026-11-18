@@ -7,5 +7,6 @@ import '@fontsource/space-grotesk/600.css'
 import '@fontsource/jetbrains-mono/400.css'
 import '../styles/app.css'
 import { MemberApp } from './MemberApp'
+import { VersionFooter } from '../ui/ui'
 
-render(<MemberApp />, document.getElementById('app')!)
+render(<><MemberApp /><VersionFooter /></>, document.getElementById('app')!)

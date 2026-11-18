@@ -7,6 +7,7 @@ import '@fontsource/space-grotesk/600.css'
 import '../styles/app.css'
 import { initPm } from '../data/store'
 import { PmApp } from './PmApp'
+import { VersionFooter } from '../ui/ui'
 
 initPm()
-render(<PmApp />, document.getElementById('app')!)
+render(<><PmApp /><VersionFooter /></>, document.getElementById('app')!)

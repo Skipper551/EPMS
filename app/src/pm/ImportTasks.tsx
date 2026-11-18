@@ -137,12 +137,12 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
         }
       >
         <p class="soft small" style={{ margin: 0 }}>
-          Plan the tasks with Claude, go back and forth until they're right, then ask for the Group Hub task file and paste it here. You'll see a preview before anything is created.
+          Plan the tasks with Claude, go back and forth until they're right, then ask for the EPMS task file and paste it here. You'll see a preview before anything is created.
         </p>
         <div class="card card-tight stack">
           <strong style={{ fontWeight: 600 }}>Tell Claude the format</strong>
           <span class="muted small">
-            Either install the Group Hub skill in Claude once, or paste the instructions into your chat. The instructions include this project's member names and deadline.
+            Either install the EPMS skill in Claude once, or paste the instructions into your chat. The instructions include this project's member names and deadline.
           </span>
           <div class="row">
             <button
@@ -152,14 +152,14 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
             >
               Copy instructions for Claude
             </button>
-            <a class="btn btn-soft btn-sm" href="./group-hub-task-plan.zip" download>Download the Claude skill</a>
+            <a class="btn btn-soft btn-sm" href="./epms-task-plan.zip" download>Download the Claude skill</a>
           </div>
           <span class="muted xsmall">To install the skill, upload the downloaded file under Skills in Claude's settings.</span>
         </div>
         <div class="field">
           <label class="field-label" for="import-text">Task file</label>
           <textarea id="import-text" class="textarea" rows={10} style={{ fontFamily: 'var(--mono)', fontSize: '12px' }} value={text}
-            onInput={(e) => setText(e.currentTarget.value)} placeholder='{ "format": "group-hub-tasks", "version": 1, "tasks": [ … ] }' data-autofocus />
+            onInput={(e) => setText(e.currentTarget.value)} placeholder='{ "format": "epms-tasks", "version": 1, "tasks": [ … ] }' data-autofocus />
         </div>
         <div class="row">
           <label class="btn btn-soft btn-sm" style={{ cursor: 'pointer' }}>

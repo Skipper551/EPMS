@@ -1,4 +1,4 @@
-// The PocketBase instance this copy of Group Hub talks to.
+// The PocketBase instance this copy of EPMS talks to.
 // Set VITE_PB_URL at build time (see .env.example) to point at a different instance.
 export const PB_URL: string = (import.meta.env.VITE_PB_URL as string | undefined)?.replace(/\/+$/, '') ||
   'https://j4sam3zmm0y2s0q.pwz5.pocketbasecloud.com'

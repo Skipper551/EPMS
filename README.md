@@ -1,6 +1,8 @@
-# Group Hub
+# EPMS
 
-Free, open-source project management for university group projects of 3 to 7 people. Built around the **S.W.I.M.S. method** (Student Workgroup Integrated Management System): every group has one project manager (PM) who runs the board, and everyone else just does their tasks.
+**Educational Project Management Software** (name work in progress, previously Group Hub).
+
+Free, open-source project management for university group projects of 3 to 7 people. Built around the **Swim method** (Swim Education Project Management Method, name work in progress): every group has one project manager (PM) who runs the board, and everyone else just does their tasks.
 
 It replaces shared tables in Loop or Excel with a calm, simple app: each member sees their own tasks and what they're waiting on, the PM manages the board, and every member's AI (Claude or ChatGPT) can read the live project and the PM's guidelines.
 
@@ -46,9 +48,10 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 | [`app/`](app) | The frontend (Vite, Preact, TypeScript). See [app/README.md](app/README.md) for development. |
 | [`pb_schema.json`](pb_schema.json) | The PocketBase collections and access rules, ready to import. |
 | [`pb_hooks/`](pb_hooks) | Server routes for PocketBase: claiming a name (`claim.pb.js`) and a Teams link preview test (`preview.pb.js`). |
-| [`skills/group-hub-task-plan/`](skills/group-hub-task-plan) | A Claude skill for planning tasks with Claude and exporting them in Group Hub's import format. |
+| [`skills/epms-task-plan/`](skills/epms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in EPMS's import format. |
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |
+| [`LICENSE`](LICENSE) | MIT licence. |
 
 ## Set up your own copy (PM)
 
@@ -66,7 +69,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 
 ## Planning tasks with Claude
 
-Install the skill (download it from the PM board's menu, or zip [`skills/group-hub-task-plan`](skills/group-hub-task-plan)) and plan the tasks with Claude. When the plan is ready, Claude exports a `group-hub-tasks` file; paste it into **Import tasks** on the board. Without the skill, use **Copy instructions for Claude** in the import dialog, which includes your project's members and deadline.
+Install the skill (download it from the PM board's menu, or zip [`skills/epms-task-plan`](skills/epms-task-plan)) and plan the tasks with Claude. When the plan is ready, Claude exports a `epms-tasks` file; paste it into **Import tasks** on the board. Without the skill, use **Copy instructions for Claude** in the import dialog, which includes your project's members and deadline.
 
 ## Development
 
@@ -75,3 +78,7 @@ See [app/README.md](app/README.md): a local PocketBase with the schema and demo 
 ## Status
 
 Early and openly vibe coded. Built and tested against a local PocketBase; first deployment on PocketBase Cloud is next.
+
+## Licence
+
+[MIT](LICENSE). Free to use, change and share, including for your own group's copy.

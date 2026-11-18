@@ -205,7 +205,7 @@ export function readFragment(): LinkParts | null {
 /** The standing instructions a member pastes into their AI. */
 export function aiPrompt(who: string, projectName: string, link: string): string {
   return [
-    `I'm ${who}, a member of the university group project "${projectName}", run with Group Hub.`,
+    `I'm ${who}, a member of the university group project "${projectName}", run with EPMS.`,
     '',
     'Whenever I ask about the group project, first read the live project here:',
     link,
