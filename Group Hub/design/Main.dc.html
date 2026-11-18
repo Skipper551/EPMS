@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My tasks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0F1115}
+a{color:#8FB4FF}a:hover{color:#B7CEFF}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0F1115; color: #E8EAED; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 40px; border-bottom: 1px solid #23262E">
+<div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap">
+<div style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 18px; letter-spacing: 0.02em">Group Hub</div>
+<button type="button" style="display: flex; align-items: center; gap: 8px; background: #171A21; color: #E8EAED; border: 1px solid #262A33; border-radius: 8px; padding: 8px 14px; font-size: 14px">Innovation Management · Group 2
+<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="#9AA1AD" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="color: #9AA1AD; font-size: 14px">You're <strong style="color: #E8EAED; font-weight: 500">Jimmy</strong></span>
+<button type="button" style="background: transparent; color: #E8EAED; border: 1px solid #262A33; border-radius: 8px; padding: 8px 14px; font-size: 14px">Ask the PM</button>
+</div>
+</header>
+
+<main style="max-width: 1240px; margin: 0 auto; padding: 40px; display: flex; flex-wrap: wrap; gap: 40px">
+
+<section style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 32px">My tasks</h1>
+<span style="color: #9AA1AD; font-size: 14px">3 tasks · next due Thu 26 Nov</span>
+</div>
+
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+<article style="background: #171A21; border: 1px solid #23262E; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">{{t.title}}</h2>
+<span style="color: #9AA1AD; font-size: 14px">{{t.meta}}</span>
+</div>
+<span style="{{t.pillStyle}}">{{t.status}}</span>
+</div>
+<sc-if value="{{t.blocked}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 10px; background: #2A2016; border-radius: 8px; padding: 10px 14px; color: #F2B880; font-size: 14px">
+<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#F2B880" stroke-width="1.5"/><path d="M5 8h6" stroke="#F2B880" stroke-width="1.5" stroke-linecap="round"/></svg>
+<span>{{t.blockedText}}</span>
+</div>
+</sc-if>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+<button type="button" style="{{t.primaryStyle}}">{{t.primary}}</button>
+<button type="button" style="background: transparent; color: #C9CDD4; border: 1px solid #262A33; border-radius: 8px; padding: 9px 16px; font-size: 14px">Add a note</button>
+<button type="button" style="background: transparent; color: #C9CDD4; border: 1px solid #262A33; border-radius: 8px; padding: 9px 16px; font-size: 14px">I'm blocked</button>
+<sc-if value="{{t.hasLinks}}" hint-placeholder-val="{{true}}">
+<a href="#" style="margin-left: auto; font-size: 14px">{{t.link}}</a>
+</sc-if>
+</div>
+</article>
+</sc-for>
+
+<div style="display: flex; align-items: center; gap: 12px; border: 1px dashed #2E323C; border-radius: 12px; padding: 16px 24px; color: #9AA1AD; font-size: 14px">
+<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 2l1.6 4.4L15 8l-4.4 1.6L9 14l-1.6-4.4L3 8l4.4-1.6z" fill="none" stroke="#9AA1AD" stroke-width="1.4" stroke-linejoin="round"/></svg>
+<span>Stuck on how to start? Ask your AI: <span style="color: #E8EAED">"Walk me through my next task."</span> It knows the project and the PM's guidelines.</span>
+</div>
+</section>
+
+<aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+
+<section style="background: #171A21; border: 1px solid #23262E; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #9AA1AD">Waiting on you</h2>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-weight: 500">Ola · Build the slides</span>
+<span style="color: #9AA1AD; font-size: 14px">Needs your intro first</span>
+</div>
+</section>
+
+<section style="background: #171A21; border: 1px solid #23262E; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #9AA1AD">The group</h2>
+<span style="color: #9AA1AD; font-size: 13px">Due Sat 12 Dec</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 14px"><span>Overall</span><span style="color: #9AA1AD">5 of 14 done</span></div>
+<div style="height: 8px; background: #23262E; border-radius: 4px"><div style="width: 36%; height: 8px; background: #6CA0FF; border-radius: 4px"></div></div>
+</div>
+<sc-for list="{{people}}" as="p" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 12px; font-size: 14px">
+<span style="width: 56px">{{p.name}}</span>
+<div style="flex: 1; height: 6px; background: #23262E; border-radius: 3px"><div style="{{p.bar}}"></div></div>
+<span style="width: 36px; text-align: right; color: #9AA1AD">{{p.count}}</span>
+</div>
+</sc-for>
+</section>
+
+<section style="background: #171A21; border: 1px solid #23262E; border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #9AA1AD">From the PM</h2>
+<p style="margin: 0; font-size: 14px; color: #C9CDD4">APA 7 for all references. Keep your section under 600 words. Send things to review by Thursday evening so I can merge on Friday.</p>
+</section>
+
+</aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pill = (bg, fg) => `background: ${bg}; color: ${fg}; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 500; white-space: nowrap`;
+    const primary = 'background: #6CA0FF; color: #0F1115; border: 0; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600';
+    const muted = 'background: #23262E; color: #9AA1AD; border: 0; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600';
+    const tasks = [
+      { title: 'Format the references list', meta: 'Due Thu 26 Nov · 1 note from Ala', status: 'Doing', pillStyle: pill('#1B2A45', '#9CC0FF'), blocked: false, primary: 'Send to review', primaryStyle: primary, hasLinks: true, link: 'References.docx' },
+      { title: 'Write the introduction', meta: 'Due Mon 30 Nov', status: 'To do', pillStyle: pill('#23262E', '#C9CDD4'), blocked: true, blockedText: 'Waiting on Ala: Find 5 sources (in review)', primary: 'Start', primaryStyle: muted, hasLinks: true, link: 'Report draft' },
+      { title: 'Draft the conclusion', meta: 'Due Fri 4 Dec', status: 'To do', pillStyle: pill('#23262E', '#C9CDD4'), blocked: false, primary: 'Start', primaryStyle: primary, hasLinks: false, link: '' }
+    ];
+    const bar = (pct) => `width: ${pct}%; height: 6px; background: #6CA0FF; border-radius: 3px`;
+    const people = [
+      { name: 'Malcolm', count: '2/2', bar: bar(100) },
+      { name: 'Ala', count: '1/3', bar: bar(33) },
+      { name: 'Jimmy', count: '0/3', bar: bar(0) },
+      { name: 'Ola', count: '1/3', bar: bar(33) },
+      { name: 'Kuba', count: '1/3', bar: bar(33) }
+    ];
+    return { tasks, people };
+  }
+}
+</script>
+</body>
+</html>

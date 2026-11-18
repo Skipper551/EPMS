@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PM board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0F1115}
+a{color:#8FB4FF}a:hover{color:#B7CEFF}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #0F1115; color: #E8EAED; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 40px; border-bottom: 1px solid #23262E">
+<div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap">
+<div style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 18px; letter-spacing: 0.02em">Group Hub</div>
+<button type="button" style="display: flex; align-items: center; gap: 8px; background: #171A21; color: #E8EAED; border: 1px solid #262A33; border-radius: 8px; padding: 8px 14px; font-size: 14px">Innovation Management · Group 2
+<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="#9AA1AD" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+<span style="background: #23262E; color: #C9CDD4; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em">PM</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+<button type="button" style="background: transparent; color: #E8EAED; border: 1px solid #262A33; border-radius: 8px; padding: 8px 14px; font-size: 14px">Questions <span style="background: #F2B880; color: #0F1115; border-radius: 999px; padding: 0 7px; margin-left: 4px; font-size: 12px; font-weight: 600">2</span></button>
+<button type="button" style="background: transparent; color: #E8EAED; border: 1px solid #262A33; border-radius: 8px; padding: 8px 14px; font-size: 14px">Copy link for Teams</button>
+<button type="button" style="background: #6CA0FF; color: #0F1115; border: 0; border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600">New task</button>
+</div>
+</header>
+
+<main style="max-width: 1360px; margin: 0 auto; padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 32px">Board</h1>
+<span style="color: #9AA1AD; font-size: 14px">5 of 14 done · final deadline Sat 12 Dec · 24 days left</span>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap" role="group" aria-label="Filter by member">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
+<button type="button" style="{{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<div style="flex: 1 1 260px; display: flex; align-items: center; gap: 12px; background: #1B2A45; border-radius: 10px; padding: 12px 16px; font-size: 14px; color: #C9D9FF">
+<strong style="font-weight: 600">2 tasks waiting for your review</strong><span style="color: #9CB4E0">Ala · Find 5 sources, Kuba · Survey questions</span>
+</div>
+<div style="flex: 1 1 260px; display: flex; align-items: center; gap: 12px; background: #2A2016; border-radius: 10px; padding: 12px 16px; font-size: 14px; color: #F2B880">
+<strong style="font-weight: 600">1 behind schedule</strong><span style="color: #D9A774">Ola · Competitor research</span>
+</div>
+</div>
+
+<div style="overflow-x: auto">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: 16px; min-width: 1000px">
+<sc-for list="{{columns}}" as="col" hint-placeholder-count="4">
+<section style="background: #13161C; border: 1px solid #1F222A; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 6px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">{{col.name}}</h2>
+<span style="color: #9AA1AD; font-size: 13px">{{col.count}}</span>
+</div>
+<sc-for list="{{col.cards}}" as="c" hint-placeholder-count="3">
+<article style="{{c.cardStyle}}">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 500; line-height: 1.4">{{c.title}}</h3>
+<sc-if value="{{c.behind}}" hint-placeholder-val="{{false}}">
+<span style="flex: none; background: #3A2412; color: #F2B880; border-radius: 6px; padding: 1px 7px; font-size: 12px; font-weight: 600">Behind</span>
+</sc-if>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: #9AA1AD">
+<span style="display: flex; align-items: center; gap: 8px"><span style="{{c.avatar}}">{{c.initial}}</span>{{c.owner}}</span>
+<span>{{c.due}}</span>
+</div>
+<sc-if value="{{c.blocked}}" hint-placeholder-val="{{false}}">
+<div style="font-size: 12px; color: #F2B880">Blocked by {{c.blockedBy}}</div>
+</sc-if>
+<sc-if value="{{c.review}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; gap: 8px">
+<button type="button" style="flex: 1; background: #6CA0FF; color: #0F1115; border: 0; border-radius: 6px; padding: 7px 10px; font-size: 13px; font-weight: 600">Approve</button>
+<button type="button" style="flex: 1; background: transparent; color: #C9CDD4; border: 1px solid #2E323C; border-radius: 6px; padding: 7px 10px; font-size: 13px">Send back</button>
+</div>
+</sc-if>
+</article>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const colours = { Malcolm: '#6CA0FF', Ala: '#5CC8A8', Jimmy: '#C7A6FF', Ola: '#F2B880', Kuba: '#E8D27A' };
+    const card = (title, owner, due, extra = {}) => ({
+      title, owner, due, initial: owner[0],
+      avatar: `display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: ${colours[owner]}; color: #0F1115; font-size: 11px; font-weight: 700`,
+      cardStyle: `background: #171A21; border: 1px solid ${extra.behind ? '#5A3A1E' : '#262A33'}; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px${extra.done ? '; opacity: 0.7' : ''}`,
+      behind: !!extra.behind, blocked: !!extra.blockedBy, blockedBy: extra.blockedBy || '', review: !!extra.review
+    });
+    const columns = [
+      { name: 'To do', cards: [
+        card('Write the introduction', 'Jimmy', 'Mon 30 Nov', { blockedBy: 'Find 5 sources' }),
+        card('Build the slides', 'Ola', 'Mon 7 Dec', { blockedBy: 'Write the introduction' }),
+        card('Draft the conclusion', 'Jimmy', 'Fri 4 Dec'),
+        card('Rehearse the presentation', 'Malcolm', 'Thu 10 Dec')
+      ]},
+      { name: 'Doing', cards: [
+        card('Competitor research', 'Ola', 'Fri 20 Nov', { behind: true }),
+        card('Format the references list', 'Jimmy', 'Thu 26 Nov'),
+        card('Interview two users', 'Ala', 'Fri 27 Nov')
+      ]},
+      { name: 'Review', cards: [
+        card('Find 5 sources', 'Ala', 'Fri 20 Nov', { review: true }),
+        card('Survey questions', 'Kuba', 'Sat 21 Nov', { review: true })
+      ]},
+      { name: 'Done', cards: [
+        card('Split the brief into tasks', 'Malcolm', 'Mon 9 Nov', { done: true }),
+        card('Write project guidelines', 'Malcolm', 'Tue 10 Nov', { done: true }),
+        card('Pick the case company', 'Kuba', 'Thu 12 Nov', { done: true })
+      ]}
+    ].map(c => ({ ...c, count: String(c.cards.length) }));
+    const chip = (on) => `background: ${on ? '#E8EAED' : 'transparent'}; color: ${on ? '#0F1115' : '#C9CDD4'}; border: 1px solid ${on ? '#E8EAED' : '#262A33'}; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 500`;
+    const filters = ['Everyone', 'Malcolm', 'Ala', 'Jimmy', 'Ola', 'Kuba'].map((l, i) => ({ label: l, style: chip(i === 0) }));
+    return { columns, filters };
+  }
+}
+</script>
+</body>
+</html>
