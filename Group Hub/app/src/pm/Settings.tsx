@@ -286,7 +286,7 @@ function Links(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: (k: Pr
       <LinkRow
         label="Member link"
         help="Post this in the group chat. Anyone with it can see the project and act as a member, so keep it inside the group."
-        url={keys ? memberLink(snap.project.id, keys.member_key) : null}
+        url={keys ? memberLink(snap.project.id, keys.member_key, keys.ai_key) : null}
         copyLabel="Copy member link"
         onRegenerate={regen('member_key')}
         regenerateWarning="The old member link stops working straight away."
@@ -294,11 +294,11 @@ function Links(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: (k: Pr
       <div style={{ borderTop: '1px solid var(--border)' }} />
       <LinkRow
         label="AI link"
-        help="Read only. Members get it inside the AI setup prompt on their first visit. It shows the whole project as one document, without any keys."
+        help="Read only. Members get it inside the AI setup prompt on their first visit, so you rarely need to copy it yourself. It shows the whole project as one document, without any keys."
         url={keys ? aiLink(snap.project.id, keys.ai_key) : null}
         copyLabel="Copy AI link"
         onRegenerate={regen('ai_key')}
-        regenerateWarning="Every member has to paste the new AI setup prompt into their AI again."
+        regenerateWarning="The member link changes too. Share the new one, and every member has to set up their AI again."
       />
       <ErrorBox error={error} />
     </section>

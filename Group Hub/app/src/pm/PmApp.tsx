@@ -131,7 +131,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     try {
       const k = keys ?? (await getKeys(projectId))
       setKeys(k)
-      const ok = await copyText(memberLink(projectId, k.member_key))
+      const ok = await copyText(memberLink(projectId, k.member_key, k.ai_key))
       toast(ok ? 'Member link copied. Paste it in the Teams group chat.' : "Couldn't copy. Open Project settings to copy it by hand.", !ok)
     } catch (e) {
       toast((e as StoreError).message, true)

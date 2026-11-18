@@ -120,10 +120,12 @@ export function waitingOn(snap: Snapshot, opts: { taskIds?: string[]; memberId?:
 
 // ---------- links ----------
 
-/** Member link: the project id and member key ride in the fragment, so they never reach a server log. */
-export function memberLink(projectId: string, memberKey: string): string {
+/** Member link: the project id, member key and AI key ride in the fragment, so they never reach a server or its logs.
+ *  The AI key is there so the member's AI setup prompt can include the read-only AI link
+ *  (members can't read project_keys themselves). */
+export function memberLink(projectId: string, memberKey: string, aiKey: string): string {
   const base = new URL('./', location.href)
-  base.hash = `p=${projectId}&key=${memberKey}`
+  base.hash = `p=${projectId}&key=${memberKey}&ai=${aiKey}`
   return base.toString()
 }
 
@@ -131,12 +133,20 @@ export function pmLink(): string {
   return new URL('./pm.html', location.href).toString()
 }
 
-/** Reads "#p=<id>&key=<key>" from the current URL. */
-export function readMemberFragment(): { projectId: string; key: string } | null {
+export interface MemberLinkParts {
+  projectId: string
+  key: string
+  /** '' when the link was made without it */
+  ai: string
+}
+
+/** Reads "#p=<id>&key=<key>&ai=<aiKey>" from the current URL. */
+export function readMemberFragment(): MemberLinkParts | null {
   const params = new URLSearchParams(location.hash.replace(/^#/, ''))
   const projectId = params.get('p') ?? ''
   const key = params.get('key') ?? ''
-  return /^[a-z0-9]{15}$/.test(projectId) && key.length >= 32 ? { projectId, key } : null
+  const ai = params.get('ai') ?? ''
+  return /^[a-z0-9]{15}$/.test(projectId) && key.length >= 32 ? { projectId, key, ai: ai.length >= 32 ? ai : '' } : null
 }
 
 export type AiKind = 'claude' | 'chatgpt'
