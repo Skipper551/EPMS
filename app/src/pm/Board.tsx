@@ -1,8 +1,9 @@
 import { useState } from 'preact/hooks'
 import type { Snapshot, Status, Task } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
-import { type ActiveBlocker, activeBlockers, daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
+import { daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
 import { Avatar } from '../ui/ui'
+import { BlockerSummary } from '../ui/BlockerSummary'
 
 export interface BoardActions {
   open: (taskId: string) => void
@@ -145,8 +146,7 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
 
 function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; busy: boolean; dragging: boolean; onDrag: (on: boolean) => void }) {
   const { snap, task: t, actions } = props
-  const blockers = t.status === 'done' ? [] : activeBlockers(t, snap)
-  const people = t.everyone ? (t.owner ? `Led by ${memberName(snap, t.owner)}` : 'Whole group') : peopleText(snap, t)
+  const people = t.everyone ? (t.owner ? `Led by ${memberName(snap, t.owner)}` : 'No lead yet') : peopleText(snap, t)
   const faces = [t.owner, ...(t.everyone ? [] : t.helpers)].filter(Boolean).slice(0, 4)
   const overdue = t.status !== 'done' && t.due_date && t.due_date < today()
   const cls = ['tcard', t.behind && t.status !== 'done' && 'is-behind', t.status === 'done' && 'is-done', props.dragging && 'dragging'].filter(Boolean).join(' ')
@@ -178,8 +178,8 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
           {t.due_date && <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>{formatDay(t.due_date)}</span>}
         </div>
         {t.behind && t.status !== 'done' && t.behind_note && <div class="tcard-blocked">Behind: {t.behind_note}</div>}
-        {blockedText(blockers) && <div class="tcard-blocked">{blockedText(blockers)}</div>}
       </button>
+      <BlockerSummary snap={snap} task={t} variant="board" />
       {(t.status === 'todo' || t.status === 'doing') && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-4px' }}>
           <button type="button" class="btn-text xsmall" style={{ color: t.behind ? 'var(--warn)' : 'var(--muted)', fontSize: '12px' }} disabled={props.busy}
@@ -198,9 +198,3 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
   )
 }
 
-/** "Blocked by Find 5 sources, Ala. Waiting for the professor's feedback" */
-function blockedText(blockers: ActiveBlocker[]): string {
-  const named = blockers.filter((b) => b.kind !== 'custom').map((b) => b.label)
-  const custom = blockers.find((b) => b.kind === 'custom')
-  return [named.length ? `Blocked by ${named.join(', ')}` : '', custom ? (named.length ? custom.label : `Blocked: ${custom.label}`) : ''].filter(Boolean).join('. ')
-}

@@ -2,7 +2,8 @@ import { useState } from 'preact/hooks'
 import type { Member, Snapshot, Task } from '../data/types'
 import { STATUS_LABEL } from '../data/types'
 import { activeBlockers, canMove, dueKey, formatDay, involvement, joinNames, memberName, today, waitingOn } from '../lib/util'
-import { BlockedIcon, SparkIcon, StatusPill } from '../ui/ui'
+import { SparkIcon, StatusPill } from '../ui/ui'
+import { BlockerSummary } from '../ui/BlockerSummary'
 
 export interface TaskActions {
   advance: (t: Task) => void
@@ -118,9 +119,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
         <div class="blocked-box"><span>Behind schedule: {t.behind_note}</span></div>
       )}
 
-      {blocked && (
-        <div class="blocked-box"><BlockedIcon /><span>{blocked}</span></div>
-      )}
+      <BlockerSummary snap={snap} task={t} variant="member" />
 
       {lastFromOther && (
         <div class="note">
