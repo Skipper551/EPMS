@@ -60,6 +60,7 @@ const api = (path, init = {}) => fetch(`${PB}/api/collections/${path}`, init)
 const json = { 'Content-Type': 'application/json' }
 const claimApi = (member) => fetch(`${PB}/api/gh/claim/${project.id}`, { method: 'POST', headers: { ...json, 'X-Group-Key': keys.member_key }, body: JSON.stringify({ member }) })
 check('AI link reads the project without keys', (await api(`projects/records/${project.id}?ai_key=${keys.ai_key}`)).status === 200)
+check('AI link includes the guide with the subtask format', ((await (await api(`projects/records/${project.id}?ai_key=${keys.ai_key}`)).json()).epms_ai_guide?.subtasks?.format ?? '').includes('epms-subtasks'))
 check('missing key gets 404', (await api(`projects/records/${project.id}`)).status === 404)
 check('group key alone reads nothing', (await api(`projects/records/${project.id}`, { headers: { 'X-Member-Key': keys.member_key } })).status === 404)
 check('PM name cannot be claimed', (await claimApi(m.Pat)).status === 400)
