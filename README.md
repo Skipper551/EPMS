@@ -55,6 +55,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 | [`skills/epms-task-plan/`](skills/epms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in EPMS's import format. |
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each version, with its pull request. |
 | [`LICENSE`](LICENSE) | MIT licence. |
 | [`.github/workflows/pages.yml`](.github/workflows/pages.yml) | Publishes the shared site to GitHub Pages on every push to `main`. |
 

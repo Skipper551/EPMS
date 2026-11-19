@@ -154,5 +154,5 @@ export function Loading(props: { text?: string }) {
 
 /** Small line at the bottom of every page with the app version. */
 export function VersionFooter() {
-  return <footer class="version">EPMS v{__APP_VERSION__}</footer>
+  return <footer class="version">EPMS v{__APP_VERSION__}{__APP_COMMIT__ ? ` · ${__APP_COMMIT__}` : ''}</footer>
 }
