@@ -266,12 +266,12 @@ export function previewPlan(plan: Plan, snap: Snapshot): Preview {
 
 // ---------- instructions for Claude, filled in with this project ----------
 
-export function claudeInstructions(snap: Snapshot): string {
+export function claudeInstructions(snap: Snapshot, aiLinkUrl = ''): string {
   const people = snap.members.map((m) => `- ${m.name}${m.role ? ` (${m.role})` : ''}${m.is_pm ? ', PM' : ''}`).join('\n') || '- (no members added yet)'
   const open = snap.tasks.filter((t) => t.status !== 'done').map((t) => `- ${t.title}`).slice(0, 60).join('\n')
   return `When we've agreed the task plan for my group project, give it to me as an EPMS task file so I can import it.
 
-Project: ${snap.project.name}${snap.project.course ? ` (${snap.project.course})` : ''}
+${aiLinkUrl ? `Read the project first: ${aiLinkUrl}\nIt is the live project as JSON (members with exact names, tasks already on the board, guidelines, deadline). Use it as the source of truth.\n\n` : ''}Project: ${snap.project.name}${snap.project.course ? ` (${snap.project.course})` : ''}
 Final deadline: ${snap.project.final_deadline || 'not set'}
 Today: ${today()}
 Members (use these names exactly as task owners):

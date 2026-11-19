@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { backendUrl, getKeys, initPm, setBackend, listEvents, listProjects, pmEmail, pmLogout, pmResume, updateTask, type StoreError } from '../data/store'
+import { aiLink, backendUrl, getKeys, initPm, setBackend, listEvents, listProjects, pmEmail, pmLogout, pmResume, updateTask, type StoreError } from '../data/store'
 import type { ActivityEvent, Project, ProjectKeys, Snapshot, Status } from '../data/types'
 import { copyText, groupLink, load, memberName, save } from '../lib/util'
 import { pmChangeCount } from '../lib/summary'
@@ -282,7 +282,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
           onClose={() => { const id = addSubtasksFor; setAddSubtasksFor(null); setEditing({ id }) }} />
       )}
       {snap && sendBack && <SendBackDialog snap={snap} taskId={sendBack} pmAuthorId={author} onClose={() => setSendBack(null)} onDone={reload} />}
-      {snap && importOpen && <ImportTasksDialog snap={snap} pmAuthorId={author} onClose={() => setImportOpen(false)} onDone={reload} />}
+      {snap && importOpen && <ImportTasksDialog snap={snap} pmAuthorId={author} aiLinkUrl={keys ? aiLink(snap.project.id, keys.ai_key) : ''} onClose={() => setImportOpen(false)} onDone={reload} />}
       {newProjectOpen && (
         <NewProjectDialog
           onClose={() => setNewProjectOpen(false)}

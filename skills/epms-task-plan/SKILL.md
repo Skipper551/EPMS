@@ -1,6 +1,6 @@
 ---
 name: epms-task-plan
-description: Plan, split and assign the tasks of a university group project with its project manager (PM), then export them as an EPMS task file (format "epms-tasks") that the PM imports into EPMS. Use when a student PM asks to break a brief into tasks, delegate work to group members, revise a task plan, or "export the tasks for EPMS".
+description: Plan, split and assign the tasks of a university group project with its project manager (PM), then export them as an EPMS task file (format "epms-tasks") that the PM imports into EPMS. Always starts from the project's AI link (asks the PM for it if it hasn't been shared) so names, existing tasks and dates match the board. Use when a student PM asks to break a brief into tasks, delegate work to group members, revise a task plan, or "export the tasks for EPMS".
 ---
 
 # EPMS task plan
@@ -9,15 +9,15 @@ EPMS (Educational Project Management Software) is a free project management app 
 
 ## Workflow
 
-1. **Gather what you need.** Before drafting, make sure you know:
-   - the brief or assignment (ask the PM to paste or upload it),
-   - the members' names and, if any, their roles or strengths,
-   - the final deadline and today's date,
-   - any tasks already on the EPMS board (the PM may paste the instructions from EPMS's import dialog, which list them).
-   Ask only for what's missing, in one message.
-2. **Draft the plan in the conversation as a readable table**, not as JSON: title, owner, due date, blocked by, and a one-line description. Keep the workload fair across members and give the PM their own share of tasks.
-3. **Iterate.** Apply the PM's suggestions and show the updated table. Don't output the file until the PM says the plan is ready, or asks for the file.
-4. **Export.** Output the file as a single ```json code block (or a downloadable `epms-tasks.json` file if you can create files), following the format below exactly. Then check it against the checklist at the end.
+1. **Read the project's AI link first.** It is the source of truth for the file: exact member names (and who is a PM), tasks already on the board, the final deadline, the PM's guidelines and existing subtasks.
+   - If the PM hasn't shared it in this conversation, ask for it before planning: "Please paste your project's AI link. In EPMS, open Project settings, Links, Copy AI link." It looks like `https://<instance>/api/collections/projects/records/<id>?ai_key=...&expand=...`. The instructions from EPMS's import dialog (Copy instructions for Claude) include it too.
+   - Fetch it and read the JSON: `name`, `final_deadline` and `guidelines` on the project; `expand.members_via_project` (use these `name`s exactly as owners; `is_pm` marks the PM); `expand.tasks_via_project` (existing tasks: reuse their exact titles in `blocked_by`, and don't plan duplicates, since EPMS skips tasks whose title is already on the board).
+   - If you can't open links, ask the PM to paste the link's JSON contents instead, or to paste the import dialog's instructions, which list the members, deadline and existing tasks.
+   - Don't guess member names. A name that doesn't match exactly turns into a new member on import.
+2. **Gather the rest.** The brief or assignment (ask the PM to paste or upload it), anything the link doesn't say about members' strengths, and today's date. Ask only for what's missing, in one message.
+3. **Draft the plan in the conversation as a readable table**, not as JSON: title, owner, due date, blocked by, and a one-line description. Keep the workload fair across members and give the PM their own share of tasks.
+4. **Iterate.** Apply the PM's suggestions and show the updated table. Don't output the file until the PM says the plan is ready, or asks for the file.
+5. **Export.** Before writing it, re-read the AI link if you can, in case the board changed while you planned. Output the file as a single ```json code block (or a downloadable `epms-tasks.json` file if you can create files), following the format below exactly. Then check it against the checklist at the end.
 
 ## Planning guidance
 
@@ -130,7 +130,8 @@ Each task:
 - [ ] Valid JSON: double quotes, no trailing commas, no comments.
 - [ ] `"format": "epms-tasks"` and `"version": 1` at the top.
 - [ ] Every task has a `title`; every `id` is unique.
-- [ ] Every `owner`, `helpers` and `waiting_on` name is spelled exactly as the PM gave it; the lead isn't also listed as a helper.
+- [ ] Every `owner`, `helpers` and `waiting_on` name matches a member in the AI link exactly (or is a new person listed in `members`); the lead isn't also listed as a helper.
+- [ ] No task repeats the title of a task already on the board, unless the PM asked to replace it.
 - [ ] `everyone` tasks have a lead and no helpers.
 - [ ] Every `blocked_by` entry is an `id` in this file or an exact existing title; no task blocks itself; no cycles.
 - [ ] Every `start` and `due` is `YYYY-MM-DD`, each `start` is on or before its `due`, and every `due` is on or before the final deadline.
