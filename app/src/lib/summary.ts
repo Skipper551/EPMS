@@ -31,6 +31,10 @@ export function buildSummary(snap: Snapshot, events: ActivityEvent[], pmName: st
     .filter((t) => t.status !== 'done' && t.due_date && (daysUntil(t.due_date) ?? 99) <= 7)
     .sort((a, b) => a.due_date.localeCompare(b.due_date))
 
+  const startingSoon = snap.tasks
+    .filter((t) => t.status === 'todo' && t.start_date && (daysUntil(t.start_date) ?? -1) >= 0 && (daysUntil(t.start_date) ?? 99) <= 7)
+    .sort((a, b) => a.start_date.localeCompare(b.start_date))
+
   const block = (title: string, lines: string[]) => (lines.length ? `${title}\n${lines.map((l) => `- ${l}`).join('\n')}` : '')
   const due = (t: Task) => (t.due_date ? `, due ${formatDay(t.due_date)}` : '')
 
@@ -44,6 +48,7 @@ export function buildSummary(snap: Snapshot, events: ActivityEvent[], pmName: st
       ? `${created.length} new tasks are on the board. Open EPMS to see yours.`
       : block('New tasks', created.map((t) => `${t.title} (${by(snap, t)}${due(t)})`)),
     block('Changed hands', reassigned.map((t) => `${t.title} is now with ${by(snap, t)}`)),
+    block('Starting in the next 7 days', startingSoon.map((t) => `${t.title} (${by(snap, t)}, starts ${formatDay(t.start_date)})`)),
     block('Due in the next 7 days', dueSoon.map((t) => {
       const late = (daysUntil(t.due_date) ?? 0) < 0
       return `${t.title} (${by(snap, t)}, ${late ? 'was due' : 'due'} ${formatDay(t.due_date)})`

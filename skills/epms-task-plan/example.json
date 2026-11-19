@@ -19,6 +19,7 @@
       "id": "find-sources",
       "title": "Find 5 sources",
       "owner": "Ala",
+      "start": "2026-11-16",
       "due": "2026-11-20",
       "description": "Find five peer-reviewed sources on open innovation in mid-sized firms. Save each in the shared References doc in APA 7 with its DOI. Done when all five are in the doc with a one-line summary each.",
       "blocked_by": [],
@@ -34,10 +35,18 @@
       "id": "write-intro",
       "title": "Write the introduction",
       "owner": "Jimmy",
+      "start": "2026-11-21",
       "due": "2026-11-30",
       "description": "Using Ala's sources, write a 400 to 600 word introduction that sets out the research question.",
       "blocked_by": [
         "find-sources"
+      ],
+      "subtasks": [
+        "Re-read the brief and the sources",
+        "Outline the argument in 5 bullet points",
+        "Write the first draft",
+        "Ask Ala to read it",
+        "Edit to under 600 words"
       ]
     },
     {

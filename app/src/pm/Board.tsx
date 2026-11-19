@@ -1,9 +1,10 @@
 import { useState } from 'preact/hooks'
 import type { Snapshot, Status, Task } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
-import { daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
+import { daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, startState, today } from '../lib/util'
 import { Avatar } from '../ui/ui'
 import { BlockerSummary } from '../ui/BlockerSummary'
+import { SubtaskProgress } from '../ui/Subtasks'
 
 export interface BoardActions {
   open: (taskId: string) => void
@@ -175,8 +176,14 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
             {faces.length > 0 && <span class="avatars">{faces.map((id) => <Avatar key={id} snap={snap} memberId={id} />)}</span>}
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={people}>{people}</span>
           </span>
-          {t.due_date && <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>{formatDay(t.due_date)}</span>}
+          {(t.due_date || t.start_date) && (
+            <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>
+              {t.start_date && t.status === 'todo' ? `${formatDay(t.start_date)} to ` : ''}{t.due_date ? formatDay(t.due_date) : `from ${formatDay(t.start_date)}`}
+            </span>
+          )}
         </div>
+        {startState(t) === 'late' && <div class="tcard-blocked">Should have started {formatDay(t.start_date)}</div>}
+        {t.status !== 'done' && <SubtaskProgress snap={snap} task={t} />}
         {t.behind && t.status !== 'done' && t.behind_note && <div class="tcard-blocked">Behind: {t.behind_note}</div>}
       </button>
       <BlockerSummary snap={snap} task={t} variant="board" />

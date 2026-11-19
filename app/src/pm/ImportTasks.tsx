@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'preact/hooks'
-import { addNote, createMember, createTask, updateProject, updateTask, type StoreError } from '../data/store'
+import { addNote, createMember, createSubtasks, createTask, updateProject, updateTask, type StoreError } from '../data/store'
 import type { Snapshot } from '../data/types'
 import { STATUS_LABEL } from '../data/types'
 import { claudeInstructions, parsePlan, previewPlan, type OwnerMatch, type Preview } from '../lib/importPlan'
@@ -75,6 +75,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
           owner: personId(row.owner),
           helpers: [...new Set(row.helpers.map(personId).filter((id) => id && id !== personId(row.owner)))],
           everyone: row.task.everyone,
+          start_date: row.task.start,
           due_date: row.task.due,
           status: row.task.status,
           behind: false,
@@ -97,14 +98,21 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
         await updateTask(refToId.get(norm(row.task.ref))!, { blocked_by_tasks: [...new Set([...board, ...inFile])] })
       }
 
-      // 4. Descriptions become the first note on each task.
+      // 4. Checklists of subtasks.
+      for (const row of toImport) {
+        if (!row.task.subtasks.length) continue
+        setProgress('Adding subtasks…')
+        await createSubtasks(refToId.get(norm(row.task.ref))!, row.task.subtasks, 1)
+      }
+
+      // 5. Descriptions become the first note on each task.
       for (const row of toImport) {
         if (!row.task.description) continue
         setProgress('Adding descriptions…')
         await addNote(refToId.get(norm(row.task.ref))!, props.pmAuthorId, row.task.description)
       }
 
-      // 5. Guidelines, if the PM chose to use them.
+      // 6. Guidelines, if the PM chose to use them.
       if (useGuidelines && parsed.plan.guidelines) {
         setProgress('Saving guidelines…')
         await updateProject(snap.project.id, { guidelines: parsed.plan.guidelines })
@@ -248,7 +256,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
                 <span class="xsmall muted">{skipped ? 'Already on the board' : STATUS_LABEL[r.task.status]}</span>
               </div>
               <span class="xsmall muted">
-                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? `${ownerText(r.owner)} with ${r.helpers.map(ownerText).join(', ')}` : ownerText(r.owner), r.dueText ? `due ${r.dueText}` : 'no due date', r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`]
+                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? `${ownerText(r.owner)} with ${r.helpers.map(ownerText).join(', ')}` : ownerText(r.owner), r.startText ? `starts ${r.startText}` : '', r.dueText ? `due ${r.dueText}` : 'no due date', r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`, r.task.subtasks.length && `${r.task.subtasks.length} ${r.task.subtasks.length === 1 ? 'subtask' : 'subtasks'}`]
                   .filter(Boolean).join(' · ')}
               </span>
               {(blockers.length > 0 || waiting.length > 0) && (

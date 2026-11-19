@@ -9,6 +9,7 @@ import { forgetSession, patchSession, saveSession, sessionFor, sessions, type Se
 import { MyTasks, Sidebar, type TaskActions } from './MyTasks'
 import { AiSetup, AiSetupContent, PickName, Tour } from './Welcome'
 import { SinceLastVisit } from './Updates'
+import { AddSubtasksDialog } from '../ui/Subtasks'
 
 type Route =
   | { kind: 'session'; session: Session }
@@ -140,6 +141,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
   const [step, setStep] = useState<'tour' | 'ai'>('tour')
   const [busy, setBusy] = useState<Set<string>>(new Set())
   const [detail, setDetail] = useState<{ id: string; focusNote: boolean } | null>(null)
+  const [addSubtasksFor, setAddSubtasksFor] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<string | null>(null)
   const [aiOpen, setAiOpen] = useState(false)
   // Updates newer than the last visit; the next visit starts from now.
@@ -234,6 +236,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
     openDetail: (t, focusNote = false) => setDetail({ id: t.id, focusNote }),
     blocked: (t) => { setDetail(null); setBlocked(t.id) },
     setUpAi: () => setAiOpen(true),
+    addSubtasks: (t) => setAddSubtasksFor(t.id),
   }
 
   return (
@@ -263,7 +266,12 @@ function Project(props: { session: Session; onLeave: () => void }) {
         <TaskDetail
           snap={snap} me={me} taskId={detail.id} focusNote={detail.focusNote} busy={busy.has(detail.id)}
           onAdvance={advance} onBlocked={actions.blocked} onClose={() => setDetail(null)} onChanged={reload}
+          onAddSubtasks={(t) => { setDetail(null); setAddSubtasksFor(t.id) }}
         />
+      )}
+      {addSubtasksFor && snap.tasks.some((t) => t.id === addSubtasksFor) && (
+        <AddSubtasksDialog snap={snap} task={snap.tasks.find((t) => t.id === addSubtasksFor)!} onDone={reload}
+          onClose={() => { const id = addSubtasksFor; setAddSubtasksFor(null); setDetail({ id, focusNote: false }) }} />
       )}
       {blocked && <BlockedDialog snap={snap} me={me} taskId={blocked} onClose={() => setBlocked(null)} onChanged={reload} />}
       {aiOpen && (

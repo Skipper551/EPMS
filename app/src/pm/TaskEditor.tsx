@@ -4,6 +4,7 @@ import type { Snapshot, Status, TaskInput, TaskLink } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
 import { memberName, normaliseUrl, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
+import { SubtaskList } from '../ui/Subtasks'
 import { CloseIcon, Dialog, ErrorBox, Field, Toggle, toast } from '../ui/ui'
 
 export function TaskEditor(props: {
@@ -12,17 +13,18 @@ export function TaskEditor(props: {
   pmAuthorId: string
   onClose: () => void
   onSaved: () => void
+  onAddSubtasks: (taskId: string) => void
 }) {
   const { snap } = props
   const existing = props.taskId ? snap.tasks.find((t) => t.id === props.taskId) ?? null : null
   const [form, setForm] = useState<TaskInput>(() =>
     existing
       ? {
-          title: existing.title, owner: existing.owner, helpers: existing.helpers, everyone: existing.everyone, due_date: existing.due_date, status: existing.status, behind: existing.behind, behind_note: existing.behind_note, blocked_reason: existing.blocked_reason,
+          title: existing.title, owner: existing.owner, helpers: existing.helpers, everyone: existing.everyone, start_date: existing.start_date, due_date: existing.due_date, status: existing.status, behind: existing.behind, behind_note: existing.behind_note, blocked_reason: existing.blocked_reason,
           blocked_by_tasks: existing.blocked_by_tasks, blocked_by_members: existing.blocked_by_members,
           links: existing.links.length ? existing.links : [],
         }
-      : { title: '', owner: '', helpers: [], everyone: false, due_date: '', status: 'todo', behind: false, behind_note: '', blocked_reason: '', blocked_by_tasks: [], blocked_by_members: [], links: [] },
+      : { title: '', owner: '', helpers: [], everyone: false, start_date: '', due_date: '', status: 'todo', behind: false, behind_note: '', blocked_reason: '', blocked_by_tasks: [], blocked_by_members: [], links: [] },
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -125,9 +127,6 @@ export function TaskEditor(props: {
               </select>
             )}
           </Field>
-          <Field label="Due date">
-            {(id) => <input id={id} class="input" type="date" value={form.due_date} onInput={(e) => set('due_date', e.currentTarget.value)} />}
-          </Field>
           <Field label="Status">
             {(id) => (
               <select id={id} class="select" value={form.status} onChange={(e) => set('status', e.currentTarget.value as Status)}>
@@ -135,6 +134,15 @@ export function TaskEditor(props: {
               </select>
             )}
           </Field>
+          <Field label="Start date" help="Optional. The lead can change it too.">
+            {(id) => <input id={id} class="input" type="date" value={form.start_date} max={form.due_date || undefined} onInput={(e) => set('start_date', e.currentTarget.value)} />}
+          </Field>
+          <Field label="Due date">
+            {(id) => <input id={id} class="input" type="date" value={form.due_date} min={form.start_date || undefined} onInput={(e) => set('due_date', e.currentTarget.value)} />}
+          </Field>
+          {form.start_date && form.due_date && form.start_date > form.due_date && (
+            <span class="xsmall warn-text span-2">The start date is after the due date.</span>
+          )}
           <div class="field">
             <span class="field-label">Schedule</span>
             <Toggle checked={form.behind} onChange={(v) => set('behind', v)} label={form.behind ? 'Behind schedule' : 'On schedule'} />
@@ -199,6 +207,10 @@ export function TaskEditor(props: {
             <button type="button" class="btn btn-soft btn-sm" onClick={() => set('links', [...form.links, { label: '', url: '' }])}>Add a file or link</button>
           </div>
         </fieldset>
+
+        {existing && (
+          <SubtaskList snap={snap} task={existing} canEdit onChanged={props.onSaved} onAddMany={() => props.onAddSubtasks(existing.id)} />
+        )}
 
         {existing && (
           <section class="stack">

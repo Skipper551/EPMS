@@ -7,11 +7,11 @@
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
 import { PB_URL } from '../config'
 import type {
-  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Status, Task, TaskInput, TaskLink,
+  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Subtask, Status, Task, TaskInput, TaskLink,
 } from './types'
 
 const SNAPSHOT_EXPAND =
-  'members_via_project,tasks_via_project,tasks_via_project.notes_via_task'
+  'members_via_project,tasks_via_project,tasks_via_project.notes_via_task,tasks_via_project.subtasks_via_task'
 
 let pb: PocketBase | null = null
 let mode: 'pm' | 'member' | null = null
@@ -126,7 +126,7 @@ function toTask(r: RecordModel): Task {
   const status = (['todo', 'doing', 'review', 'done'] as Status[]).includes(r.status) ? (r.status as Status) : 'todo'
   return {
     id: r.id, project: str(r.project), title: str(r.title), owner: str(r.owner), helpers: ids(r.helpers), everyone: !!r.everyone,
-    due_date: dateOnly(r.due_date),
+    start_date: dateOnly(r.start_date), due_date: dateOnly(r.due_date),
     status, behind: !!r.behind, behind_note: str(r.behind_note), blocked_by_tasks: ids(r.blocked_by_tasks), blocked_by_members: ids(r.blocked_by_members),
     blocked_reason: str(r.blocked_reason),
     links: toLinks(r.links), created: str(r.created), updated: str(r.updated),
@@ -135,6 +135,10 @@ function toTask(r: RecordModel): Task {
 
 function toNote(r: RecordModel): Note {
   return { id: r.id, task: str(r.task), author: str(r.author), text: str(r.text), created: str(r.created) }
+}
+
+function toSubtask(r: RecordModel): Subtask {
+  return { id: r.id, task: str(r.task), title: str(r.title), done: !!r.done, order: typeof r.order === 'number' ? r.order : 0, created: str(r.created) }
 }
 
 function toKeys(r: RecordModel): ProjectKeys {
@@ -147,6 +151,7 @@ const byCreated = <T extends { created: string }>(a: T, b: T) => a.created.local
 function taskBody(t: Partial<TaskInput>): Record<string, unknown> {
   const body: Record<string, unknown> = { ...t }
   if (t.due_date !== undefined) body.due_date = toPbDate(t.due_date)
+  if (t.start_date !== undefined) body.start_date = toPbDate(t.start_date)
   return body
 }
 
@@ -166,12 +171,17 @@ export function loadSnapshot(projectId: string): Promise<Snapshot> {
     const ex = r.expand ?? {}
     const taskRecords: RecordModel[] = ex.tasks_via_project ?? []
     const notes: Note[] = []
-    for (const t of taskRecords) for (const n of (t.expand?.notes_via_task ?? []) as RecordModel[]) notes.push(toNote(n))
+    const subtasks: Subtask[] = []
+    for (const t of taskRecords) {
+      for (const n of (t.expand?.notes_via_task ?? []) as RecordModel[]) notes.push(toNote(n))
+      for (const st of (t.expand?.subtasks_via_task ?? []) as RecordModel[]) subtasks.push(toSubtask(st))
+    }
     return {
       project: toProject(r),
       members: ((ex.members_via_project ?? []) as RecordModel[]).map(toMember).sort(byCreated),
       tasks: taskRecords.map(toTask).sort(byCreated),
       notes: notes.sort(byCreated),
+      subtasks: subtasks.sort((a, b) => a.order - b.order || a.created.localeCompare(b.created)),
     }
   })
 }
@@ -306,6 +316,11 @@ export function deleteTask(id: string): Promise<void> {
 /** Member move: only doing or review are allowed by the server. Sends nothing but the status. */
 export function setStatus(id: string, status: Status): Promise<Task> {
   return run(async () => toTask(await client().collection('tasks').update(id, { status })))
+}
+
+/** Lead or PM: set or clear when work on a task begins. Sends nothing but the start date. */
+export function setStartDate(id: string, date: string): Promise<Task> {
+  return run(async () => toTask(await client().collection('tasks').update(id, { start_date: toPbDate(date) })))
 }
 
 /** Member or PM: replace a task's blockers. Sends nothing but the blocker fields. */
@@ -444,4 +459,27 @@ export async function postToChat(projectId: string, text: string): Promise<void>
 /** Record that the PM shared an update some other way (copied it into the chat). */
 export function markUpdateShared(keysId: string): Promise<ProjectKeys> {
   return run(async () => toKeys(await client().collection('project_keys').update(keysId, { last_summary_at: pbTime(new Date().toISOString()) })))
+}
+
+// ---------- subtasks ----------
+
+/** Add subtasks to a task, in order, after any it already has. */
+export function createSubtasks(taskId: string, titles: string[], startOrder: number): Promise<Subtask[]> {
+  return run(async () => {
+    const out: Subtask[] = []
+    for (const [i, title] of titles.entries()) {
+      out.push(toSubtask(await client().collection('subtasks').create({ task: taskId, title: title.slice(0, 200), done: false, order: startOrder + i })))
+    }
+    return out
+  })
+}
+
+export function updateSubtask(id: string, patch: Partial<Pick<Subtask, 'title' | 'done' | 'order'>>): Promise<Subtask> {
+  return run(async () => toSubtask(await client().collection('subtasks').update(id, patch)))
+}
+
+export function deleteSubtask(id: string): Promise<void> {
+  return run(async () => {
+    await client().collection('subtasks').delete(id)
+  })
 }
