@@ -394,6 +394,9 @@ function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: 
   useEffect(() => setUrl(keys?.chat_webhook ?? ''), [keys?.id, keys?.chat_webhook])
   const clean = url.trim()
   const valid = !clean || /^https?:\/\/\S+$/i.test(clean)
+  // Teams Workflows addresses carry a signature (&sig=...) unless the workflow only accepts signed-in users,
+  // in which case posting from EPMS fails with 401.
+  const teamsUnsigned = /(powerplatform\.com|logic\.azure\.com|powerautomate)/i.test(clean) && !/[?&]sig=/i.test(clean)
 
   return (
     <section class="panel">
@@ -416,6 +419,11 @@ function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: 
           {(id) => <input id={id} class="input" type="text" inputMode="url" maxLength={2000} placeholder="https://…" value={url} onInput={(e) => setUrl(e.currentTarget.value)} />}
         </Field>
         {!valid && <span class="xsmall warn-text">That doesn't look like a web address. It should start with https://</span>}
+        {valid && teamsUnsigned && (
+          <span class="xsmall warn-text">
+            This Teams address has no signature (it should end with &amp;sig=...), so Teams will refuse posts from EPMS. Either the copy was cut short, or the workflow only accepts signed-in users: in Power Automate, open the workflow, click its first step, set "Who can trigger the flow?" to Anyone, save, and copy the address again.
+          </span>
+        )}
         <div class="row">
           <button type="submit" class="btn btn-primary btn-md" disabled={!keys || s.busy || !valid || clean === (keys?.chat_webhook ?? '')}>Save</button>
           <button
@@ -432,7 +440,7 @@ function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: 
       <details>
         <summary class="small" style={{ cursor: 'pointer' }}>Where do I get a webhook address?</summary>
         <div class="stack-sm small soft" style={{ marginTop: '10px' }}>
-          <span><strong style={{ color: 'var(--text)', fontWeight: 500 }}>Teams:</strong> in the group chat, open the Workflows app (the ••• menu or Apps), pick the template that posts to a chat when a webhook request is received ("Send webhook alerts to a chat"), choose this chat, and copy the address it gives you.</span>
+          <span><strong style={{ color: 'var(--text)', fontWeight: 500 }}>Teams:</strong> in the group chat, open the Workflows app (the ••• menu or Apps), pick the template that posts to a chat when a webhook request is received ("Send webhook alerts to a chat"), choose this chat, and copy the address it gives you. It must end with &amp;sig= and a long code; if it doesn't, open the workflow in Power Automate, click its first step, set "Who can trigger the flow?" to Anyone, save, and copy it again.</span>
           <span><strong style={{ color: 'var(--text)', fontWeight: 500 }}>Discord:</strong> Server settings, Integrations, Webhooks, New webhook, pick the channel, Copy webhook URL.</span>
           <span><strong style={{ color: 'var(--text)', fontWeight: 500 }}>Slack:</strong> create an incoming webhook for the channel and copy its URL.</span>
           <span class="muted xsmall">The address is stored with the project's private keys: members and AIs can't see it.</span>

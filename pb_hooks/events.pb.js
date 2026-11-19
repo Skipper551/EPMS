@@ -81,6 +81,10 @@ routerAdd("POST", "/api/gh/chat/{project}", (e) => {
   } catch (err) {
     throw new BadRequestError("Couldn't reach the chat. Check the webhook address in Project settings.")
   }
+  const isTeams = /(powerplatform\.com|logic\.azure\.com|powerautomate)/i.test(url)
+  if (isTeams && (res.statusCode === 401 || res.statusCode === 403)) {
+    throw new BadRequestError("Teams refused the post (error " + res.statusCode + "): the workflow only accepts signed-in users. In Power Automate, open the workflow, click its first step, set \"Who can trigger the flow?\" to Anyone, save, and copy the new address (it ends with &sig=...).")
+  }
   if (res.statusCode < 200 || res.statusCode >= 300) {
     throw new BadRequestError("The chat didn't accept the update (error " + res.statusCode + "). Check the webhook address in Project settings.")
   }
