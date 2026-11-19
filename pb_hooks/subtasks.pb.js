@@ -9,3 +9,6 @@ onRecordCreateRequest((e) => {
   }
   e.next()
 }, "subtasks")
+
+// Lets the EPMS setup check see that this file is installed, and which version.
+routerAdd("GET", "/api/gh/hooks/subtasks", (e) => e.json(200, { name: "subtasks", version: "2026-11-19" }))

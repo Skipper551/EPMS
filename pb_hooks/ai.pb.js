@@ -30,3 +30,6 @@ onRecordEnrich((e) => {
   }
   e.next()
 }, "projects")
+
+// Lets the EPMS setup check see that this file is installed, and which version.
+routerAdd("GET", "/api/gh/hooks/ai", (e) => e.json(200, { name: "ai", version: "2026-11-19" }))

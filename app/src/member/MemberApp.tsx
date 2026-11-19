@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { claimName, initMember, joinInfo, listEvents, memberStatus, setPin, setStatus, signInWithPin, type StoreError } from '../data/store'
+import { claimName, initMember, setBackend, joinInfo, listEvents, memberStatus, setPin, setStatus, signInWithPin, type StoreError } from '../data/store'
 import type { ActivityEvent, JoinInfo, Snapshot, Status, Task } from '../data/types'
 import { copyText, personalHash, personalLink, readFragment, type LinkParts } from '../lib/util'
 import { useSnapshot } from '../lib/useSnapshot'
@@ -9,12 +9,14 @@ import { forgetSession, patchSession, saveSession, sessionFor, sessions, type Se
 import { MyTasks, Sidebar, type TaskActions } from './MyTasks'
 import { AiSetup, AiSetupContent, PickName, PinInput, Tour } from './Welcome'
 import { SinceLastVisit } from './Updates'
+import { StartGuide } from './StartGuide'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 
 type Route =
   | { kind: 'session'; session: Session }
-  | { kind: 'join'; projectId: string; groupKey: string }
+  | { kind: 'join'; projectId: string; groupKey: string; pbUrl: string }
   | { kind: 'none' }
+  | { kind: 'start' }
 
 /** Work out what to show from the URL and what this device remembers. */
 function route(): Route {
@@ -23,8 +25,9 @@ function route(): Route {
     // A personal link: sign this device in as that member (opened on a new device, or a bookmark).
     const known = sessionFor(link.projectId)
     const same = known && known.memberId === link.memberId && known.personalKey === link.personalKey
+    if (!link.pbUrl) return { kind: 'none' }
     const session = saveSession({
-      projectId: link.projectId, memberId: link.memberId, personalKey: link.personalKey,
+      projectId: link.projectId, memberId: link.memberId, personalKey: link.personalKey, pbUrl: link.pbUrl,
       ai: link.ai || (same ? known.ai : ''), name: same ? known.name : '', setupDone: same ? known.setupDone : true,
       lastSeen: same ? known.lastSeen : undefined,
     })
@@ -33,8 +36,10 @@ function route(): Route {
   if (link?.groupKey) {
     // The group link: if this device already picked a name in this project, go straight in.
     const known = sessionFor(link.projectId)
-    return known ? { kind: 'session', session: known } : { kind: 'join', projectId: link.projectId, groupKey: link.groupKey }
+    if (known) return { kind: 'session', session: known }
+    return link.pbUrl ? { kind: 'join', projectId: link.projectId, groupKey: link.groupKey, pbUrl: link.pbUrl } : { kind: 'none' }
   }
+  if (location.hash === '#start') return { kind: 'start' }
   if (location.hash.replace(/^#/, '')) return { kind: 'none' }
   const last = sessions()[0]
   return last ? { kind: 'session', session: last } : { kind: 'none' }
@@ -42,7 +47,7 @@ function route(): Route {
 
 /** Keep the personal link in the address bar so a bookmark brings the member back. */
 function showPersonalHash(s: Session) {
-  history.replaceState(null, '', `#${personalHash(s.projectId, s.memberId, s.personalKey, s.ai)}`)
+  history.replaceState(null, '', `#${personalHash(s.projectId, s.memberId, s.personalKey, s.ai, s.pbUrl)}`)
 }
 
 export function MemberApp() {
@@ -57,8 +62,9 @@ export function MemberApp() {
   return (
     <>
       {r.kind === 'session' && <Project key={`${r.session.projectId}:${r.session.personalKey}`} session={r.session} onLeave={() => setR(route())} />}
-      {r.kind === 'join' && <Join projectId={r.projectId} groupKey={r.groupKey} onJoined={(s) => setR({ kind: 'session', session: s })} />}
+      {r.kind === 'join' && <Join projectId={r.projectId} groupKey={r.groupKey} pbUrl={r.pbUrl} onJoined={(s) => setR({ kind: 'session', session: s })} />}
       {r.kind === 'none' && <NoLink />}
+      {r.kind === 'start' && <StartGuide />}
       <Toasts />
     </>
   )
@@ -74,21 +80,48 @@ function Shell(props: { children: preact.ComponentChildren }) {
 }
 
 function NoLink() {
-  const broken = !!location.hash.replace(/^#/, '')
+  const hash = location.hash.replace(/^#/, '')
+  const broken = !!hash
+  const noInstance = /(^|&)p=/.test(hash) && !/(^|&)pb=/.test(hash)
+  if (broken) {
+    return (
+      <Shell>
+        <h1 class="h1-xl">This link isn't complete</h1>
+        <p class="muted" style={{ margin: 0 }}>
+          {noInstance
+            ? "This link doesn't say which instance the project lives on; it may be from an older version of EPMS. Ask your PM to copy the group link again and share the new one."
+            : 'Part of the link is missing. Copy the whole link from the group chat and open it again.'}
+        </p>
+      </Shell>
+    )
+  }
   return (
     <Shell>
-      <h1 class="h1-xl">{broken ? "This link isn't complete" : 'Open your project link'}</h1>
-      <p class="muted" style={{ margin: 0 }}>
-        {broken
-          ? 'Part of the link is missing. Copy the whole link from the group chat and open it again.'
-          : "EPMS opens from the link your PM posts in the group chat. Open that link on this device and you'll go straight to your project. After that, this page remembers it."}
-      </p>
-      <p class="muted small" style={{ margin: 0 }}>Are you the PM? <a href="./pm.html">Log in to your board</a></p>
+      <div class="stack-sm">
+        <span class="muted small">Educational Project Management Software</span>
+        <h1 class="h1-xl">Welcome to EPMS</h1>
+        <p class="muted" style={{ margin: 0 }}>Free, open-source project management for university group projects, run by one project manager.</p>
+      </div>
+      <div class="card stack-sm">
+        <strong style={{ fontWeight: 600 }}>In a group already?</strong>
+        <span class="muted small">Open the link your PM posted in the group chat, on this device. After that, this page remembers your project.</span>
+      </div>
+      <div class="card stack">
+        <div class="stack-sm">
+          <strong style={{ fontWeight: 600 }}>Running a group project?</strong>
+          <span class="muted small">Set up EPMS for your group in about 10 minutes. Free, and your data stays in your own instance.</span>
+        </div>
+        <div class="row">
+          <a class="btn btn-primary btn-md" href="#start">Set up EPMS</a>
+          <a class="btn btn-soft btn-md" href="./pm.html">Log in to my board</a>
+        </div>
+      </div>
     </Shell>
   )
 }
 
-function Join(props: { projectId: string; groupKey: string; onJoined: (s: Session) => void }) {
+function Join(props: { projectId: string; groupKey: string; pbUrl: string; onJoined: (s: Session) => void }) {
+  setBackend(props.pbUrl)
   const [info, setInfo] = useState<JoinInfo | null>(null)
   const [loadError, setLoadError] = useState<StoreError | null>(null)
   const [busy, setBusy] = useState(false)
@@ -114,7 +147,7 @@ function Join(props: { projectId: string; groupKey: string; onJoined: (s: Sessio
     try {
       const claim = await signInWithPin(props.projectId, props.groupKey, memberId, pin)
       const s = saveSession({
-        projectId: props.projectId, memberId: claim.member, personalKey: claim.key, ai: claim.ai_key,
+        projectId: props.projectId, memberId: claim.member, personalKey: claim.key, ai: claim.ai_key, pbUrl: props.pbUrl,
         name: info!.project.name, setupDone: true, lastSeen: new Date().toISOString(),
       })
       showPersonalHash(s)
@@ -131,7 +164,7 @@ function Join(props: { projectId: string; groupKey: string; onJoined: (s: Sessio
     try {
       const claim = await claimName(props.projectId, props.groupKey, memberId, pin)
       const s = saveSession({
-        projectId: props.projectId, memberId: claim.member, personalKey: claim.key, ai: claim.ai_key,
+        projectId: props.projectId, memberId: claim.member, personalKey: claim.key, ai: claim.ai_key, pbUrl: props.pbUrl,
         name: info!.project.name, setupDone: skipIntro, lastSeen: new Date().toISOString(),
       })
       showPersonalHash(s)
@@ -150,6 +183,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
   const [session, setSession] = useState(props.session)
   const started = useRef(false)
   if (!started.current) {
+    setBackend(session.pbUrl)
     initMember(session.personalKey)
     started.current = true
   }
@@ -342,7 +376,7 @@ function MemberMenu(props: { snap: Snapshot; session: Session; onAi: () => void;
               <span class="menu-label">Your other projects on this device</span>
               {others.map((o) => (
                 <button key={o.projectId} type="button" role="menuitem" class="menu-item"
-                  onClick={pick(() => { location.hash = personalHash(o.projectId, o.memberId, o.personalKey, o.ai) })}>
+                  onClick={pick(() => { location.hash = personalHash(o.projectId, o.memberId, o.personalKey, o.ai, o.pbUrl) })}>
                   {o.name || 'Project'}
                 </button>
               ))}
@@ -356,7 +390,7 @@ function MemberMenu(props: { snap: Snapshot; session: Session; onAi: () => void;
             role="menuitem"
             class="menu-item"
             onClick={pick(async () => {
-              const ok = await copyText(personalLink(s.projectId, s.memberId, s.personalKey, s.ai))
+              const ok = await copyText(personalLink(s.projectId, s.memberId, s.personalKey, s.ai, s.pbUrl))
               toast(ok ? 'Personal link copied. Open it on your other devices, and keep it to yourself: it signs in as you.' : "Couldn't copy the link.", !ok)
             })}
           >

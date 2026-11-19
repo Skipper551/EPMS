@@ -27,7 +27,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 
 - Backend: one PocketBase instance per PM on PocketBase Cloud's free plan (1 instance, 50 MB, 5,000 API requests/hour, never hibernates). One instance holds all of that PM's projects; each project is isolated with its own group link. PocketBase is MIT-licensed open source, so a PM can also self-host it.
 - The free plan needs a $0 Stripe subscription (card on file, never charged). The PM setup screen explains this plainly.
-- Frontend: static app, hosted on PocketBase Cloud's free frontend slots or GitHub Pages.
+- Frontend: static app. One shared copy on GitHub Pages works with any PM's instance: the PM enters their instance address at login, and links carry it after `#` (`pb=`). Anyone can also host their own copy with a default instance (VITE_PB_URL).
 - Data access goes through a small storage layer so the backend can be swapped.
 - Each project has a group link (members pick their name once), a personal link per member, and a read-only link for AIs.
 - AIs read the project through the read-only link placed in their standing instructions. No AI writes in v1.
@@ -120,6 +120,12 @@ Screens are on the design canvas: https://claude.ai/artifact/UG853jZTSu7BzvwMfaF
 Decisions from design review:
 - The PM never appears in the member name picker. The PM view is reached only through the PocketBase superuser login, never through the group or personal links.
 - The browser remembers which member it is signed in as (localStorage, one per project), so returning members go straight to My tasks. A name that's already set up can't be picked again; on a new device the member opens their personal link (copied from the menu on their first device) or asks the PM to reset their name.
+
+## PM onboarding
+
+- **Start page:** the shared site without a link welcomes members ("open your PM's link") and PMs ("Set up EPMS"), with a 5-step guide at `#start`: PocketBase Cloud free plan (card on file, never charged), superuser, log in.
+- **Setup check after login:** compares the instance with the bundled pb_schema.json (collections, fields, rules) and asks each hook file for its version (`/api/gh/hooks/<name>`). Collections install or update in one click (superuser import, never deletes); hooks are offered as a zip with steps for the Code tab. Also under Check setup in the project menu.
+- **Getting started checklist** on a new project's board: add your group, write the guidelines, plan the tasks, share the group link, set up chat updates (optional). Ticks itself; hideable.
 
 ## Teams link previews (tested 2026-11-18)
 

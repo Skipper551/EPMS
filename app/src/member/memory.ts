@@ -2,6 +2,7 @@
 // with that member's personal key), whether they finished the first visit, and the project name for the menu.
 // The personal key works like a password reset link: whoever has it acts as that member.
 
+import { DEFAULT_PB_URL } from '../config'
 import { load, save } from '../lib/util'
 
 const SESSIONS = 'gh:member:sessions:v2'
@@ -11,6 +12,8 @@ export interface Session {
   memberId: string
   personalKey: string
   ai: string
+  /** The PocketBase instance this project lives on */
+  pbUrl: string
   name: string
   setupDone: boolean
   lastOpened: number
@@ -22,7 +25,9 @@ export function sessions(): Session[] {
   try {
     const list = JSON.parse(load(SESSIONS) ?? '[]')
     return Array.isArray(list)
-      ? list.filter((s) => s && typeof s.projectId === 'string' && typeof s.memberId === 'string' && typeof s.personalKey === 'string')
+      ? list
+          .filter((s) => s && typeof s.projectId === 'string' && typeof s.memberId === 'string' && typeof s.personalKey === 'string')
+          .map((s) => ({ ...s, pbUrl: typeof s.pbUrl === 'string' && s.pbUrl ? s.pbUrl : DEFAULT_PB_URL }))
       : []
   } catch {
     return []
