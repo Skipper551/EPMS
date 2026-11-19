@@ -55,6 +55,23 @@ export function when(iso: string): string {
   return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`
 }
 
+/** "Mon 23 Nov to Fri 27 Nov", "Due Fri 27 Nov", "Starts Mon 23 Nov" or ''. */
+export function dateRange(start: string, due: string): string {
+  if (start && due) return `${formatDay(start)} to ${formatDay(due)}`
+  if (due) return `Due ${formatDay(due)}`
+  if (start) return `Starts ${formatDay(start)}`
+  return ''
+}
+
+/** Where a task stands against its start date: not yet (upcoming), should have begun (late), or nothing to say. */
+export function startState(t: Task): 'upcoming' | 'late' | null {
+  if (!t.start_date || t.status !== 'todo') return null
+  const today_ = today()
+  if (t.start_date > today_) return 'upcoming'
+  if (t.start_date < today_) return 'late'
+  return null
+}
+
 /** Sort key that puts tasks without a due date last. */
 export const dueKey = (t: Task) => t.due_date || '9999-99-99'
 

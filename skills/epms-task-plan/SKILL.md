@@ -26,6 +26,7 @@ EPMS (Educational Project Management Software) is a free project management app 
 - Collaborative work: when two or three people genuinely have to do something together (an interview pair, co-writing a section), give it a lead and list the others in `helpers`. Prefer splitting into separate tasks when the work can be divided; shared tasks without one accountable person tend to stall.
 - Whole-group work (rehearsing the presentation, everyone reading the final draft, a group meeting): set `"everyone": true` with a lead, usually the PM, and no helpers.
 - Order work with blockers: a task that can't start until another is done lists it in `blocked_by`. Avoid long chains when tasks could run in parallel.
+- Start dates: give each task a `start` so members know when to begin, not only when to finish. Tasks that wait on others start when those are due.
 - Due dates: leave a buffer before the final deadline for merging, proofreading and rehearsal. Put review-heavy tasks earlier.
 - Descriptions are read by the task owner as the first note on their task. Write them for that person: what to do, in a few concrete steps, and what "done" looks like. Respect the PM's guidelines (citation style, word limits, tone).
 - For bigger tasks, add `subtasks`: short steps the owner can tick off in one sitting each. Members can also add their own later, with their AI or by hand.
@@ -49,6 +50,7 @@ EPMS (Educational Project Management Software) is a free project management app 
       "id": "find-sources",
       "title": "Find 5 sources",
       "owner": "Ala",
+      "start": "2026-11-16",
       "due": "2026-11-20",
       "description": "Find five peer-reviewed sources on open innovation in mid-sized firms. Save each in the shared References doc in APA 7 with its DOI. Done when all five are in the doc with a one-line summary each.",
       "blocked_by": [],
@@ -59,6 +61,7 @@ EPMS (Educational Project Management Software) is a free project management app 
       "id": "write-intro",
       "title": "Write the introduction",
       "owner": "Jimmy",
+      "start": "2026-11-21",
       "due": "2026-11-30",
       "description": "Using Ala's sources, write a 400 to 600 word introduction that sets out the research question.",
       "blocked_by": ["find-sources"],
@@ -105,6 +108,7 @@ Each task:
 | `owner` | no | The lead: one member's name, spelled exactly as in EPMS, accountable for the task. Leave out if unassigned. |
 | `helpers` | no | Other members working on the task with the lead. They see it on their page and can start it or send it to review. |
 | `everyone` | no | `true` for a whole-group task: it shows on every member's page. Give it a lead and no helpers. |
+| `start` | no | When work should begin, as `YYYY-MM-DD`. Stagger starts around blockers: a task should start when the work it's blocked by is due. The task's lead can move it later. |
 | `due` | no | Date as `YYYY-MM-DD`. No times. |
 | `description` | no | Instructions for the owner (max 5,000 characters). Becomes the task's first note, posted by the PM. |
 | `blocked_by` | no | List of `id`s of tasks in this file, or exact titles of tasks already on the EPMS board. |
@@ -129,6 +133,6 @@ Each task:
 - [ ] Every `owner`, `helpers` and `waiting_on` name is spelled exactly as the PM gave it; the lead isn't also listed as a helper.
 - [ ] `everyone` tasks have a lead and no helpers.
 - [ ] Every `blocked_by` entry is an `id` in this file or an exact existing title; no task blocks itself; no cycles.
-- [ ] Every `due` is `YYYY-MM-DD` and on or before the final deadline.
+- [ ] Every `start` and `due` is `YYYY-MM-DD`, each `start` is on or before its `due`, and every `due` is on or before the final deadline.
 - [ ] No em dashes anywhere.
 - [ ] Only the JSON goes in the code block. After it, tell the PM in one line: "In EPMS, open your board, choose Import tasks, and paste this."

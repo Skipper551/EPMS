@@ -52,7 +52,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 
 - **Project**: name, course, final deadline, guidelines (PM-written text), members, tasks, created date.
 - **Member**: name, role in the group (free text), PM flag (a project can have more than one PM).
-- **Task**: title, lead (owner), helpers, whole-group flag, due date, status, behind schedule (flag set by PM), blocked by (tasks and/or members), files or links, notes.
+- **Task**: title, lead (owner), helpers, whole-group flag, start date (set by the PM or the lead), due date, status, behind schedule (flag set by PM), blocked by (tasks and/or members), files or links, notes.
 - **Status**: To do, In progress, Review, Done. (Stored as todo, doing, review, done.)
 - **Subtask**: a checklist item on a task (title, done, order); the task's lead and helpers tick them off, and the PM and members see the percentage. Members add them by hand or paste a list from their AI.
 - **Note**: author, text, timestamp.
@@ -78,7 +78,7 @@ Every record also gets PocketBase's automatic id, created and updated timestamps
 
 ### Access rules (members and AIs; PM bypasses as superuser)
 - **Read anything in a project** (projects, members, tasks, notes): allowed when a member_keys row has a key matching `@request.headers.x_member_key` and its member belongs to that project, or the project's ai_key matches `@request.query.ai_key`. The group key alone reads nothing.
-- **tasks, update**: personal key matches, AND that member leads or helps on the task, AND the only fields sent are status, blocked_by_tasks and blocked_by_members, AND the new status is doing or review (never done). Title, owner, helpers, everyone, dates, behind and links stay PM-only.
+- **tasks, update**: personal key matches, AND that member leads or helps on the task, AND the only fields sent are status, blocked_by_tasks and blocked_by_members, AND the new status is doing or review (never done). Title, owner, helpers, everyone, due date, behind and links stay PM-only; the start date can also be changed by the task's lead (not helpers).
 - **notes, create**: personal key matches through the task's project, AND the note's author is that member.
 - **events**: read like tasks; nobody can create, edit or delete them through the API. Only the server's hooks write them.
 - **Everything else** (creating, deleting or editing projects, members, tasks): superuser only, i.e. no public rule.

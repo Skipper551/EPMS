@@ -12,7 +12,7 @@ Free forever, private, no central server: each PM runs their own copy on free se
 
 **For the PM**
 - A board with To do, In progress, Review and Done, filtered by member
-- Tasks with a lead, optional helpers, or the whole group; due dates, blockers, files and links, notes
+- Tasks with a lead, optional helpers, or the whole group; start and due dates, blockers, files and links, notes
 - Approve finished work, or send it back with a comment; mark tasks behind schedule in one tap, with an optional note
 - After a session on the board, post one summary of the changes to the group chat (Teams, Discord or Slack), or copy it
 - Project guidelines that members and their AIs follow
@@ -22,6 +22,7 @@ Free forever, private, no central server: each PM runs their own copy on free se
 **For members**
 - Open the group link once, pick your name, and that device stays signed in as you
 - My tasks in due date order: start, send to review, add notes, flag blockers (a task, a person, or anything else)
+- Tasks that haven't started yet wait under Coming up; the lead can set when they'll start
 - Break big tasks into subtasks, written by hand or worked out with your AI, and tick them off; the PM sees the percentage
 - Since your last visit: what changed on your tasks while you were away
 - Who is waiting on you, the group's progress, and the PM's guidelines

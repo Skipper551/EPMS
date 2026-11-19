@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import type { Member, Snapshot, Task } from '../data/types'
 import { STATUS_LABEL } from '../data/types'
-import { activeBlockers, canMove, dueKey, formatDay, involvement, joinNames, memberName, today, waitingOn } from '../lib/util'
+import { activeBlockers, canMove, dateRange, dueKey, formatDay, startState, involvement, joinNames, memberName, today, waitingOn } from '../lib/util'
 import { SparkIcon, StatusPill } from '../ui/ui'
 import { BlockerSummary } from '../ui/BlockerSummary'
 import { SubtaskProgress, subtasksOf } from '../ui/Subtasks'
@@ -29,7 +29,10 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
   const { snap, me, actions } = props
   const [showDone, setShowDone] = useState(false)
   const mine = snap.tasks.filter((t) => involvement(t, me.id)).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
-  const open = mine.filter((t) => t.status !== 'done')
+  const active = mine.filter((t) => t.status !== 'done')
+  // Tasks whose start date is still ahead wait in "Coming up", so the main list is what to work on now.
+  const comingUp = active.filter((t) => startState(t) === 'upcoming').sort((a, b) => a.start_date.localeCompare(b.start_date))
+  const open = active.filter((t) => startState(t) !== 'upcoming')
   const done = mine.filter((t) => t.status === 'done')
   const nextDue = open.find((t) => t.due_date && t.status !== 'review')
 
@@ -47,11 +50,21 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
 
       {props.updates}
 
-      {open.length === 0 && (
+      {open.length === 0 && comingUp.length > 0 && (
+        <div class="empty">Nothing to work on right now. Your next task starts {formatDay(comingUp[0].start_date)}.</div>
+      )}
+      {open.length === 0 && comingUp.length === 0 && (
         <div class="empty">{mine.length ? 'All your tasks are done. Nice work.' : 'No tasks for you yet. Your PM will add them here.'}</div>
       )}
 
       {open.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} fresh={props.highlight.has(t.id)} />)}
+
+      {comingUp.length > 0 && (
+        <section class="stack" aria-label="Coming up">
+          <h2 class="eyebrow" style={{ marginTop: '8px' }}>Coming up</h2>
+          {comingUp.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} fresh={props.highlight.has(t.id)} quiet />)}
+        </section>
+      )}
 
       <div class="hint-box">
         <SparkIcon />
@@ -73,7 +86,7 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
   )
 }
 
-function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean; actions: TaskActions; fresh: boolean }) {
+function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean; actions: TaskActions; fresh: boolean; quiet?: boolean }) {
   const { snap, task: t, actions } = props
   const notes = snap.notes.filter((n) => n.task === t.id)
   const fromOthers = notes.filter((n) => n.author !== props.me.id)
@@ -92,7 +105,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
   const movable = canMove(t, props.me.id)
   const meta = [
     withText,
-    t.due_date ? `Due ${formatDay(t.due_date)}` : 'No due date',
+    dateRange(t.start_date, t.due_date) || 'No due date',
     fromOthers.length === 1 && `1 note from ${memberName(snap, fromOthers[0].author) || 'the PM'}`,
     fromOthers.length > 1 && `${fromOthers.length} notes`,
   ].filter(Boolean).join(' · ')
@@ -102,7 +115,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
     t.status === 'doing' ? 'Send to review' : null
 
   return (
-    <article class="card stack" style={{ opacity: t.status === 'done' ? 0.7 : 1, borderColor: props.fresh ? 'var(--accent)' : undefined }}>
+    <article class="card stack" style={{ opacity: t.status === 'done' ? 0.7 : props.quiet ? 0.85 : 1, borderColor: props.fresh ? 'var(--accent)' : undefined }}>
       <div class="row-between" style={{ alignItems: 'flex-start' }}>
         <div class="stack-sm grow" style={{ gap: '4px' }}>
           <h2 style={{ fontSize: '17px', fontWeight: 600 }}>
@@ -126,6 +139,10 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
           <StatusPill status={t.status} />
         </div>
       </div>
+
+      {startState(t) === 'late' && (
+        <div class="blocked-box"><span>Should have started {formatDay(t.start_date)}. Press Start when you begin.</span></div>
+      )}
 
       {t.behind && t.status !== 'done' && t.behind_note && (
         <div class="blocked-box"><span>Behind schedule: {t.behind_note}</span></div>

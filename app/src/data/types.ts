@@ -102,6 +102,8 @@ export interface Task {
   helpers: string[]
   /** Whole-group task: shows on every member's page */
   everyone: boolean
+  /** When work should begin, YYYY-MM-DD or ''. Set by the PM or the task's lead. */
+  start_date: string
   /** YYYY-MM-DD or '' */
   due_date: string
   status: Status
@@ -164,6 +166,7 @@ export interface TaskInput {
   owner: string
   helpers: string[]
   everyone: boolean
+  start_date: string
   due_date: string
   status: Status
   behind: boolean

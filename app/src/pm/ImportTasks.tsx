@@ -75,6 +75,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
           owner: personId(row.owner),
           helpers: [...new Set(row.helpers.map(personId).filter((id) => id && id !== personId(row.owner)))],
           everyone: row.task.everyone,
+          start_date: row.task.start,
           due_date: row.task.due,
           status: row.task.status,
           behind: false,
@@ -255,7 +256,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
                 <span class="xsmall muted">{skipped ? 'Already on the board' : STATUS_LABEL[r.task.status]}</span>
               </div>
               <span class="xsmall muted">
-                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? `${ownerText(r.owner)} with ${r.helpers.map(ownerText).join(', ')}` : ownerText(r.owner), r.dueText ? `due ${r.dueText}` : 'no due date', r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`, r.task.subtasks.length && `${r.task.subtasks.length} ${r.task.subtasks.length === 1 ? 'subtask' : 'subtasks'}`]
+                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? `${ownerText(r.owner)} with ${r.helpers.map(ownerText).join(', ')}` : ownerText(r.owner), r.startText ? `starts ${r.startText}` : '', r.dueText ? `due ${r.dueText}` : 'no due date', r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`, r.task.subtasks.length && `${r.task.subtasks.length} ${r.task.subtasks.length === 1 ? 'subtask' : 'subtasks'}`]
                   .filter(Boolean).join(' · ')}
               </span>
               {(blockers.length > 0 || waiting.length > 0) && (

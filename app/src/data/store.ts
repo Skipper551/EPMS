@@ -126,7 +126,7 @@ function toTask(r: RecordModel): Task {
   const status = (['todo', 'doing', 'review', 'done'] as Status[]).includes(r.status) ? (r.status as Status) : 'todo'
   return {
     id: r.id, project: str(r.project), title: str(r.title), owner: str(r.owner), helpers: ids(r.helpers), everyone: !!r.everyone,
-    due_date: dateOnly(r.due_date),
+    start_date: dateOnly(r.start_date), due_date: dateOnly(r.due_date),
     status, behind: !!r.behind, behind_note: str(r.behind_note), blocked_by_tasks: ids(r.blocked_by_tasks), blocked_by_members: ids(r.blocked_by_members),
     blocked_reason: str(r.blocked_reason),
     links: toLinks(r.links), created: str(r.created), updated: str(r.updated),
@@ -151,6 +151,7 @@ const byCreated = <T extends { created: string }>(a: T, b: T) => a.created.local
 function taskBody(t: Partial<TaskInput>): Record<string, unknown> {
   const body: Record<string, unknown> = { ...t }
   if (t.due_date !== undefined) body.due_date = toPbDate(t.due_date)
+  if (t.start_date !== undefined) body.start_date = toPbDate(t.start_date)
   return body
 }
 
@@ -315,6 +316,11 @@ export function deleteTask(id: string): Promise<void> {
 /** Member move: only doing or review are allowed by the server. Sends nothing but the status. */
 export function setStatus(id: string, status: Status): Promise<Task> {
   return run(async () => toTask(await client().collection('tasks').update(id, { status })))
+}
+
+/** Lead or PM: set or clear when work on a task begins. Sends nothing but the start date. */
+export function setStartDate(id: string, date: string): Promise<Task> {
+  return run(async () => toTask(await client().collection('tasks').update(id, { start_date: toPbDate(date) })))
 }
 
 /** Member or PM: replace a task's blockers. Sends nothing but the blocker fields. */

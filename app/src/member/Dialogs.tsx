@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
-import { addNote, setBlockers, type StoreError } from '../data/store'
+import { addNote, setBlockers, setStartDate, type StoreError } from '../data/store'
 import type { Member, Snapshot, Task } from '../data/types'
-import { canMove, formatDay, memberName, peopleText, when } from '../lib/util'
+import { canMove, dateRange, formatDay, memberName, peopleText, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
 import { SubtaskList, subtasksOf } from '../ui/Subtasks'
 import { BlockedIcon, Dialog, ErrorBox, Field, StatusPill, toast } from '../ui/ui'
@@ -51,7 +51,7 @@ export function TaskDetail(props: {
       <div class="row" style={{ gap: '8px 16px' }}>
         <StatusPill status={t.status} />
         {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
-        <span class="muted small">{t.due_date ? `Due ${formatDay(t.due_date)}` : 'No due date'}</span>
+        <span class="muted small">{dateRange(t.start_date, t.due_date) || 'No due date'}</span>
         <span class="muted small">{peopleText(snap, t)}</span>
       </div>
 
@@ -75,6 +75,8 @@ export function TaskDetail(props: {
           {t.links.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ overflowWrap: 'anywhere' }}>{l.label}</a>)}
         </section>
       )}
+
+      {t.owner === props.me.id && t.status !== 'done' && <StartDateEditor task={t} max={t.due_date} onChanged={props.onChanged} />}
 
       {(mine || subtasksOf(snap, t.id).length > 0) && (
         <SubtaskList snap={snap} task={t} canEdit={mine && t.status !== 'done'} onChanged={props.onChanged} onAddMany={() => props.onAddSubtasks(t)} />
@@ -170,4 +172,40 @@ export function BlockedDialog(props: { snap: Snapshot; me: Member; taskId: strin
 
 export function AiAgainDialog(props: { children: preact.ComponentChildren; onClose: () => void }) {
   return <Dialog title="Connect your AI" onClose={props.onClose} wide>{props.children}</Dialog>
+}
+
+/** The task's lead can say when they'll start (the PM can too, from the board). */
+function StartDateEditor(props: { task: Task; max: string; onChanged: () => void }) {
+  const [value, setValue] = useState(props.task.start_date)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const changed = value !== props.task.start_date
+  async function save(e: Event) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      await setStartDate(props.task.id, value)
+      toast(value ? `Start date set to ${formatDay(value)}` : 'Start date cleared')
+      props.onChanged()
+    } catch (err) {
+      setError((err as StoreError).message)
+    }
+    setBusy(false)
+  }
+  return (
+    <form class="stack-sm" onSubmit={save}>
+      <div class="row" style={{ alignItems: 'flex-end' }}>
+        <div style={{ minWidth: '180px' }}>
+          <Field label="I'll start on" help="You lead this task, so you can set when you begin.">
+            {(id) => <input id={id} class="input" type="date" value={value} max={props.max || undefined} onInput={(e) => setValue(e.currentTarget.value)} />}
+          </Field>
+        </div>
+        <button type="submit" class="btn btn-soft btn-md" disabled={busy || !changed} style={{ marginBottom: '22px' }}>Save</button>
+        {props.task.start_date && <button type="button" class="btn-text" style={{ marginBottom: '30px', color: 'var(--muted)' }} disabled={busy} onClick={() => setValue('')}>Clear</button>}
+      </div>
+      {value && props.max && value > props.max && <span class="xsmall warn-text">That's after the due date ({formatDay(props.max)}).</span>}
+      <ErrorBox error={error} />
+    </form>
+  )
 }
