@@ -4,6 +4,7 @@ import type { Snapshot, Status, TaskInput, TaskLink } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
 import { memberName, normaliseUrl, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
+import { SubtaskList } from '../ui/Subtasks'
 import { CloseIcon, Dialog, ErrorBox, Field, Toggle, toast } from '../ui/ui'
 
 export function TaskEditor(props: {
@@ -12,6 +13,7 @@ export function TaskEditor(props: {
   pmAuthorId: string
   onClose: () => void
   onSaved: () => void
+  onAddSubtasks: (taskId: string) => void
 }) {
   const { snap } = props
   const existing = props.taskId ? snap.tasks.find((t) => t.id === props.taskId) ?? null : null
@@ -199,6 +201,10 @@ export function TaskEditor(props: {
             <button type="button" class="btn btn-soft btn-sm" onClick={() => set('links', [...form.links, { label: '', url: '' }])}>Add a file or link</button>
           </div>
         </fieldset>
+
+        {existing && (
+          <SubtaskList snap={snap} task={existing} canEdit onChanged={props.onSaved} onAddMany={() => props.onAddSubtasks(existing.id)} />
+        )}
 
         {existing && (
           <section class="stack">

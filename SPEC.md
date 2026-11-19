@@ -54,6 +54,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 - **Member**: name, role in the group (free text), PM flag (a project can have more than one PM).
 - **Task**: title, lead (owner), helpers, whole-group flag, due date, status, behind schedule (flag set by PM), blocked by (tasks and/or members), files or links, notes.
 - **Status**: To do, In progress, Review, Done. (Stored as todo, doing, review, done.)
+- **Subtask**: a checklist item on a task (title, done, order); the task's lead and helpers tick them off, and the PM and members see the percentage. Members add them by hand or paste a list from their AI.
 - **Note**: author, text, timestamp.
 - **Blocker**: on a task; points at another task, a member, or free text for anything else ("waiting for the professor's feedback"); added by the PM or the task's lead or helpers; a task blocker clears when that task is Done, the others when removed.
 
@@ -71,6 +72,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 - **members**: project (relation), name, role (text), is_pm (bool). PMs can own tasks but never appear in the member name picker.
 - **tasks**: project (relation), title, owner (relation to members; the lead, accountable for the task), helpers (multi relation to members; they see the task and can start it or send it to review), everyone (bool; whole-group task shown on every member's page), due_date, status (select: todo, doing, review, done), behind (bool, PM only), blocked_by_tasks (multi relation to tasks), blocked_by_members (multi relation to members), links (JSON list of {label, url}).
 - **notes**: task (relation), author (relation to members), text.
+- **subtasks**: task (relation), title, done (bool), order (number). Read like tasks (personal key or AI link); created, updated and deleted only by the task's lead or helpers (or the PM); can't be moved to another task; at most 30 per task (pb_hooks/subtasks.pb.js).
 
 Every record also gets PocketBase's automatic id, created and updated timestamps.
 
@@ -83,7 +85,7 @@ Every record also gets PocketBase's automatic id, created and updated timestamps
 
 ### The AI link
 One URL returns the whole project as a single JSON document, using PocketBase's expand on back-relations:
-`/api/collections/projects/records/<project id>?ai_key=<key>&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task`
+`/api/collections/projects/records/<project id>?ai_key=<key>&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task,tasks_via_project.subtasks_via_task`
 No JavaScript needed to read it, so Claude's and ChatGPT's link fetchers can use it. It can't write, because ai_key appears in no write rule.
 
 ### Known limits of this design
@@ -156,6 +158,6 @@ PocketBase JS hooks work on the free plan (instance Code tab in the PocketBase C
 - Files alongside this spec: pb_schema.json (the collections as imported on the live instance, PocketBase v0.41.1) and preview.pb.js (the working Teams preview hook).
 - Instance: https://j4sam3zmm0y2s0q.pwz5.pocketbasecloud.com (currently empty apart from the collections).
 - Frontend: static app, deployable to a PocketBase Cloud free frontend slot or GitHub Pages; talks to PocketBase with its JS SDK. Member requests send the personal key in the X-Member-Key header; links carry the project id and keys in the URL fragment. The claim routes live in pb_hooks/claim.pb.js and must be added to the instance (Code tab) alongside the schema.
-- The AI link format (tested with Claude and ChatGPT): /api/collections/projects/records/<id>?ai_key=<key>&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task
+- The AI link format (tested with Claude and ChatGPT): /api/collections/projects/records/<id>?ai_key=<key>&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task,tasks_via_project.subtasks_via_task
 - Keep the storage access behind one small module so the backend can be swapped.
 - Open source, free forever: no paid services, nothing that can bill.

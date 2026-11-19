@@ -4,12 +4,14 @@ import { STATUS_LABEL } from '../data/types'
 import { activeBlockers, canMove, dueKey, formatDay, involvement, joinNames, memberName, today, waitingOn } from '../lib/util'
 import { SparkIcon, StatusPill } from '../ui/ui'
 import { BlockerSummary } from '../ui/BlockerSummary'
+import { SubtaskProgress, subtasksOf } from '../ui/Subtasks'
 
 export interface TaskActions {
   advance: (t: Task) => void
   openDetail: (t: Task, focusNote?: boolean) => void
   blocked: (t: Task) => void
   setUpAi: () => void
+  addSubtasks: (t: Task) => void
 }
 
 function blockerSentence(snap: Snapshot, t: Task): string {
@@ -107,6 +109,16 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
             <button type="button" class="tcard-open" style={{ display: 'inline', fontWeight: 600, fontSize: '17px' }} onClick={() => actions.openDetail(t)}>{t.title}</button>
           </h2>
           <span class={overdue ? 'small warn-text' : 'muted small'}>{meta}{overdue ? ' · overdue' : ''}</span>
+          {t.status !== 'done' && subtasksOf(snap, t.id).length > 0 && (
+            <button type="button" class="tcard-open" style={{ marginTop: '6px' }} onClick={() => actions.openDetail(t)} aria-label="Open subtasks">
+              <SubtaskProgress snap={snap} task={t} />
+            </button>
+          )}
+          {movable && t.status !== 'done' && t.status !== 'review' && subtasksOf(snap, t.id).length === 0 && (
+            <button type="button" class="btn-text" style={{ alignSelf: 'flex-start', fontSize: '13px', marginTop: '2px' }} onClick={() => actions.addSubtasks(t)}>
+              Break it into subtasks
+            </button>
+          )}
         </div>
         <div class="row" style={{ gap: '8px' }}>
           {props.fresh && <span class="group-tag">Updated</span>}

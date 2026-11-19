@@ -402,6 +402,67 @@
     ]
   },
   {
+    "id": "pbc_ghsubtasks",
+    "name": "subtasks",
+    "type": "base",
+    "listRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= task.project) || (@collection.project_keys:k.project ?= task.project && @collection.project_keys:k.ai_key ?= @request.query.ai_key)",
+    "viewRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= task.project) || (@collection.project_keys:k.project ?= task.project && @collection.project_keys:k.ai_key ?= @request.query.ai_key)",
+    "createRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= task.project) && (@collection.member_keys:mk.member ?= task.owner || @collection.member_keys:mk.member ?= task.helpers.id)",
+    "updateRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= task.project) && (@collection.member_keys:mk.member ?= task.owner || @collection.member_keys:mk.member ?= task.helpers.id) && @request.body.task:isset = false",
+    "deleteRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= task.project) && (@collection.member_keys:mk.member ?= task.owner || @collection.member_keys:mk.member ?= task.helpers.id)",
+    "indexes": [
+      "CREATE INDEX idx_ghsubtasks_task ON subtasks (task)"
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "primaryKey": true,
+        "required": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}"
+      },
+      {
+        "name": "task",
+        "type": "relation",
+        "required": true,
+        "collectionId": "pbc_ghtasks",
+        "maxSelect": 1,
+        "cascadeDelete": true
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "required": true,
+        "max": 200
+      },
+      {
+        "name": "done",
+        "type": "bool"
+      },
+      {
+        "name": "order",
+        "type": "number",
+        "onlyInt": true
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": false
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ]
+  },
+  {
     "id": "pbc_ghevents",
     "name": "events",
     "type": "base",

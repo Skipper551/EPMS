@@ -45,6 +45,9 @@ await task('Build the slides', 'Ola', 19, 'todo', { blocked_by_tasks: [t['Write 
 await task('Draft the conclusion', 'Jimmy', 16, 'todo')
 await task('Rehearse the presentation', 'Malcolm', 22, 'todo', { everyone: true })
 
+for (const [i, [title, done]] of [['List every source cited in the draft', true], ['Check each one has a DOI or URL', true], ['Format them in APA 7', false], ['Sort alphabetically', false], ['Ask Ala to double-check', false]].entries()) {
+  await pb.collection('subtasks').create({ task: t['Format the references list'], title, done, order: i + 1 })
+}
 await pb.collection('notes').create({ task: t['Format the references list'], author: m.Ala, text: 'I added the DOIs for my five sources at the bottom of the doc.' })
 
 console.log('Project:', project.id)

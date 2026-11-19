@@ -7,11 +7,11 @@
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
 import { PB_URL } from '../config'
 import type {
-  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Status, Task, TaskInput, TaskLink,
+  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Subtask, Status, Task, TaskInput, TaskLink,
 } from './types'
 
 const SNAPSHOT_EXPAND =
-  'members_via_project,tasks_via_project,tasks_via_project.notes_via_task'
+  'members_via_project,tasks_via_project,tasks_via_project.notes_via_task,tasks_via_project.subtasks_via_task'
 
 let pb: PocketBase | null = null
 let mode: 'pm' | 'member' | null = null
@@ -137,6 +137,10 @@ function toNote(r: RecordModel): Note {
   return { id: r.id, task: str(r.task), author: str(r.author), text: str(r.text), created: str(r.created) }
 }
 
+function toSubtask(r: RecordModel): Subtask {
+  return { id: r.id, task: str(r.task), title: str(r.title), done: !!r.done, order: typeof r.order === 'number' ? r.order : 0, created: str(r.created) }
+}
+
 function toKeys(r: RecordModel): ProjectKeys {
   return { id: r.id, project: str(r.project), member_key: str(r.member_key), ai_key: str(r.ai_key), claims_locked: !!r.claims_locked,
     chat_webhook: str(r.chat_webhook), last_summary_at: str(r.last_summary_at) }
@@ -166,12 +170,17 @@ export function loadSnapshot(projectId: string): Promise<Snapshot> {
     const ex = r.expand ?? {}
     const taskRecords: RecordModel[] = ex.tasks_via_project ?? []
     const notes: Note[] = []
-    for (const t of taskRecords) for (const n of (t.expand?.notes_via_task ?? []) as RecordModel[]) notes.push(toNote(n))
+    const subtasks: Subtask[] = []
+    for (const t of taskRecords) {
+      for (const n of (t.expand?.notes_via_task ?? []) as RecordModel[]) notes.push(toNote(n))
+      for (const st of (t.expand?.subtasks_via_task ?? []) as RecordModel[]) subtasks.push(toSubtask(st))
+    }
     return {
       project: toProject(r),
       members: ((ex.members_via_project ?? []) as RecordModel[]).map(toMember).sort(byCreated),
       tasks: taskRecords.map(toTask).sort(byCreated),
       notes: notes.sort(byCreated),
+      subtasks: subtasks.sort((a, b) => a.order - b.order || a.created.localeCompare(b.created)),
     }
   })
 }
@@ -444,4 +453,27 @@ export async function postToChat(projectId: string, text: string): Promise<void>
 /** Record that the PM shared an update some other way (copied it into the chat). */
 export function markUpdateShared(keysId: string): Promise<ProjectKeys> {
   return run(async () => toKeys(await client().collection('project_keys').update(keysId, { last_summary_at: pbTime(new Date().toISOString()) })))
+}
+
+// ---------- subtasks ----------
+
+/** Add subtasks to a task, in order, after any it already has. */
+export function createSubtasks(taskId: string, titles: string[], startOrder: number): Promise<Subtask[]> {
+  return run(async () => {
+    const out: Subtask[] = []
+    for (const [i, title] of titles.entries()) {
+      out.push(toSubtask(await client().collection('subtasks').create({ task: taskId, title: title.slice(0, 200), done: false, order: startOrder + i })))
+    }
+    return out
+  })
+}
+
+export function updateSubtask(id: string, patch: Partial<Pick<Subtask, 'title' | 'done' | 'order'>>): Promise<Subtask> {
+  return run(async () => toSubtask(await client().collection('subtasks').update(id, patch)))
+}
+
+export function deleteSubtask(id: string): Promise<void> {
+  return run(async () => {
+    await client().collection('subtasks').delete(id)
+  })
 }

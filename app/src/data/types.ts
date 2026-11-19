@@ -126,12 +126,23 @@ export interface Note {
   created: string
 }
 
+/** One step of a task: a checklist item the lead and helpers tick off. */
+export interface Subtask {
+  id: string
+  task: string
+  title: string
+  done: boolean
+  order: number
+  created: string
+}
+
 /** Everything in one project, loaded in a single request. */
 export interface Snapshot {
   project: Project
   members: Member[]
   tasks: Task[]
   notes: Note[]
+  subtasks: Subtask[]
 }
 
 export interface ProjectInput {

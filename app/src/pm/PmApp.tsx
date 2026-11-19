@@ -13,6 +13,7 @@ import { NewProjectDialog, NewProjectForm } from './NewProject'
 import { ImportTasksDialog } from './ImportTasks'
 import { Settings } from './Settings'
 import { TaskEditor } from './TaskEditor'
+import { AddSubtasksDialog } from '../ui/Subtasks'
 
 
 const LAST_PROJECT = 'gh:pm:project'
@@ -41,6 +42,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [view, setView] = useState<'board' | 'settings'>('board')
   const [keys, setKeys] = useState<ProjectKeys | null>(null)
   const [editing, setEditing] = useState<{ id: string | null } | null>(null)
+  const [addSubtasksFor, setAddSubtasksFor] = useState<string | null>(null)
   const [sendBack, setSendBack] = useState<string | null>(null)
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -252,7 +254,14 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
           onOpenSettings={() => { setUpdateOpen(false); setView('settings') }}
         />
       )}
-      {snap && editing && <TaskEditor snap={snap} taskId={editing.id} pmAuthorId={author} onClose={() => setEditing(null)} onSaved={reload} />}
+      {snap && editing && (
+        <TaskEditor snap={snap} taskId={editing.id} pmAuthorId={author} onClose={() => setEditing(null)} onSaved={reload}
+          onAddSubtasks={(id) => { setEditing(null); setAddSubtasksFor(id) }} />
+      )}
+      {snap && addSubtasksFor && snap.tasks.some((t) => t.id === addSubtasksFor) && (
+        <AddSubtasksDialog snap={snap} task={snap.tasks.find((t) => t.id === addSubtasksFor)!} onDone={reload}
+          onClose={() => { const id = addSubtasksFor; setAddSubtasksFor(null); setEditing({ id }) }} />
+      )}
       {snap && sendBack && <SendBackDialog snap={snap} taskId={sendBack} pmAuthorId={author} onClose={() => setSendBack(null)} onDone={reload} />}
       {snap && importOpen && <ImportTasksDialog snap={snap} pmAuthorId={author} onClose={() => setImportOpen(false)} onDone={reload} />}
       {newProjectOpen && (

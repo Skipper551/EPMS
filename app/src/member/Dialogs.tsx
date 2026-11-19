@@ -3,6 +3,7 @@ import { addNote, setBlockers, type StoreError } from '../data/store'
 import type { Member, Snapshot, Task } from '../data/types'
 import { canMove, formatDay, memberName, peopleText, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
+import { SubtaskList, subtasksOf } from '../ui/Subtasks'
 import { BlockedIcon, Dialog, ErrorBox, Field, StatusPill, toast } from '../ui/ui'
 
 export function TaskDetail(props: {
@@ -13,6 +14,7 @@ export function TaskDetail(props: {
   busy: boolean
   onAdvance: (t: Task) => void
   onBlocked: (t: Task) => void
+  onAddSubtasks: (t: Task) => void
   onClose: () => void
   onChanged: () => void
 }) {
@@ -72,6 +74,10 @@ export function TaskDetail(props: {
           <h3 class="eyebrow">Files and links</h3>
           {t.links.map((l, i) => <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ overflowWrap: 'anywhere' }}>{l.label}</a>)}
         </section>
+      )}
+
+      {(mine || subtasksOf(snap, t.id).length > 0) && (
+        <SubtaskList snap={snap} task={t} canEdit={mine && t.status !== 'done'} onChanged={props.onChanged} onAddMany={() => props.onAddSubtasks(t)} />
       )}
 
       <section class="stack">

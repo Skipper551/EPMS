@@ -81,6 +81,10 @@ check('member sets a custom blocker on their task', (await patch(sources.id, { b
 check('member cannot set a behind note', (await patch(sources.id, { behind_note: 'x' })).status !== 200)
 await patch(sources.id, { blocked_reason: '' })
 check('members can read events but not write them', (await api('events/records', { method: 'POST', headers: asAla, body: JSON.stringify({ project: project.id, kind: 'approved' }) })).status !== 200)
+const sub = await (await api('subtasks/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: pair.id, title: 'Book the room', order: 1 }) })).json()
+check('lead adds a subtask', !!sub.id)
+check("member cannot add subtasks to someone else's task", (await api('subtasks/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: intro.id, title: 'x' }) })).status !== 200)
+await api(`subtasks/records/${sub.id}`, { method: 'DELETE', headers: asAla })
 check('personal keys cannot be listed', ((await (await api('member_keys/records', { headers: asAla })).json()).items ?? []).length === 0)
 
 // ---------- browser ----------
@@ -158,6 +162,24 @@ let memberPage
   await page.click('role=dialog >> button:has-text("Save")')
   await page.waitForTimeout(400)
   check('custom blocker shows on the task', (await interview.locator('.blocked-box').innerText()).includes('Waiting for interview slots'))
+  // Subtasks: written by hand on one task, pasted from the AI on another.
+  const draft = page.locator('article', { hasText: 'Write the intro' })
+  await draft.locator('button:has-text("Break it into subtasks")').click()
+  await page.fill('#subtasks-write', '- Read the brief again\n- Outline in 5 bullets\n- Write the first draft')
+  await page.click('role=dialog >> button:has-text("Add subtasks")')
+  await page.waitForSelector('role=dialog >> text=Subtasks')
+  await page.locator('role=dialog >> .subtask-list input[type=checkbox]').first().check()
+  await page.waitForTimeout(500)
+  await page.keyboard.press('Escape')
+  check('subtask progress shows on the card', (await draft.locator('.subtask-progress').innerText()).replace(/\s+/g, ' ').includes('1 of 3 subtasks 33%'))
+  await page.locator('article', { hasText: 'Interview users' }).locator('h2 button').click()
+  await page.click('role=dialog >> text=Add several at once, or paste from your AI')
+  await page.click('role=tab[name="Paste from your AI"]')
+  await page.fill('#subtasks-paste', 'Here you go:\n```json\n{ "format": "epms-subtasks", "version": 1, "task": "Interview users", "subtasks": [{ "title": "Write 6 questions" }, { "title": "Book two slots" }] }\n```')
+  check('AI subtasks preview', (await page.locator('ol[aria-label="Preview"] li').count()) === 2)
+  await page.click('role=dialog >> button:has-text("Add subtasks")')
+  await page.waitForSelector('role=dialog >> text=Write 6 questions')
+  await page.keyboard.press('Escape')
   memberPage = page
 }
 
@@ -184,6 +206,7 @@ let memberPage
   await page.waitForTimeout(500)
   check('send back returns to In progress', (await page.locator('section[aria-label="In progress"] >> text=Draft the conclusion').count()) === 1)
 
+  check('PM sees subtask progress on the board', (await page.locator('article', { hasText: 'Write the intro' }).locator('.subtask-progress').innerText()).replace(/\s+/g, ' ').includes('1 of 3 subtasks 33%'))
   check('custom blocker shows on the board', (await page.locator('article', { hasText: 'Interview users' }).innerText()).includes('Blocked: Waiting for interview slots'))
 
   // One-tap Behind, then one chat update for the whole session
@@ -229,7 +252,7 @@ let memberPage
   await page.fill('#import-text', 'Here you go:\n```json\n' + JSON.stringify({
     format: 'epms-tasks', version: 1,
     tasks: [
-      { id: 'a', title: 'Collect data', owner: 'ala', due: day(6).slice(0, 10), description: 'Steps here.' },
+      { id: 'a', title: 'Collect data', owner: 'ala', due: day(6).slice(0, 10), description: 'Steps here.', subtasks: ['Export the survey', 'Clean it'] },
       { id: 'b', title: 'Make charts', owner: 'Newbie', blocked_by: ['a'] },
       { title: 'Write the intro', owner: 'Jimmy' },
     ],
@@ -240,6 +263,7 @@ let memberPage
   await page.waitForTimeout(400)
   const charts = await page.locator('article', { hasText: 'Make charts' }).innerText()
   check('import creates tasks, members and blockers', charts.includes('Newbie') && charts.includes('Blocked by Collect data'), charts)
+  check('import adds subtasks', (await page.locator('article', { hasText: 'Collect data' }).locator('.subtask-progress').innerText()).includes('0 of 2 subtasks'))
   check('import skips duplicates', (await page.locator('article h3:text-is("Write the intro")').count()) === 1)
   await ctx.close()
 }

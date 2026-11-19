@@ -4,6 +4,7 @@ import { STATUSES, STATUS_LABEL } from '../data/types'
 import { daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, today } from '../lib/util'
 import { Avatar } from '../ui/ui'
 import { BlockerSummary } from '../ui/BlockerSummary'
+import { SubtaskProgress } from '../ui/Subtasks'
 
 export interface BoardActions {
   open: (taskId: string) => void
@@ -177,6 +178,7 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
           </span>
           {t.due_date && <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>{formatDay(t.due_date)}</span>}
         </div>
+        {t.status !== 'done' && <SubtaskProgress snap={snap} task={t} />}
         {t.behind && t.status !== 'done' && t.behind_note && <div class="tcard-blocked">Behind: {t.behind_note}</div>}
       </button>
       <BlockerSummary snap={snap} task={t} variant="board" />

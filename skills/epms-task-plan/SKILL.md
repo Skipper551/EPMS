@@ -28,6 +28,7 @@ EPMS (Educational Project Management Software) is a free project management app 
 - Order work with blockers: a task that can't start until another is done lists it in `blocked_by`. Avoid long chains when tasks could run in parallel.
 - Due dates: leave a buffer before the final deadline for merging, proofreading and rehearsal. Put review-heavy tasks earlier.
 - Descriptions are read by the task owner as the first note on their task. Write them for that person: what to do, in a few concrete steps, and what "done" looks like. Respect the PM's guidelines (citation style, word limits, tone).
+- For bigger tasks, add `subtasks`: short steps the owner can tick off in one sitting each. Members can also add their own later, with their AI or by hand.
 - Keep titles short (under 80 characters) and start with a verb: "Find 5 sources", "Draft the conclusion".
 - Plain punctuation only: no em dashes anywhere in titles or descriptions.
 
@@ -60,7 +61,8 @@ EPMS (Educational Project Management Software) is a free project management app 
       "owner": "Jimmy",
       "due": "2026-11-30",
       "description": "Using Ala's sources, write a 400 to 600 word introduction that sets out the research question.",
-      "blocked_by": ["find-sources"]
+      "blocked_by": ["find-sources"],
+      "subtasks": ["Re-read the brief and the sources", "Outline the argument in 5 bullet points", "Write the first draft", "Ask Ala to read it", "Edit to under 600 words"]
     },
     {
       "id": "interviews",
@@ -107,6 +109,7 @@ Each task:
 | `description` | no | Instructions for the owner (max 5,000 characters). Becomes the task's first note, posted by the PM. |
 | `blocked_by` | no | List of `id`s of tasks in this file, or exact titles of tasks already on the EPMS board. |
 | `waiting_on` | no | List of member names the task waits on for something that isn't a task (for example "Kuba has to share the survey data"). |
+| `subtasks` | no | A checklist of short steps for the owner, in the order to do them, at most 30: a list of strings. The owner ticks them off in EPMS and the PM sees the percentage. Use it for bigger tasks; small ones don't need it. |
 | `blocked_reason` | no | A short note for anything else the task waits on that isn't a task or a member, like "Waiting for the professor's feedback". |
 | `links` | no | Files or links: list of `{ "label": "...", "url": "https://..." }`. Only `http://` or `https://` addresses. |
 | `status` | no | Leave out for new tasks (they start in To do). Allowed: `todo`, `doing`, `review`, `done`. |
