@@ -145,6 +145,7 @@ PocketBase JS hooks work on the free plan (instance Code tab in the PocketBase C
 - Timeline: the whole group's progress toward the final deadline.
 
 ### PM view
+- Task view: the PM's own My tasks (the same screen members get; their tasks go straight to Done), with "Viewing as" to preview any member's screen read only.
 - Board of every task by status and owner.
 - Review queue: tasks waiting for approval.
 - Behind schedule toggle on any task.

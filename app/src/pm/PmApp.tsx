@@ -16,6 +16,7 @@ import { NewProjectDialog, NewProjectForm } from './NewProject'
 import { ImportTasksDialog } from './ImportTasks'
 import { Settings } from './Settings'
 import { TaskEditor } from './TaskEditor'
+import { TaskView } from './TaskView'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 
 
@@ -49,7 +50,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [projects, setProjects] = useState<Project[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<string | null>(null)
-  const [view, setView] = useState<'board' | 'settings'>('board')
+  const [view, setView] = useState<'board' | 'tasks' | 'settings'>('board')
   const [keys, setKeys] = useState<ProjectKeys | null>(null)
   const [editing, setEditing] = useState<{ id: string | null } | null>(null)
   const [addSubtasksFor, setAddSubtasksFor] = useState<string | null>(null)
@@ -221,9 +222,13 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onLogout={props.onLogout}
           />
           <span class="tag-pm">PM</span>
+          <div class="row" style={{ gap: '6px' }} role="tablist" aria-label="View">
+            <button type="button" role="tab" class="chip" aria-selected={view === 'board'} onClick={() => setView('board')}>Board</button>
+            <button type="button" role="tab" class="chip" aria-selected={view === 'tasks'} onClick={() => setView('tasks')} disabled={!snap}>Task view</button>
+          </div>
         </div>
         <div class="header-actions">
-          {view === 'board'
+          {view !== 'settings'
             ? <button type="button" class="btn" onClick={() => setView('settings')} disabled={!snap}>Project settings</button>
             : <button type="button" class="btn" onClick={() => setView('board')}>Back to board</button>}
           <button type="button" class="btn" onClick={copyGroupLink} disabled={!projectId}>Copy group link</button>
@@ -246,6 +251,13 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onCopyLink={copyGroupLink} onChat={() => setView('settings')}
           />
           <Board snap={snap} actions={actions} busy={busy} changes={pmChangeCount(events)} onUpdate={() => setUpdateOpen(true)} />
+        </main>
+      )}
+
+      {snap && view === 'tasks' && (
+        <main class="main-board" style={{ maxWidth: '1240px' }}>
+          {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
+          <TaskView key={snap.project.id} snap={snap} pmAuthorId={author} onChanged={reload} />
         </main>
       )}
 

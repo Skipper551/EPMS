@@ -271,6 +271,21 @@ let memberPage
   check('member sees behind with the note since their last visit', since.includes('marked Write the intro behind schedule: "Need this by Thursday"'), since)
   check('tab title counts the updates', /^\(\d+\) /.test(await memberPage.title()))
 
+  // Task view: the PM's own tasks, and a read-only preview of a member's screen.
+  await page.click('role=tab[name="Task view"]')
+  await page.waitForSelector('h1:text-is("My tasks")')
+  const rehearse = page.locator('article', { hasText: 'Rehearse' })
+  check("Task view shows the PM's own tasks", (await rehearse.count()) === 1)
+  await rehearse.locator('button:has-text("Start")').click()
+  await rehearse.locator('button:has-text("Mark done")').click()
+  await page.waitForTimeout(500)
+  check('the PM finishes their own task directly', (await page.locator('text=Show 1 done task').count()) === 1)
+  await page.selectOption('#viewing-as', { label: 'Jimmy' })
+  await page.waitForSelector("text=Preview of Jimmy's screen")
+  check("previewing a member shows their tasks, read only", (await page.locator('article', { hasText: 'Write the intro' }).count()) === 1 && (await page.locator('main button:has-text("Start")').count()) === 0 && (await page.locator('main button:has-text("Add a note")').count()) === 0)
+  await page.click('role=tab[name="Board"]')
+  await page.waitForSelector('h1:text-is("Board")')
+
   // Reset and lock
   await page.click('header >> text=Project settings')
   await page.waitForSelector('text=Set up')
