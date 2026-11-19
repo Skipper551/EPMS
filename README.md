@@ -20,7 +20,7 @@ Free forever, private, no central server: each PM runs their own copy on free se
 - Several PMs per project if needed
 
 **For members**
-- Open the group link once, pick your name, and that device stays signed in as you
+- Open the group link once, pick your name and choose a 4-digit PIN; that device stays signed in as you, and the PIN signs you in on your other devices
 - My tasks in due date order: start, send to review, add notes, flag blockers (a task, a person, or anything else)
 - Tasks that haven't started yet wait under Coming up; the lead can set when they'll start
 - Break big tasks into subtasks, written by hand or worked out with your AI, and tick them off; the PM sees the percentage

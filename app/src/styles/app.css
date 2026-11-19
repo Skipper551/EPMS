@@ -351,3 +351,4 @@ h1, h2, h3 { margin: 0; }
 .subtask-list input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; flex: none; }
 .subtask-list li.is-done .subtask-title { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(154, 161, 173, 0.5); }
 .subtask-title { overflow-wrap: anywhere; }
+.pin-input { max-width: 140px; font-size: 22px; letter-spacing: 0.4em; text-align: center; font-family: var(--mono); }

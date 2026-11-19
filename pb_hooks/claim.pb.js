@@ -24,7 +24,7 @@ routerAdd("GET", "/api/gh/join/{project}", (e) => {
   const members = $app.findRecordsByFilter("members", "project = {:p}", "created", 200, 0, { p: projectId })
   const claimed = {}
   for (const r of $app.findRecordsByFilter("member_keys", "member.project = {:p}", "", 500, 0, { p: projectId })) {
-    claimed[r.getString("member")] = true
+    claimed[r.getString("member")] = { pin: !!r.getString("pin_hash") }
   }
   return e.json(200, {
     project: { id: project.id, name: project.getString("name") },
@@ -32,7 +32,7 @@ routerAdd("GET", "/api/gh/join/{project}", (e) => {
     pms: members.filter((m) => m.getBool("is_pm")).map((m) => m.getString("name")),
     members: members
       .filter((m) => !m.getBool("is_pm"))
-      .map((m) => ({ id: m.id, name: m.getString("name"), role: m.getString("role"), claimed: !!claimed[m.id] })),
+      .map((m) => ({ id: m.id, name: m.getString("name"), role: m.getString("role"), claimed: !!claimed[m.id], has_pin: !!(claimed[m.id] && claimed[m.id].pin) })),
   })
 })
 
@@ -41,6 +41,8 @@ routerAdd("POST", "/api/gh/claim/{project}", (e) => {
   const groupKey = e.request.header.get("X-Group-Key") || ""
   const body = e.requestInfo().body || {}
   const memberId = String(body.member || "")
+  const pin = String(body.pin || "")
+  const pins = require(`${__hooks}/epms/pin.js`)
   let keys
   try {
     keys = $app.findFirstRecordByFilter("project_keys", "project = {:p}", { p: projectId })
@@ -50,6 +52,7 @@ routerAdd("POST", "/api/gh/claim/{project}", (e) => {
   if (!groupKey || groupKey.length < 32 || keys.getString("member_key") !== groupKey) {
     throw new NotFoundError("This link doesn't work any more.")
   }
+  if (!pins.valid(pin)) throw new BadRequestError("Choose a 4-digit PIN.")
   if (keys.getBool("claims_locked")) {
     throw new ForbiddenError("The PM has locked this link. Ask them for your personal link.")
   }
@@ -70,11 +73,12 @@ routerAdd("POST", "/api/gh/claim/{project}", (e) => {
     taken = false
   }
   if (taken) {
-    throw new BadRequestError(member.getString("name") + " is already set up on another device. If that's you, open your personal link there, or ask the PM to reset it.")
+    throw new BadRequestError(member.getString("name") + " is already set up. If that's you, pick your name and enter your PIN, or ask the PM to reset it.")
   }
   const record = new Record($app.findCollectionByNameOrId("member_keys"))
   record.set("member", memberId)
   record.set("key", $security.randomString(40))
+  pins.set(record, pin)
   try {
     $app.save(record)
   } catch (_) {
@@ -96,5 +100,59 @@ routerAdd("GET", "/api/gh/ai/{project}", (e) => {
     throw new NotFoundError("Not found.")
   }
   const keys = $app.findFirstRecordByFilter("project_keys", "project = {:p}", { p: projectId })
-  return e.json(200, { ai_key: keys.getString("ai_key") })
+  return e.json(200, { ai_key: keys.getString("ai_key"), has_pin: !!mk.getString("pin_hash") })
+})
+
+// Sign in on another device: pick your (already set up) name on the group link and enter your PIN.
+// Works even when the PM has locked the group link, since this person already joined.
+routerAdd("POST", "/api/gh/signin/{project}", (e) => {
+  const projectId = e.request.pathValue("project")
+  const groupKey = e.request.header.get("X-Group-Key") || ""
+  const body = e.requestInfo().body || {}
+  const memberId = String(body.member || "")
+  const pin = String(body.pin || "")
+  const pins = require(`${__hooks}/epms/pin.js`)
+  let keys
+  try {
+    keys = $app.findFirstRecordByFilter("project_keys", "project = {:p}", { p: projectId })
+  } catch (_) {
+    throw new NotFoundError("This link doesn't work any more.")
+  }
+  if (!groupKey || groupKey.length < 32 || keys.getString("member_key") !== groupKey) {
+    throw new NotFoundError("This link doesn't work any more.")
+  }
+  let mk
+  try {
+    mk = $app.findFirstRecordByFilter("member_keys", "member = {:m} && member.project = {:p}", { m: memberId, p: projectId })
+  } catch (_) {
+    throw new BadRequestError("That name isn't set up yet. Pick it and choose a PIN to join.")
+  }
+  if (!pins.has(mk)) {
+    throw new BadRequestError("This name has no PIN yet. Open EPMS on the device you joined with to set one, or ask the PM for your personal link.")
+  }
+  const result = pins.check($app, mk, pin)
+  if (!result.ok) {
+    if (result.locked) throw new TooManyRequestsError("Too many wrong PINs. Try again in " + result.locked + " minutes, or ask the PM for your personal link.")
+    throw new BadRequestError("That PIN isn't right. " + result.left + (result.left === 1 ? " try" : " tries") + " left before a 15 minute pause.")
+  }
+  return e.json(200, { member: memberId, key: mk.getString("key"), ai_key: keys.getString("ai_key") })
+})
+
+// Set or change your PIN while signed in (members who joined before PINs existed, or anyone changing theirs).
+routerAdd("POST", "/api/gh/pin/{project}", (e) => {
+  const projectId = e.request.pathValue("project")
+  const personalKey = e.request.header.get("X-Member-Key") || ""
+  const pin = String((e.requestInfo().body || {}).pin || "")
+  const pins = require(`${__hooks}/epms/pin.js`)
+  if (!pins.valid(pin)) throw new BadRequestError("Choose a 4-digit PIN.")
+  let mk
+  try {
+    if (personalKey.length < 32) throw new Error("short")
+    mk = $app.findFirstRecordByFilter("member_keys", "key = {:k} && member.project = {:p}", { k: personalKey, p: projectId })
+  } catch (_) {
+    throw new NotFoundError("Not found.")
+  }
+  pins.set(mk, pin)
+  $app.save(mk)
+  return e.json(200, { ok: true })
 })

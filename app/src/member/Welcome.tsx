@@ -33,17 +33,51 @@ export function WelcomeShell(props: { step: WelcomeStep; children: preact.Compon
   )
 }
 
-export function PickName(props: { join: JoinInfo; busy: boolean; error: string | null; onPick: (id: string, skipIntro: boolean) => void }) {
+/** 4 digits only, as the member types. */
+export function PinInput(props: { id: string; value: string; onInput: (v: string) => void; hidden?: boolean; autoFocus?: boolean }) {
+  return (
+    <input
+      id={props.id}
+      class="input pin-input"
+      type={props.hidden ? 'password' : 'text'}
+      inputMode="numeric"
+      autoComplete={props.hidden ? 'current-password' : 'off'}
+      pattern="[0-9]{4}"
+      maxLength={4}
+      value={props.value}
+      onInput={(e) => props.onInput(e.currentTarget.value.replace(/[^0-9]/g, '').slice(0, 4))}
+      {...(props.autoFocus ? { 'data-autofocus': true, autoFocus: true } : {})}
+    />
+  )
+}
+
+export function PickName(props: {
+  join: JoinInfo
+  busy: boolean
+  error: string | null
+  onPick: (id: string, pin: string, skipIntro: boolean) => void
+  onSignIn: (id: string, pin: string) => void
+}) {
   const { join } = props
   const [who, setWho] = useState('')
+  const [pin, setPin] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const free = join.members.filter((m) => !m.claimed)
+  const chosen = join.members.find((m) => m.id === who)
+  const returning = !!chosen?.claimed
   const shown = error ?? props.error
+
+  const choose = (id: string) => {
+    setWho(id)
+    setPin('')
+    setError(null)
+  }
 
   const go = (skipIntro: boolean) => () => {
     if (!who) return setError('Pick your name first.')
+    if (pin.length !== 4) return setError(returning ? 'Enter your 4-digit PIN.' : 'Choose a 4-digit PIN.')
     setError(null)
-    props.onPick(who, skipIntro)
+    if (returning) props.onSignIn(who, pin)
+    else props.onPick(who, pin, skipIntro)
   }
 
   return (
@@ -55,45 +89,66 @@ export function PickName(props: { join: JoinInfo; busy: boolean; error: string |
           {join.pms.length ? `${joinNames(join.pms)} set this project up. ` : ''}Pick your name and you'll see your tasks. This device stays signed in as you.
         </p>
       </div>
-      {join.locked ? (
-        <div class="error-box">The PM has locked this link because everyone has picked their name. Ask them for your personal link.</div>
-      ) : join.members.length === 0 ? (
+      {join.members.length === 0 ? (
         <div class="empty">Your PM hasn't added anyone to this project yet. Check back once they have.</div>
       ) : (
         <div role="radiogroup" aria-label="Your name" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
           {join.members.map((m) => {
             const on = who === m.id
+            // A taken name can only be picked to sign in with its PIN; while the link is locked, only those.
+            const disabled = (m.claimed && !m.has_pin) || (join.locked && !m.claimed)
             return (
               <button
                 key={m.id}
                 type="button"
                 role="radio"
                 aria-checked={on}
-                disabled={m.claimed}
-                onClick={() => { setWho(m.id); setError(null) }}
+                disabled={disabled}
+                onClick={() => choose(m.id)}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', textAlign: 'left',
-                  background: on ? 'var(--accent-bg)' : 'var(--surface)', color: 'var(--text)', opacity: m.claimed ? 0.5 : 1,
+                  background: on ? 'var(--accent-bg)' : 'var(--surface)', color: 'var(--text)', opacity: disabled ? 0.5 : 1,
                   border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, borderRadius: '12px', padding: '16px 18px', fontSize: '15px',
                 }}
               >
                 <span style={{ fontWeight: 600 }}>{m.name}</span>
-                <span class="muted xsmall">{m.claimed ? 'Already set up' : m.role || 'Member'}</span>
+                <span class="muted xsmall">{m.claimed ? (m.has_pin ? 'Set up · sign in with your PIN' : 'Already set up') : m.role || 'Member'}</span>
               </button>
             )
           })}
         </div>
       )}
-      <ErrorBox error={shown} />
-      {!join.locked && free.length > 0 && (
-        <div class="row" style={{ gap: '20px' }}>
-          <button type="button" class="btn btn-primary btn-lg" disabled={props.busy} onClick={go(false)}>{props.busy ? 'Setting up…' : 'Continue'}</button>
-          <button type="button" class="btn-text" disabled={props.busy} onClick={go(true)}>Skip the intro, go to my tasks</button>
+
+      {chosen && (
+        <div class="card card-tight stack-sm">
+          <label class="field-label" for="pin">{returning ? `Welcome back, ${chosen.name}. Enter your PIN` : 'Choose a 4-digit PIN'}</label>
+          <PinInput id="pin" value={pin} onInput={setPin} hidden={returning} autoFocus />
+          <span class="muted xsmall">
+            {returning
+              ? 'The PIN you chose when you first joined. Forgot it? Ask the PM to reset your name.'
+              : 'You need it to sign in on another device, like your phone. Pick something you will remember; the PM never sees it.'}
+          </span>
         </div>
       )}
-      {join.members.some((m) => m.claimed) && (
+
+      <ErrorBox error={shown} />
+
+      {join.locked && !chosen && (
+        <div class="muted small">The PM has locked this link, so new names can't join. If you're already set up, pick your name and enter your PIN.</div>
+      )}
+
+      {chosen && (
+        <div class="row" style={{ gap: '20px' }}>
+          <button type="button" class="btn btn-primary btn-lg" disabled={props.busy} onClick={go(false)}>
+            {props.busy ? (returning ? 'Signing in…' : 'Setting up…') : returning ? 'Sign in' : 'Continue'}
+          </button>
+          {!returning && <button type="button" class="btn-text" disabled={props.busy} onClick={go(true)}>Skip the intro, go to my tasks</button>}
+        </div>
+      )}
+
+      {join.members.some((m) => m.claimed && !m.has_pin) && (
         <p class="muted small" style={{ margin: 0 }}>
-          Already set up on another device? Open your personal link there (it's in the menu next to the project name) and copy it to this one, or ask the PM to reset your name.
+          Greyed-out names joined before PINs existed. To sign in here, open your personal link from your other device (in the menu next to the project name), or ask the PM for it.
         </p>
       )}
     </WelcomeShell>
