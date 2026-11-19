@@ -39,12 +39,12 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 - Creates the project and adds members.
 - Writes the project guidelines (how the group works, standards, tone, what "done" means), which every member's AI follows.
 - Creates, assigns, edits and removes tasks; sets due dates, blockers and files or links.
-- Moves tasks from Review to Done, or back to Doing with a comment.
+- Moves tasks from Review to Done, or back to In progress with a comment.
 - Marks tasks behind schedule (manual only).
 
 **Member**
 - Picks their name once from the group link; that device is then signed in as them.
-- Moves their own tasks from To do to Doing (started) and from Doing to Review (finished). Only the PM moves a task to Done.
+- Moves their own tasks from To do to In progress (started) and from In progress to Review (finished). Only the PM moves a task to Done.
 - Adds notes to a task.
 - Adds blockers to their own tasks, pointing at another task or mentioning another member.
 
@@ -53,7 +53,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 - **Project**: name, course, final deadline, guidelines (PM-written text), members, tasks, created date.
 - **Member**: name, role in the group (free text), PM flag (a project can have more than one PM).
 - **Task**: title, lead (owner), helpers, whole-group flag, due date, status, behind schedule (flag set by PM), blocked by (tasks and/or members), files or links, notes.
-- **Status**: To do, Doing, Review, Done.
+- **Status**: To do, In progress, Review, Done. (Stored as todo, doing, review, done.)
 - **Note**: author, text, timestamp.
 - **Blocker**: on a task; points at another task, a member, or free text for anything else ("waiting for the professor's feedback"); added by the PM or the task's lead or helpers; a task blocker clears when that task is Done, the others when removed.
 

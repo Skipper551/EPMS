@@ -16,7 +16,7 @@ export function describe(snap: Snapshot, e: ActivityEvent, meId: string): string
     case 'helper_added': return `${who} added you as a helper on ${title}`
     case 'behind': return `${who} marked ${title} behind schedule${e.text ? `: "${quote(e.text)}"` : ''}`
     case 'on_schedule': return `${title} is back on schedule`
-    case 'sent_back': return `${who} sent ${title} back to Doing`
+    case 'sent_back': return `${who} sent ${title} back to In progress`
     case 'approved': return `${who} approved ${title}. It's done.`
     case 'unblocked': return `${title} is unblocked: ${e.text || 'the task it waited on'} is done`
     case 'note': return `${who} added a note on ${title}: "${quote(e.text)}"`
