@@ -8,6 +8,10 @@ EPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "EPMS v0.6.1 · ebbf81d".
 
+## 0.7.1
+- Guidelines can't be lost silently: after saving, EPMS checks the whole text was stored and says how much if not; unsaved changes are flagged, survive switching view or closing the tab, and leaving the page asks first.
+- One subtask format everywhere: `{ "title": ... }` objects in the Paste from your AI placeholder, the import instructions and the task-plan skill, matching the AI link's guide. Plain strings still import.
+
 ## 0.7.0
 - Task view for PMs: their own My tasks next to the Board (their tasks finish directly, no review), and "Viewing as" to preview any member's screen read only.
 

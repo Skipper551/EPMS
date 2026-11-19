@@ -208,7 +208,7 @@ export function AddSubtasksDialog(props: { snap: Snapshot; task: Task; onClose: 
           <div class="field">
             <label class="field-label" for="subtasks-paste">Your AI's reply</label>
             <textarea id="subtasks-paste" class="textarea" rows={8} style={{ fontFamily: 'var(--mono)', fontSize: '12px' }} value={pasted} onInput={(e) => setPasted(e.currentTarget.value)}
-              placeholder='{ "format": "epms-subtasks", "version": 1, "subtasks": [ … ] }' />
+              placeholder={`{ "format": "epms-subtasks", "version": 1, "task": "${props.task.title.replace(/"/g, '\\"')}", "subtasks": [{ "title": "…" }] }`} />
           </div>
         </div>
       )}

@@ -42,11 +42,21 @@
         "find-sources"
       ],
       "subtasks": [
-        "Re-read the brief and the sources",
-        "Outline the argument in 5 bullet points",
-        "Write the first draft",
-        "Ask Ala to read it",
-        "Edit to under 600 words"
+        {
+          "title": "Re-read the brief and the sources"
+        },
+        {
+          "title": "Outline the argument in 5 bullet points"
+        },
+        {
+          "title": "Write the first draft"
+        },
+        {
+          "title": "Ask Ala to read it"
+        },
+        {
+          "title": "Edit to under 600 words"
+        }
       ]
     },
     {
