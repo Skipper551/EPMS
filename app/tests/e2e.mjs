@@ -180,9 +180,9 @@ let memberPage
   check('blocker clears when the blocking task is Done', (await page.locator('article', { hasText: 'Write the intro' }).locator('.tcard-blocked').count()) === 0)
   await page.locator('article', { hasText: 'Draft the conclusion' }).locator('button:has-text("Send back")').click()
   await page.fill('role=dialog >> textarea', 'Shorter, please.')
-  await page.click('button:has-text("Send back to Doing")')
+  await page.click('button:has-text("Send back to In progress")')
   await page.waitForTimeout(500)
-  check('send back returns to Doing', (await page.locator('section[aria-label="Doing"] >> text=Draft the conclusion').count()) === 1)
+  check('send back returns to In progress', (await page.locator('section[aria-label="In progress"] >> text=Draft the conclusion').count()) === 1)
 
   check('custom blocker shows on the board', (await page.locator('article', { hasText: 'Interview users' }).innerText()).includes('Blocked: Waiting for interview slots'))
 

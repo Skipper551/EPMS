@@ -7,7 +7,7 @@ export const STATUSES: Status[] = ['todo', 'doing', 'review', 'done']
 
 export const STATUS_LABEL: Record<Status, string> = {
   todo: 'To do',
-  doing: 'Doing',
+  doing: 'In progress',
   review: 'Review',
   done: 'Done',
 }
