@@ -28,7 +28,7 @@ export function buildSummary(snap: Snapshot, events: ActivityEvent[], pmName: st
   const reassigned = [...touched('assigned'), ...touched('helper_added')].filter((t, i, a) => !createdIds.has(t.id) && a.indexOf(t) === i)
 
   const dueSoon = snap.tasks
-    .filter((t) => t.status !== 'done' && t.due_date && (daysUntil(t.due_date) ?? 99) <= 7)
+    .filter((t) => t.status !== 'done' && t.due_date && (daysUntil(t.due_date) ?? 99) <= 3)
     .sort((a, b) => a.due_date.localeCompare(b.due_date))
 
   const startingSoon = snap.tasks
@@ -49,7 +49,7 @@ export function buildSummary(snap: Snapshot, events: ActivityEvent[], pmName: st
       : block('New tasks', created.map((t) => `${t.title} (${by(snap, t)}${due(t)})`)),
     block('Changed hands', reassigned.map((t) => `${t.title} is now with ${by(snap, t)}`)),
     block('Starting in the next 7 days', startingSoon.map((t) => `${t.title} (${by(snap, t)}, starts ${formatDay(t.start_date)})`)),
-    block('Due in the next 7 days', dueSoon.map((t) => {
+    block('Due in the next 3 days', dueSoon.map((t) => {
       const late = (daysUntil(t.due_date) ?? 0) < 0
       return `${t.title} (${by(snap, t)}, ${late ? 'was due' : 'due'} ${formatDay(t.due_date)})`
     })),
