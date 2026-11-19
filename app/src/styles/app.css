@@ -352,3 +352,12 @@ h1, h2, h3 { margin: 0; }
 .subtask-list li.is-done .subtask-title { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(154, 161, 173, 0.5); }
 .subtask-title { overflow-wrap: anywhere; }
 .pin-input { max-width: 140px; font-size: 22px; letter-spacing: 0.4em; text-align: center; font-family: var(--mono); }
+
+/* ---------- getting started ---------- */
+
+.getting-started { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.getting-started li { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.getting-started li:first-child { border-top: 0; }
+.getting-started li.is-done strong { color: var(--muted); }
+.gs-mark { flex: none; width: 26px; height: 26px; border-radius: 999px; background: var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+.getting-started li.is-done .gs-mark { background: var(--accent-bg); color: var(--accent-text); }

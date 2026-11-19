@@ -39,7 +39,7 @@ npm run build
 
 `dist/` is the whole app: plain HTML, JavaScript, CSS, fonts and the Claude skill zip, with relative paths, so it works from any folder. Upload the contents of `dist/` to a PocketBase Cloud frontend slot or GitHub Pages. The instance also needs the collections in `../pb_schema.json` and the files in `../pb_hooks/`, including its `epms` folder (PocketBase Cloud: the instance's Code tab).
 
-The instance address is baked in at build time. It defaults to the address in `src/config.ts`; another PM builds their own copy with:
+A build without `VITE_PB_URL` is the shared site: the PM enters their instance address on the login screen, and links carry it after `#`. GitHub Actions publishes that build to GitHub Pages from `main` (`.github/workflows/pages.yml`; turn on Pages with Source: GitHub Actions in the repository settings). To give a copy a default instance instead:
 
 ```bash
 VITE_PB_URL=https://their-instance.example.com npm run build
@@ -69,6 +69,10 @@ The format and planning workflow live in the Claude skill at `../skills/epms-tas
 npm run skill
 ```
 
+## Setup check and hook versions
+
+After login, EPMS compares the instance with `../pb_schema.json` (bundled into the app) and asks each hook file for its version at `/api/gh/hooks/<name>`. Missing or older collections install in one click; missing or older hooks are offered as `public/epms-hooks.zip` (built by `npm run hooks`, and by every `npm run build`). When you change a hook file, bump its version string in the file and in `src/lib/setup.ts`, so PMs with the old copy are told to update.
+
 ## Tests
 
 `tests/e2e.mjs` checks the access rules and drives the member page, the PM board and the import in a real browser, against the local instance only. It needs Playwright:
@@ -79,4 +83,10 @@ npm i -D playwright && npx playwright install chromium
 
 ```bash
 npm run test:e2e
+```
+
+`tests/onboarding.mjs` checks the shared-site path end to end: start guide, login with an address, one-click collections, the Getting started checklist, and a member joining through a link that carries the instance. It needs a fresh local PocketBase and a build without `VITE_PB_URL`; the steps are at the top of the file.
+
+```bash
+npm run test:onboarding
 ```

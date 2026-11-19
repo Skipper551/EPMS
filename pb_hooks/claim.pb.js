@@ -156,3 +156,6 @@ routerAdd("POST", "/api/gh/pin/{project}", (e) => {
   $app.save(mk)
   return e.json(200, { ok: true })
 })
+
+// Lets the EPMS setup check see that this file is installed, and which version.
+routerAdd("GET", "/api/gh/hooks/claim", (e) => e.json(200, { name: "claim", version: "2026-11-19" }))

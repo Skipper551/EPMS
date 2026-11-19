@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { getKeys, listEvents, listProjects, pmEmail, pmLogout, pmResume, updateTask, type StoreError } from '../data/store'
+import { backendUrl, getKeys, initPm, setBackend, listEvents, listProjects, pmEmail, pmLogout, pmResume, updateTask, type StoreError } from '../data/store'
 import type { ActivityEvent, Project, ProjectKeys, Snapshot, Status } from '../data/types'
 import { copyText, groupLink, load, memberName, save } from '../lib/util'
 import { pmChangeCount } from '../lib/summary'
 import { useSnapshot } from '../lib/useSnapshot'
-import { ChevronIcon, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
+import { DEFAULT_PB_URL } from '../config'
+import { ChevronIcon, Dialog, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { Board, type BoardActions } from './Board'
 import { BehindDialog, SendBackDialog } from './Dialogs'
 import { ChatUpdateDialog } from './ChatUpdate'
 import { Login } from './Login'
+import { GettingStarted, markGroupLinkShared } from './GettingStarted'
+import { SetupCheckContent, SetupGate, useSetupReport } from './SetupCheck'
 import { NewProjectDialog, NewProjectForm } from './NewProject'
 import { ImportTasksDialog } from './ImportTasks'
 import { Settings } from './Settings'
@@ -17,18 +20,25 @@ import { AddSubtasksDialog } from '../ui/Subtasks'
 
 
 const LAST_PROJECT = 'gh:pm:project'
+export const INSTANCE = 'epms:pm:instance'
 const authorKey = (projectId: string) => `gh:pm:author:${projectId}`
 
 export function PmApp() {
-  const [auth, setAuth] = useState<'checking' | 'out' | 'in'>('checking')
+  const [auth, setAuth] = useState<'checking' | 'out' | 'setup' | 'in'>('checking')
   useEffect(() => {
-    pmResume().then((ok) => setAuth(ok ? 'in' : 'out'))
+    // The instance this browser last logged in to (or this build's default). Without one, ask on the login screen.
+    const url = load(INSTANCE) || DEFAULT_PB_URL
+    if (!url) return setAuth('out')
+    setBackend(url)
+    initPm()
+    pmResume().then((ok) => setAuth(ok ? 'setup' : 'out'))
   }, [])
 
   return (
     <>
       {auth === 'checking' && <Loading />}
-      {auth === 'out' && <Login onDone={() => setAuth('in')} />}
+      {auth === 'out' && <Login onDone={() => setAuth('setup')} />}
+      {auth === 'setup' && <SetupGate onReady={() => setAuth('in')} onLogout={() => { pmLogout(); setAuth('out') }} />}
       {auth === 'in' && <PmHome onLogout={() => { pmLogout(); setAuth('out') }} onExpired={() => setAuth('out')} />}
       <Toasts />
     </>
@@ -50,6 +60,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [author, setAuthor] = useState('')
   const [behindFor, setBehindFor] = useState<string | null>(null)
   const [updateOpen, setUpdateOpen] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
   const [events, setEvents] = useState<ActivityEvent[]>([])
 
   const { snap, error, reload, patch } = useSnapshot(projectId)
@@ -157,7 +168,8 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     try {
       const k = keys ?? (await getKeys(projectId))
       setKeys(k)
-      const ok = await copyText(groupLink(projectId, k.member_key))
+      const ok = await copyText(groupLink(projectId, k.member_key, backendUrl()))
+      if (ok) markGroupLinkShared(projectId)
       toast(ok ? 'Group link copied. Paste it in the group chat; everyone picks their name once.' : "Couldn't copy. Open Project settings to copy it by hand.", !ok)
     } catch (e) {
       toast((e as StoreError).message, true)
@@ -205,6 +217,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onNew={() => setNewProjectOpen(true)}
             onSettings={() => setView('settings')}
             onUpdate={() => setUpdateOpen(true)}
+            onSetup={() => setSetupOpen(true)}
             onLogout={props.onLogout}
           />
           <span class="tag-pm">PM</span>
@@ -227,7 +240,12 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       {snap && view === 'board' && (
         <main class="main-board">
           {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
-          <Board snap={snap} actions={actions} busy={busy} onImport={() => setImportOpen(true)} changes={pmChangeCount(events)} onUpdate={() => setUpdateOpen(true)} />
+          <GettingStarted
+            snap={snap} keys={keys}
+            onSettings={() => setView('settings')} onImport={() => setImportOpen(true)} onNewTask={() => setEditing({ id: null })}
+            onCopyLink={copyGroupLink} onChat={() => setView('settings')}
+          />
+          <Board snap={snap} actions={actions} busy={busy} changes={pmChangeCount(events)} onUpdate={() => setUpdateOpen(true)} />
         </main>
       )}
 
@@ -245,6 +263,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
         </main>
       )}
 
+      {setupOpen && <SetupDialog onClose={() => setSetupOpen(false)} />}
       {snap && behindFor && <BehindDialog snap={snap} taskId={behindFor} onClose={() => setBehindFor(null)} onDone={reload} />}
       {snap && keys && updateOpen && (
         <ChatUpdateDialog
@@ -281,6 +300,7 @@ function ProjectMenu(props: {
   onNew: () => void
   onSettings: () => void
   onUpdate: () => void
+  onSetup: () => void
   onLogout: () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -323,10 +343,23 @@ function ProjectMenu(props: {
             Download the Claude skill
           </a>
           <div class="menu-sep" />
-          <span class="menu-label" style={{ overflowWrap: 'anywhere' }}>Logged in as {pmEmail()}</span>
+          <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onSetup)}>Check setup</button>
+          <div class="menu-sep" />
+          <span class="menu-label" style={{ overflowWrap: 'anywhere' }}>Logged in as {pmEmail()}<br />on {backendUrl().replace(/^https?:\/\//, '')}</span>
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onLogout)}>Log out</button>
         </div>
       )}
     </div>
+  )
+}
+
+function SetupDialog(props: { onClose: () => void }) {
+  const { report, error, recheck } = useSetupReport()
+  return (
+    <Dialog title="Check setup" onClose={props.onClose} wide>
+      {error && <ErrorBox error={error} />}
+      {!report && !error && <Loading text="Checking your instance…" />}
+      {report && <SetupCheckContent report={report} recheck={recheck} />}
+    </Dialog>
   )
 }

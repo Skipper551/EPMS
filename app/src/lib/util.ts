@@ -1,3 +1,4 @@
+import { DEFAULT_PB_URL, cleanUrl } from '../config'
 // Small helpers shared by both pages. No backend code here.
 
 import type { Member, Snapshot, Task } from '../data/types'
@@ -173,23 +174,28 @@ export function normaliseUrl(u: string): string {
   return /^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`
 }
 
+/** The instance address as it rides in a link: only when it isn't this build's default, so links stay short. */
+function pbParam(pbUrl: string): string {
+  return pbUrl && pbUrl !== DEFAULT_PB_URL ? `&pb=${encodeURIComponent(pbUrl)}` : ''
+}
+
 /** Group link: what the PM posts in the group chat. Only good for picking a name.
  *  Everything after # stays in the browser and never reaches a server or its logs. */
-export function groupLink(projectId: string, groupKey: string): string {
+export function groupLink(projectId: string, groupKey: string, pbUrl: string): string {
   const base = new URL('./', location.href)
-  base.hash = `p=${projectId}&key=${groupKey}`
+  base.hash = `p=${projectId}&key=${groupKey}${pbParam(pbUrl)}`
   return base.toString()
 }
 
 /** Personal link: signs a device in as one member. The AI key rides along for the AI setup prompt. */
-export function personalLink(projectId: string, memberId: string, personalKey: string, aiKey: string): string {
+export function personalLink(projectId: string, memberId: string, personalKey: string, aiKey: string, pbUrl: string): string {
   const base = new URL('./', location.href)
-  base.hash = personalHash(projectId, memberId, personalKey, aiKey)
+  base.hash = personalHash(projectId, memberId, personalKey, aiKey, pbUrl)
   return base.toString()
 }
 
-export function personalHash(projectId: string, memberId: string, personalKey: string, aiKey: string): string {
-  return `p=${projectId}&m=${memberId}&me=${personalKey}${aiKey ? `&ai=${aiKey}` : ''}`
+export function personalHash(projectId: string, memberId: string, personalKey: string, aiKey: string, pbUrl: string): string {
+  return `p=${projectId}&m=${memberId}&me=${personalKey}${aiKey ? `&ai=${aiKey}` : ''}${pbParam(pbUrl)}`
 }
 
 export function pmLink(): string {
@@ -204,6 +210,8 @@ export interface LinkParts {
   memberId: string
   personalKey: string
   ai: string
+  /** The PocketBase instance: from the link, else this build's default, else '' */
+  pbUrl: string
 }
 
 /** Reads "#p=<id>&key=<group key>" or "#p=<id>&m=<member>&me=<personal key>&ai=<AI key>". */
@@ -217,7 +225,7 @@ export function readFragment(): LinkParts | null {
   const personalKey = memberId ? ok(get('me')) : ''
   const groupKey = ok(get('key'))
   if (!personalKey && !groupKey) return null
-  return { projectId, groupKey, memberId: personalKey ? memberId : '', personalKey, ai: ok(get('ai')) }
+  return { projectId, groupKey, memberId: personalKey ? memberId : '', personalKey, ai: ok(get('ai')), pbUrl: cleanUrl(get('pb')) || DEFAULT_PB_URL }
 }
 
 /** The standing instructions a member pastes into their AI. */

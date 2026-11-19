@@ -27,7 +27,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 
 - Backend: one PocketBase instance per PM on PocketBase Cloud's free plan (1 instance, 50 MB, 5,000 API requests/hour, never hibernates). One instance holds all of that PM's projects; each project is isolated with its own group link. PocketBase is MIT-licensed open source, so a PM can also self-host it.
 - The free plan needs a $0 Stripe subscription (card on file, never charged). The PM setup screen explains this plainly.
-- Frontend: static app, hosted on PocketBase Cloud's free frontend slots or GitHub Pages.
+- Frontend: static app. One shared copy on GitHub Pages works with any PM's instance: the PM enters their instance address at login, and links carry it after `#` (`pb=`). Anyone can also host their own copy with a default instance (VITE_PB_URL).
 - Data access goes through a small storage layer so the backend can be swapped.
 - Each project has a group link (members pick their name once), a personal link per member, and a read-only link for AIs.
 - AIs read the project through the read-only link placed in their standing instructions. No AI writes in v1.
@@ -100,7 +100,7 @@ When read with an ai_key, the document also carries an `epms_ai_guide` section (
 - Every change to a task, and every note, is recorded in **events** by a server hook: who did it (member, or the PM as superuser), who it concerns (the task's lead and helpers), and any text (a Behind note, a note's text, a custom blocker). Kinds: created, assigned, helper_added, started, submitted, sent_back, approved, behind, on_schedule, blocked, unblocked, note.
 - Members get **Since your last visit** at the top of My tasks (events about them since this device last opened the project), highlighted task cards, and a count in the tab title.
 - The PM marks a task **behind** with one tap on the board, with an optional note for the owner (tasks.behind_note, PM only).
-- **Chat updates**: rather than a message per change, the PM posts one summary after a session on the board ("Update the group"): approved, sent back, behind, back on schedule, new tasks, changed hands, due in the next 7 days, final deadline. The board shows how many tasks changed since the last update. The summary is editable before sending. It posts through a webhook stored in project_keys.chat_webhook (Teams Workflows, Discord or Slack; never readable by members or AIs) via `POST /api/gh/chat/<project>` (superuser only), or the PM copies it. project_keys.last_summary_at marks where the next summary starts.
+- **Chat updates**: rather than a message per change, the PM posts one summary after a session on the board ("Update the group"): approved, sent back, behind, back on schedule, new tasks, changed hands, due in the next 3 days, final deadline. The board shows how many tasks changed since the last update. The summary is editable before sending. It posts through a webhook stored in project_keys.chat_webhook (Teams Workflows, Discord or Slack; never readable by members or AIs) via `POST /api/gh/chat/<project>` (superuser only), or the PM copies it. project_keys.last_summary_at marks where the next summary starts.
 
 ### Claiming a name (pb_hooks/claim.pb.js)
 - `GET /api/gh/join/<project>` with header `X-Group-Key`: the non-PM members, which are taken, PM names, and whether the link is locked.
@@ -120,6 +120,12 @@ Screens are on the design canvas: https://claude.ai/artifact/UG853jZTSu7BzvwMfaF
 Decisions from design review:
 - The PM never appears in the member name picker. The PM view is reached only through the PocketBase superuser login, never through the group or personal links.
 - The browser remembers which member it is signed in as (localStorage, one per project), so returning members go straight to My tasks. A name that's already set up can't be picked again; on a new device the member opens their personal link (copied from the menu on their first device) or asks the PM to reset their name.
+
+## PM onboarding
+
+- **Start page:** the shared site without a link welcomes members ("open your PM's link") and PMs ("Set up EPMS"), with a 5-step guide at `#start`: PocketBase Cloud free plan (card on file, never charged), superuser, log in.
+- **Setup check after login:** compares the instance with the bundled pb_schema.json (collections, fields, rules) and asks each hook file for its version (`/api/gh/hooks/<name>`). Collections install or update in one click (superuser import, never deletes); hooks are offered as a zip with steps for the Code tab. Also under Check setup in the project menu.
+- **Getting started checklist** on a new project's board: add your group, write the guidelines, plan the tasks, share the group link, set up chat updates (optional). Ticks itself; hideable.
 
 ## Teams link previews (tested 2026-11-18)
 

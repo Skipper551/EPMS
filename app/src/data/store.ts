@@ -5,7 +5,7 @@
 //  - Member: no account; every request carries the project's member key in the X-Member-Key header.
 
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
-import { PB_URL } from '../config'
+import { DEFAULT_PB_URL } from '../config'
 import type {
   ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Subtask, Status, Task, TaskInput, TaskLink,
 } from './types'
@@ -15,6 +15,28 @@ const SNAPSHOT_EXPAND =
 
 let pb: PocketBase | null = null
 let mode: 'pm' | 'member' | null = null
+/** The instance this page is talking to; set before initPm, initMember or the join routes. */
+let baseUrl = DEFAULT_PB_URL
+
+export function setBackend(url: string): void {
+  baseUrl = url
+}
+
+export function backendUrl(): string {
+  return baseUrl
+}
+
+/** Is there a PocketBase instance at this address? */
+export async function checkInstance(url: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${url}/api/health`, { method: 'GET' })
+    if (!r.ok) return false
+    const j = await r.json()
+    return typeof j?.message === 'string'
+  } catch {
+    return false
+  }
+}
 
 function client(): PocketBase {
   if (!pb) throw new Error('Storage not initialised')
@@ -23,7 +45,7 @@ function client(): PocketBase {
 
 /** Start in PM mode. The superuser session is kept in this browser's localStorage. */
 export function initPm(): void {
-  pb = new PocketBase(PB_URL)
+  pb = new PocketBase(baseUrl)
   pb.autoCancellation(false)
   mode = 'pm'
 }
@@ -31,7 +53,7 @@ export function initPm(): void {
 /** Start in member mode: no session, the member's personal key goes on every request. */
 export function initMember(memberKey: string): void {
   // A memory-only auth store, so a PM session in the same browser is never sent from the member page.
-  pb = new PocketBase(PB_URL, new BaseAuthStore())
+  pb = new PocketBase(baseUrl, new BaseAuthStore())
   pb.autoCancellation(false)
   pb.beforeSend = (url, options) => {
     options.headers = { ...(options.headers as Record<string, string>), 'X-Member-Key': memberKey }
@@ -40,7 +62,6 @@ export function initMember(memberKey: string): void {
   mode = 'member'
 }
 
-export const backendUrl = PB_URL
 
 // ---------- errors ----------
 
@@ -159,7 +180,7 @@ function taskBody(t: Partial<TaskInput>): Record<string, unknown> {
 
 /** Read-only link an AI can fetch: the whole project as one JSON document. */
 export function aiLink(projectId: string, aiKey: string): string {
-  return `${PB_URL}/api/collections/projects/records/${projectId}?ai_key=${encodeURIComponent(aiKey)}&expand=${SNAPSHOT_EXPAND}`
+  return `${baseUrl}/api/collections/projects/records/${projectId}?ai_key=${encodeURIComponent(aiKey)}&expand=${SNAPSHOT_EXPAND}`
 }
 
 // ---------- whole project ----------
@@ -342,7 +363,7 @@ export function addNote(taskId: string, authorId: string, text: string): Promise
 
 /** A plain client for the join routes: sends the group key, never a personal key or a PM session. */
 function joinClient(groupKey: string): PocketBase {
-  const c = new PocketBase(PB_URL, new BaseAuthStore())
+  const c = new PocketBase(baseUrl, new BaseAuthStore())
   c.autoCancellation(false)
   c.beforeSend = (url, options) => {
     options.headers = { ...(options.headers as Record<string, string>), 'X-Group-Key': groupKey }
@@ -500,4 +521,48 @@ export function deleteSubtask(id: string): Promise<void> {
   return run(async () => {
     await client().collection('subtasks').delete(id)
   })
+}
+
+// ---------- setup check (PM) ----------
+
+export interface CollectionInfo {
+  name: string
+  fields: string[]
+  rules: Record<string, string | null>
+}
+
+/** The collections on this instance, with their fields and rules. */
+export function listCollections(): Promise<CollectionInfo[]> {
+  return run(async () => {
+    const list = await client().collections.getFullList()
+    return list.map((c) => ({
+      name: c.name,
+      fields: ((c.fields ?? []) as { name: string }[]).map((f) => f.name),
+      rules: { listRule: c.listRule ?? null, viewRule: c.viewRule ?? null, createRule: c.createRule ?? null, updateRule: c.updateRule ?? null, deleteRule: c.deleteRule ?? null },
+    }))
+  })
+}
+
+/** Create or update EPMS's collections from the bundled schema. Never deletes anything else on the instance. */
+export function importSchema(schema: unknown[]): Promise<void> {
+  return run(async () => {
+    await client().collections.import(schema as never, false)
+  })
+}
+
+/** Which EPMS hook files answer, and their versions. */
+export async function probeHooks(names: string[]): Promise<Record<string, string | null>> {
+  const out: Record<string, string | null> = {}
+  await Promise.all(
+    names.map(async (n) => {
+      try {
+        const r = await fetch(`${baseUrl}/api/gh/hooks/${n}`)
+        const j = r.ok ? await r.json() : null
+        out[n] = typeof j?.version === 'string' ? j.version : null
+      } catch {
+        out[n] = null
+      }
+    }),
+  )
+  return out
 }

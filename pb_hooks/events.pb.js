@@ -92,3 +92,6 @@ routerAdd("POST", "/api/gh/chat/{project}", (e) => {
   e.app.save(keys)
   return e.json(200, { ok: true })
 }, $apis.requireSuperuserAuth())
+
+// Lets the EPMS setup check see that this file is installed, and which version.
+routerAdd("GET", "/api/gh/hooks/events", (e) => e.json(200, { name: "events", version: "2026-11-19" }))

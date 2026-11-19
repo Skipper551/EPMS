@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'preact/hooks'
 import {
-  aiLink, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, postToChat, regenerateKey, setChatWebhook, setClaimsLocked,
+  aiLink, backendUrl, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, postToChat, regenerateKey, setChatWebhook, setClaimsLocked,
   updateMember, updateProject, type StoreError,
 } from '../data/store'
 import type { Member, MemberKey, ProjectKeys, Snapshot } from '../data/types'
 import { copyText, groupLink, normaliseUrl, personalLink } from '../lib/util'
 import { Avatar, ErrorBox, Field, Toggle, toast } from '../ui/ui'
+import { markGroupLinkShared } from './GettingStarted'
 
 export function Settings(props: {
   snap: Snapshot
@@ -255,7 +256,7 @@ function MemberRow(props: { snap: Snapshot; m: Member; claim: MemberKey | null |
                   if (!ok || !k) return
                   props.onClaimsChanged()
                 }
-                const copied = await copyText(personalLink(snap.project.id, m.id, k.key, props.aiKey))
+                const copied = await copyText(personalLink(snap.project.id, m.id, k.key, props.aiKey, backendUrl()))
                 toast(copied ? `${m.name}'s personal link copied. Send it to them privately.` : "Couldn't copy the link.", !copied)
               }}
             >
@@ -278,7 +279,7 @@ function MemberRow(props: { snap: Snapshot; m: Member; claim: MemberKey | null |
   )
 }
 
-function LinkRow(props: { label: string; help: string; url: string | null; copyLabel: string; onRegenerate: () => Promise<void>; regenerateWarning: string }) {
+function LinkRow(props: { label: string; help: string; url: string | null; copyLabel: string; onRegenerate: () => Promise<void>; regenerateWarning: string; onCopied?: () => void }) {
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
   return (
@@ -289,7 +290,7 @@ function LinkRow(props: { label: string; help: string; url: string | null; copyL
       </div>
       <div class="link-box">
         <code>{props.url ?? 'Loading…'}</code>
-        <button type="button" class="btn btn-primary btn-sm" disabled={!props.url} onClick={async () => toast((await copyText(props.url!)) ? 'Copied' : "Couldn't copy. Select the link and copy it by hand.", false)}>
+        <button type="button" class="btn btn-primary btn-sm" disabled={!props.url} onClick={async () => { const ok = await copyText(props.url!); if (ok) props.onCopied?.(); toast(ok ? 'Copied' : "Couldn't copy. Select the link and copy it by hand.", false) }}>
           {props.copyLabel}
         </button>
       </div>
@@ -326,8 +327,9 @@ function Links(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: (k: Pr
       <LinkRow
         label="Group link"
         help="Post this in the group chat. Each member opens it once and picks their name; after that their device is signed in as them. On its own, the link only shows the names that are still free."
-        url={keys ? groupLink(snap.project.id, keys.member_key) : null}
+        url={keys ? groupLink(snap.project.id, keys.member_key, backendUrl()) : null}
         copyLabel="Copy group link"
+        onCopied={() => markGroupLinkShared(snap.project.id)}
         onRegenerate={regen('member_key')}
         regenerateWarning="The old group link stops working. Members who already picked their name stay signed in."
       />

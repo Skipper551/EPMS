@@ -8,6 +8,8 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 export default defineConfig({
   base: './',
   plugins: [preact()],
+  // The app bundles ../pb_schema.json for the setup check.
+  server: { fs: { allow: ['..'] } },
   // The version shown at the bottom of every page comes from package.json.
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   build: {

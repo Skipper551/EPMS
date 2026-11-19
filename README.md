@@ -39,7 +39,7 @@ Free forever, private, no central server: each PM runs their own copy on free se
 ```
 
 - **Backend:** one [PocketBase](https://pocketbase.io) instance per PM, on PocketBase Cloud's free plan or self-hosted. One instance holds all of that PM's projects.
-- **Frontend:** a static app (HTML, JavaScript, CSS) that talks to the instance. Host it on a PocketBase Cloud frontend slot or GitHub Pages.
+- **Frontend:** a static app (HTML, JavaScript, CSS). One shared copy is published on GitHub Pages and works with any PM's instance; anyone can also host their own copy.
 - **Access:** the PM logs in as the instance's superuser. Members have no accounts: the group link lets each member claim their name once, which gives their device a personal key. The server's access rules check that key on every request, so members can only act as themselves and only on their own tasks.
 - **AIs:** each project has a read-only link that returns the whole project as one JSON document, which Claude's and ChatGPT's link readers can fetch.
 
@@ -56,20 +56,28 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |
 | [`LICENSE`](LICENSE) | MIT licence. |
+| [`.github/workflows/pages.yml`](.github/workflows/pages.yml) | Publishes the shared site to GitHub Pages on every push to `main`. |
 
-## Set up your own copy (PM)
+## Start a group (PM)
 
-1. **Create a PocketBase instance.** On [PocketBase Cloud](https://pocketbasecloud.com)'s free plan you get one instance with 50 MB and 5,000 requests an hour. The free plan asks for a card to start a 0 cost subscription through Stripe; it is never charged. You can also self-host PocketBase.
-2. **Import the schema.** In the instance dashboard, go to Settings, Import collections, and paste [`pb_schema.json`](pb_schema.json).
-3. **Add the hooks.** Add everything in [`pb_hooks/`](pb_hooks) to the instance, keeping the `epms` folder (on PocketBase Cloud, the instance's Code tab).
-4. **Build the frontend** with your instance's address:
-   ```bash
-   cd app
-   npm install
-   VITE_PB_URL=https://your-instance.example.com npm run build
-   ```
-5. **Upload** the contents of `app/dist/` to a PocketBase Cloud frontend slot or GitHub Pages.
-6. **Open `pm.html`** on your deployed address, log in with your superuser email and password, create a project, and post the group link in your group chat.
+Open the shared EPMS site, **https://skipper551.github.io/EPMS/**, and choose **Set up EPMS**. In short:
+
+1. **Create a free PocketBase instance** on [PocketBase Cloud](https://pocketbasecloud.com): one instance, 50 MB, 5,000 requests an hour. The free plan asks for a card to start a subscription that costs 0 through Stripe; it is never charged. You can also self-host PocketBase.
+2. **Set its superuser** email and password in the instance dashboard, and copy the instance's address.
+3. **Log in to EPMS** with the address, email and password. EPMS checks your instance:
+   - **Collections:** installed or updated in one click.
+   - **Hooks:** download them from the setup check and upload them in the instance's Code tab, keeping the `epms` folder. PocketBase only accepts hook files through its dashboard. **Check setup** in the project menu re-runs the check any time, for example after an EPMS update.
+4. **Create your project.** A Getting started checklist on the board walks you through adding your group, writing the guidelines, planning the tasks and sharing the group link.
+
+The shared site is only the app: it holds no data and has no server. Your projects live in your own instance, and group and personal links carry its address after `#`, so members' browsers know where to connect.
+
+**Prefer your own copy of the app?** Build it with your instance as the default, then upload `app/dist/` anywhere static (a PocketBase Cloud frontend slot, GitHub Pages):
+
+```bash
+cd app
+npm install
+VITE_PB_URL=https://your-instance.example.com npm run build
+```
 
 ## Planning tasks with Claude
 
