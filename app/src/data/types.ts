@@ -62,6 +62,7 @@ export interface MemberKey {
   id: string
   member: string
   key: string
+  has_pin: boolean
 }
 
 /** What the group link shows before someone has picked their name. */
@@ -69,7 +70,7 @@ export interface JoinInfo {
   project: { id: string; name: string }
   locked: boolean
   pms: string[]
-  members: { id: string; name: string; role: string; claimed: boolean }[]
+  members: { id: string; name: string; role: string; claimed: boolean; has_pin: boolean }[]
 }
 
 export interface Claim {

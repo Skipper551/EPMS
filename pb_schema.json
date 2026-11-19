@@ -222,6 +222,29 @@
         "autogeneratePattern": "[a-zA-Z0-9]{40}"
       },
       {
+        "name": "pin_hash",
+        "type": "text",
+        "max": 128,
+        "hidden": true
+      },
+      {
+        "name": "pin_salt",
+        "type": "text",
+        "max": 64,
+        "hidden": true
+      },
+      {
+        "name": "pin_fails",
+        "type": "number",
+        "onlyInt": true,
+        "hidden": true
+      },
+      {
+        "name": "pin_locked_until",
+        "type": "date",
+        "hidden": true
+      },
+      {
         "name": "created",
         "type": "autodate",
         "onCreate": true,

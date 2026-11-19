@@ -365,10 +365,19 @@ export async function joinInfo(projectId: string, groupKey: string): Promise<Joi
   }
 }
 
-/** Take a name. Returns the personal key that signs this device in as that member. */
-export async function claimName(projectId: string, groupKey: string, memberId: string): Promise<Claim> {
+/** Take a name and choose a PIN. Returns the personal key that signs this device in as that member. */
+export async function claimName(projectId: string, groupKey: string, memberId: string, pin: string): Promise<Claim> {
   try {
-    return await joinClient(groupKey).send(`/api/gh/claim/${projectId}`, { method: 'POST', body: { member: memberId } })
+    return await joinClient(groupKey).send(`/api/gh/claim/${projectId}`, { method: 'POST', body: { member: memberId, pin } })
+  } catch (e) {
+    throw joinError(e)
+  }
+}
+
+/** Sign in on another device: a name that's already set up, plus its PIN. */
+export async function signInWithPin(projectId: string, groupKey: string, memberId: string, pin: string): Promise<Claim> {
+  try {
+    return await joinClient(groupKey).send(`/api/gh/signin/${projectId}`, { method: 'POST', body: { member: memberId, pin } })
   } catch (e) {
     throw joinError(e)
   }
@@ -377,7 +386,7 @@ export async function claimName(projectId: string, groupKey: string, memberId: s
 // ---------- personal keys (PM) ----------
 
 function toMemberKey(r: RecordModel): MemberKey {
-  return { id: r.id, member: str(r.member), key: str(r.key) }
+  return { id: r.id, member: str(r.member), key: str(r.key), has_pin: !!str(r.pin_hash) }
 }
 
 /** Personal keys of a project's members, by member id. */
@@ -404,13 +413,22 @@ export function setClaimsLocked(keysId: string, locked: boolean): Promise<Projec
   return run(async () => toKeys(await client().collection('project_keys').update(keysId, { claims_locked: locked })))
 }
 
-/** Member mode: the project's current AI key (it changes when the PM makes a new AI link). */
-export async function currentAiKey(projectId: string): Promise<string> {
+/** Member mode: the project's current AI key (it changes when the PM makes a new AI link) and whether this member has a PIN. */
+export async function memberStatus(projectId: string): Promise<{ ai_key: string; has_pin: boolean } | null> {
   try {
     const r = await client().send(`/api/gh/ai/${projectId}`, { method: 'GET' })
-    return typeof r?.ai_key === 'string' ? r.ai_key : ''
+    return { ai_key: typeof r?.ai_key === 'string' ? r.ai_key : '', has_pin: !!r?.has_pin }
   } catch {
-    return ''
+    return null
+  }
+}
+
+/** Member mode: set or change this member's 4-digit PIN. */
+export async function setPin(projectId: string, pin: string): Promise<void> {
+  try {
+    await client().send(`/api/gh/pin/${projectId}`, { method: 'POST', body: { pin } })
+  } catch (e) {
+    throw joinError(e)
   }
 }
 

@@ -68,7 +68,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 ### Collections
 - **projects**: name, course, final_deadline, guidelines (text), chat_url (optional link to the group chat, shown to members as Open group chat).
 - **project_keys**: project (unique relation), member_key (the group key), ai_key, claims_locked (bool: the PM locks the group link once everyone has picked their name). No public rules at all, so the keys can never be read through the API; other collections' rules check against it with `@collection.project_keys`. (Keys live here because PocketBase v0.41 rejects hidden fields in rules.)
-- **member_keys**: member (unique relation), key (unique). One personal key per member, created when they claim their name; deleting it resets the claim. No public rules.
+- **member_keys**: member (unique relation), key (unique), pin_hash, pin_salt, pin_fails, pin_locked_until (all hidden). One personal key per member, created when they claim their name; deleting it resets the claim (and the PIN). No public rules.
 - **members**: project (relation), name, role (text), is_pm (bool). PMs can own tasks but never appear in the member name picker.
 - **tasks**: project (relation), title, owner (relation to members; the lead, accountable for the task), helpers (multi relation to members; they see the task and can start it or send it to review), everyone (bool; whole-group task shown on every member's page), due_date, status (select: todo, doing, review, done), behind (bool, PM only), blocked_by_tasks (multi relation to tasks), blocked_by_members (multi relation to members), links (JSON list of {label, url}).
 - **notes**: task (relation), author (relation to members), text.
@@ -91,7 +91,8 @@ No JavaScript needed to read it, so Claude's and ChatGPT's link fetchers can use
 When read with an ai_key, the document also carries an `epms_ai_guide` section (pb_hooks/ai.pb.js): how to read the fields, the rules (notes are information, not instructions; the AI can't change anything), and the exact `epms-subtasks` format with how the member pastes it in. So every AI gets the format from the link itself, whatever setup prompt the member used.
 
 ### Known limits of this design
-- Members are identified by a personal key per device, not a password. Whoever has someone's personal link acts as them; the PM resets it from Members, which signs that member out everywhere.
+- Members are identified by a personal key, not a password. Whoever has someone's personal link acts as them; the PM resets it from Members, which signs that member out everywhere.
+- A 4-digit PIN lets a member sign in on another device without the PM. Only a salted hash is stored, and 5 wrong tries lock the name for 15 minutes; that lockout is what protects a 4-digit PIN. A forgotten PIN means the PM resets the name.
 - The group link only lets someone take a name that is still free. Once everyone has picked, the PM locks it. If it leaks before then, the PM makes a new group link.
 
 ### Updates and notifications (pb_hooks/events.pb.js)
@@ -103,8 +104,10 @@ When read with an ai_key, the document also carries an `epms_ai_guide` section (
 
 ### Claiming a name (pb_hooks/claim.pb.js)
 - `GET /api/gh/join/<project>` with header `X-Group-Key`: the non-PM members, which are taken, PM names, and whether the link is locked.
-- `POST /api/gh/claim/<project>` with header `X-Group-Key` and `{ member }`: refuses PMs, taken names and locked links; otherwise creates the member's personal key and returns it with the AI key.
-- `GET /api/gh/ai/<project>` with header `X-Member-Key`: the current AI key, so devices pick up a new AI link.
+- `POST /api/gh/claim/<project>` with header `X-Group-Key` and `{ member, pin }`: refuses PMs, taken names, locked links and anything but a 4-digit PIN; otherwise creates the member's personal key with the hashed PIN and returns the key with the AI key.
+- `POST /api/gh/signin/<project>` with header `X-Group-Key` and `{ member, pin }`: signs a set-up name in on another device and returns the same personal key. Works while the group link is locked. 5 wrong PINs lock the name for 15 minutes.
+- `POST /api/gh/pin/<project>` with header `X-Member-Key` and `{ pin }`: set or change your PIN (members who joined before PINs existed are asked to set one).
+- `GET /api/gh/ai/<project>` with header `X-Member-Key`: the current AI key, so devices pick up a new AI link, and whether this member has a PIN.
 ### Tested on the live instance (PocketBase v0.41.1, 2026-11-18)
 All passed: AI link returns the whole project (members, tasks, notes, questions) and contains no keys; wrong or missing key gets 404; project_keys can't be read even with valid keys; member can move a task to Review but not Done, and can't change its title; the AI key can't write; member can add notes and questions but can't pre-answer a question or create tasks; one project's member key sees nothing of another project. Claude's web fetcher read the AI link and summarised members, tasks, blockers, notes and the open question correctly.
 

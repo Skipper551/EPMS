@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { claimName, currentAiKey, initMember, joinInfo, listEvents, setStatus, type StoreError } from '../data/store'
+import { claimName, initMember, joinInfo, listEvents, memberStatus, setPin, setStatus, signInWithPin, type StoreError } from '../data/store'
 import type { ActivityEvent, JoinInfo, Snapshot, Status, Task } from '../data/types'
 import { copyText, personalHash, personalLink, readFragment, type LinkParts } from '../lib/util'
 import { useSnapshot } from '../lib/useSnapshot'
-import { ChevronIcon, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
+import { ChevronIcon, Dialog, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { AiAgainDialog, BlockedDialog, TaskDetail } from './Dialogs'
 import { forgetSession, patchSession, saveSession, sessionFor, sessions, type Session } from './memory'
 import { MyTasks, Sidebar, type TaskActions } from './MyTasks'
-import { AiSetup, AiSetupContent, PickName, Tour } from './Welcome'
+import { AiSetup, AiSetupContent, PickName, PinInput, Tour } from './Welcome'
 import { SinceLastVisit } from './Updates'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 
@@ -108,11 +108,28 @@ function Join(props: { projectId: string; groupKey: string; onJoined: (s: Sessio
   }
   if (!info) return <Loading />
 
-  async function pick(memberId: string, skipIntro: boolean) {
+  async function signIn(memberId: string, pin: string) {
     setBusy(true)
     setError(null)
     try {
-      const claim = await claimName(props.projectId, props.groupKey, memberId)
+      const claim = await signInWithPin(props.projectId, props.groupKey, memberId, pin)
+      const s = saveSession({
+        projectId: props.projectId, memberId: claim.member, personalKey: claim.key, ai: claim.ai_key,
+        name: info!.project.name, setupDone: true, lastSeen: new Date().toISOString(),
+      })
+      showPersonalHash(s)
+      props.onJoined(s)
+    } catch (e) {
+      setError((e as StoreError).message)
+      setBusy(false)
+    }
+  }
+
+  async function pick(memberId: string, pin: string, skipIntro: boolean) {
+    setBusy(true)
+    setError(null)
+    try {
+      const claim = await claimName(props.projectId, props.groupKey, memberId, pin)
       const s = saveSession({
         projectId: props.projectId, memberId: claim.member, personalKey: claim.key, ai: claim.ai_key,
         name: info!.project.name, setupDone: skipIntro, lastSeen: new Date().toISOString(),
@@ -126,7 +143,7 @@ function Join(props: { projectId: string; groupKey: string; onJoined: (s: Sessio
     }
   }
 
-  return <PickName join={info} busy={busy} error={error} onPick={pick} />
+  return <PickName join={info} busy={busy} error={error} onPick={pick} onSignIn={signIn} />
 }
 
 function Project(props: { session: Session; onLeave: () => void }) {
@@ -144,6 +161,8 @@ function Project(props: { session: Session; onLeave: () => void }) {
   const [addSubtasksFor, setAddSubtasksFor] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<string | null>(null)
   const [aiOpen, setAiOpen] = useState(false)
+  const [hasPin, setHasPin] = useState(true)
+  const [pinOpen, setPinOpen] = useState(false)
   // Updates newer than the last visit; the next visit starts from now.
   const [since, setSince] = useState(() => props.session.lastSeen || new Date().toISOString())
   const [updates, setUpdates] = useState<ActivityEvent[]>([])
@@ -163,7 +182,10 @@ function Project(props: { session: Session; onLeave: () => void }) {
 
   useEffect(() => {
     showPersonalHash(session)
-    currentAiKey(session.projectId).then((ai) => {
+    memberStatus(session.projectId).then((status) => {
+      if (!status) return
+      setHasPin(status.has_pin)
+      const ai = status.ai_key
       if (ai && ai !== session.ai) {
         const next = patchSession(projectId, { ai })
         if (next) { setSession(next); showPersonalHash(next) }
@@ -244,7 +266,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
       <header class="header">
         <div class="header-side">
           <span class="logo">EPMS</span>
-          <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} />
+          <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} onPin={() => setPinOpen(true)} hasPin={hasPin} />
         </div>
         <div class="row" style={{ gap: '12px' }}>
           <span class="muted small">Hello <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
@@ -257,6 +279,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
         <MyTasks
           snap={snap} me={me} busy={busy} actions={actions} aiReady={!!session.ai}
           highlight={new Set(updates.map((e) => e.task))}
+          pinPrompt={!hasPin && <SetPinPanel projectId={projectId} onDone={() => setHasPin(true)} />}
           updates={updates.length > 0 && <SinceLastVisit snap={snap} meId={me.id} events={updates} onDismiss={() => { setUpdates([]); setSince(new Date().toISOString()) }} />}
         />
         <Sidebar snap={snap} me={me} />
@@ -274,6 +297,11 @@ function Project(props: { session: Session; onLeave: () => void }) {
           onClose={() => { const id = addSubtasksFor; setAddSubtasksFor(null); setDetail({ id, focusNote: false }) }} />
       )}
       {blocked && <BlockedDialog snap={snap} me={me} taskId={blocked} onClose={() => setBlocked(null)} onChanged={reload} />}
+      {pinOpen && (
+        <Dialog title={hasPin ? 'Change my PIN' : 'Set a PIN'} onClose={() => setPinOpen(false)}>
+          <SetPinPanel projectId={projectId} plain onDone={() => { setHasPin(true); setPinOpen(false) }} />
+        </Dialog>
+      )}
       {aiOpen && (
         <AiAgainDialog onClose={() => setAiOpen(false)}>
           <p class="muted" style={{ margin: 0 }}>Paste this once and your AI will always know the project. Then ask it things like "what should I do next?"</p>
@@ -284,7 +312,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
   )
 }
 
-function MemberMenu(props: { snap: Snapshot; session: Session; onAi: () => void }) {
+function MemberMenu(props: { snap: Snapshot; session: Session; onAi: () => void; onPin: () => void; hasPin: boolean }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const others = sessions().filter((s) => s.projectId !== props.session.projectId)
@@ -322,6 +350,7 @@ function MemberMenu(props: { snap: Snapshot; session: Session; onAi: () => void 
             </>
           )}
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onAi)}>Set up my AI</button>
+          <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onPin)}>{props.hasPin ? 'Change my PIN' : 'Set a PIN'}</button>
           <button
             type="button"
             role="menuitem"
@@ -336,5 +365,49 @@ function MemberMenu(props: { snap: Snapshot; session: Session; onAi: () => void 
         </div>
       )}
     </div>
+  )
+}
+
+/** Members who joined before PINs existed set one here; everyone can change theirs from the menu. */
+function SetPinPanel(props: { projectId: string; plain?: boolean; onDone: () => void }) {
+  const [pin, setPinValue] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function save(e: Event) {
+    e.preventDefault()
+    if (pin.length !== 4) return setError('Choose a 4-digit PIN.')
+    setBusy(true)
+    setError(null)
+    try {
+      await setPin(props.projectId, pin)
+      toast('PIN saved. Use it to sign in on your other devices.')
+      props.onDone()
+    } catch (err) {
+      setError((err as StoreError).message)
+      setBusy(false)
+    }
+  }
+
+  const body = (
+    <form class="stack-sm" onSubmit={save}>
+      <label class="field-label" for="new-pin">Choose a 4-digit PIN</label>
+      <div class="row">
+        <PinInput id="new-pin" value={pin} onInput={setPinValue} autoFocus={props.plain} />
+        <button type="submit" class="btn btn-primary btn-md" disabled={busy || pin.length !== 4}>{busy ? 'Saving…' : 'Save PIN'}</button>
+      </div>
+      <span class="muted xsmall">
+        On another device, open the group link, pick your name and enter this PIN. The PM never sees it; if you forget it, they can reset your name.
+      </span>
+      <ErrorBox error={error} />
+    </form>
+  )
+
+  if (props.plain) return body
+  return (
+    <section class="panel" style={{ borderColor: 'var(--accent-bg)', gap: '10px' }} aria-label="Set a PIN">
+      <h2 class="eyebrow" style={{ color: 'var(--accent-text)' }}>Set a PIN for your other devices</h2>
+      {body}
+    </section>
   )
 }

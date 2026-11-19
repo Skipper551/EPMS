@@ -25,7 +25,7 @@ function blockerSentence(snap: Snapshot, t: Task): string {
     .join('. ')
 }
 
-export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean; highlight: Set<string>; updates: preact.ComponentChildren }) {
+export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean; highlight: Set<string>; updates: preact.ComponentChildren; pinPrompt?: preact.ComponentChildren }) {
   const { snap, me, actions } = props
   const [showDone, setShowDone] = useState(false)
   const mine = snap.tasks.filter((t) => involvement(t, me.id)).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
@@ -48,6 +48,7 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
         <span class="muted small">{summary}</span>
       </div>
 
+      {props.pinPrompt}
       {props.updates}
 
       {open.length === 0 && comingUp.length > 0 && (

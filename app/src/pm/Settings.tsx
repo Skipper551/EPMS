@@ -137,7 +137,7 @@ function Members(props: { snap: Snapshot; keys: ProjectKeys | null; pmAuthorId: 
       <div class="stack-sm">
         <h2 class="eyebrow">Members</h2>
         <span class="muted small">
-          Members pick their name once from the group link, and that device stays signed in as them. Nobody else can take a name that's set up. PMs never appear in the picker; each PM logs in here with their own superuser account, added in the instance dashboard.
+          Members pick their name once from the group link and choose a 4-digit PIN; that device stays signed in, and the PIN lets them sign in on their other devices. Nobody else can take a name that's set up. Reset clears both if someone is locked out or forgets their PIN. PMs never appear in the picker; each PM logs in here with their own superuser account, added in the instance dashboard.
         </span>
       </div>
       <div class="list">
@@ -231,7 +231,7 @@ function MemberRow(props: { snap: Snapshot; m: Member; claim: MemberKey | null |
           </span>
           <span class="muted xsmall">
             {[m.role, `${owned} ${owned === 1 ? 'task' : 'tasks'}`].filter(Boolean).join(' · ')}
-            {!m.is_pm && claim !== undefined && <> · <span style={{ color: claim ? 'var(--accent-text)' : 'var(--muted)' }}>{claim ? 'Set up' : 'Not set up yet'}</span></>}
+            {!m.is_pm && claim !== undefined && <> · <span style={{ color: claim ? 'var(--accent-text)' : 'var(--muted)' }}>{claim ? (claim.has_pin ? 'Set up, has a PIN' : 'Set up, no PIN yet') : 'Not set up yet'}</span></>}
           </span>
         </div>
       </div>
