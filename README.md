@@ -12,6 +12,7 @@ Free forever, private, no central server: each PM runs their own copy on free se
 
 **For the PM**
 - A board with To do, In progress, Review and Done, filtered by member
+- Task view: your own tasks as the PM, the way members see theirs, and a read-only preview of any member's screen
 - Tasks with a lead, optional helpers, or the whole group; start and due dates, blockers, files and links, notes
 - Approve finished work, or send it back with a comment; mark tasks behind schedule in one tap, with an optional note
 - After a session on the board, post one summary of the changes to the group chat (Teams, Discord or Slack), or copy it

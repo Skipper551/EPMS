@@ -8,6 +8,9 @@ EPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "EPMS v0.6.1 · ebbf81d".
 
+## 0.7.0
+- Task view for PMs: their own My tasks next to the Board (their tasks finish directly, no review), and "Viewing as" to preview any member's screen read only.
+
 ## 0.6.1 ([#9](https://github.com/Skipper551/EPMS/pull/9))
 - The task-plan skill starts from the project's AI link, and asks for it if it hasn't been shared.
 - "Copy instructions for Claude" includes the AI link.

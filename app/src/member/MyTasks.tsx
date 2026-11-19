@@ -25,7 +25,11 @@ function blockerSentence(snap: Snapshot, t: Task): string {
     .join('. ')
 }
 
-export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean; highlight: Set<string>; updates: preact.ComponentChildren; pinPrompt?: preact.ComponentChildren }) {
+/** How the screen behaves: a member's own view; the PM's own tasks (they finish directly, no review);
+ *  or the PM previewing a member's screen (read only, so nothing is done in their name). */
+export type TaskViewMode = 'member' | 'pm' | 'preview'
+
+export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean; highlight: Set<string>; updates: preact.ComponentChildren; pinPrompt?: preact.ComponentChildren; mode?: TaskViewMode }) {
   const { snap, me, actions } = props
   const [showDone, setShowDone] = useState(false)
   const mine = snap.tasks.filter((t) => involvement(t, me.id)).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
@@ -58,12 +62,12 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
         <div class="empty">{mine.length ? 'All your tasks are done. Nice work.' : 'No tasks for you yet. Your PM will add them here.'}</div>
       )}
 
-      {open.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} fresh={props.highlight.has(t.id)} />)}
+      {open.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} fresh={props.highlight.has(t.id)} mode={props.mode} />)}
 
       {comingUp.length > 0 && (
         <section class="stack" aria-label="Coming up">
           <h2 class="eyebrow" style={{ marginTop: '8px' }}>Coming up</h2>
-          {comingUp.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} fresh={props.highlight.has(t.id)} quiet />)}
+          {comingUp.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={props.busy.has(t.id)} actions={actions} fresh={props.highlight.has(t.id)} quiet mode={props.mode} />)}
         </section>
       )}
 
@@ -80,14 +84,14 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
           <button type="button" class="btn-text" style={{ alignSelf: 'flex-start', color: 'var(--muted)' }} aria-expanded={showDone} onClick={() => setShowDone(!showDone)}>
             {showDone ? 'Hide' : 'Show'} {done.length} done {done.length === 1 ? 'task' : 'tasks'}
           </button>
-          {showDone && done.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={false} actions={actions} fresh={props.highlight.has(t.id)} />)}
+          {showDone && done.map((t) => <TaskCard key={t.id} snap={snap} me={me} task={t} busy={false} actions={actions} fresh={props.highlight.has(t.id)} mode={props.mode} />)}
         </div>
       )}
     </section>
   )
 }
 
-function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean; actions: TaskActions; fresh: boolean; quiet?: boolean }) {
+function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean; actions: TaskActions; fresh: boolean; quiet?: boolean; mode?: TaskViewMode }) {
   const { snap, task: t, actions } = props
   const notes = snap.notes.filter((n) => n.task === t.id)
   const fromOthers = notes.filter((n) => n.author !== props.me.id)
@@ -103,7 +107,8 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
     t.everyone ? (lead && role !== 'lead' ? `Whole group, led by ${lead}` : 'Whole group') :
     role === 'helper' ? `Helping ${[lead, ...others].filter(Boolean).length ? joinNames([lead, ...others].filter(Boolean)) : 'out'}` :
     others.length ? `With ${joinNames(others)}` : ''
-  const movable = canMove(t, props.me.id)
+  const preview = props.mode === 'preview'
+  const movable = !preview && canMove(t, props.me.id)
   const meta = [
     withText,
     dateRange(t.start_date, t.due_date) || 'No due date',
@@ -113,7 +118,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
 
   const primary = !movable ? null :
     t.status === 'todo' ? 'Start' :
-    t.status === 'doing' ? 'Send to review' : null
+    t.status === 'doing' ? (props.mode === 'pm' ? 'Mark done' : 'Send to review') : null
 
   return (
     <article class="card stack" style={{ opacity: t.status === 'done' ? 0.7 : props.quiet ? 0.85 : 1, borderColor: props.fresh ? 'var(--accent)' : undefined }}>
@@ -166,8 +171,8 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
             </button>
           )}
           {t.status === 'review' && <span class="muted small">Waiting for the PM to approve</span>}
-          {!movable && t.status !== 'review' && <span class="muted small">{lead ? `${lead} moves this one` : 'The PM moves this one'}</span>}
-          <button type="button" class="btn btn-soft btn-md" onClick={() => actions.openDetail(t, true)}>Add a note</button>
+          {!movable && !preview && t.status !== 'review' && <span class="muted small">{lead ? `${lead} moves this one` : 'The PM moves this one'}</span>}
+          {!preview && <button type="button" class="btn btn-soft btn-md" onClick={() => actions.openDetail(t, true)}>Add a note</button>}
           {movable && t.status !== 'review' && <button type="button" class="btn btn-soft btn-md" onClick={() => actions.blocked(t)}>I'm blocked</button>}
           {t.links.length > 0 && (
             <span class="row" style={{ marginLeft: 'auto', gap: '14px' }}>

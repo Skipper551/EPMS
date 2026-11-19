@@ -4,6 +4,7 @@ import type { Member, Snapshot, Task } from '../data/types'
 import { canMove, dateRange, formatDay, memberName, peopleText, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
 import { SubtaskList, subtasksOf } from '../ui/Subtasks'
+import type { TaskViewMode } from './MyTasks'
 import { BlockedIcon, Dialog, ErrorBox, Field, StatusPill, toast } from '../ui/ui'
 
 export function TaskDetail(props: {
@@ -17,8 +18,10 @@ export function TaskDetail(props: {
   onAddSubtasks: (t: Task) => void
   onClose: () => void
   onChanged: () => void
+  mode?: TaskViewMode
 }) {
   const { snap } = props
+  const preview = props.mode === 'preview'
   const t = snap.tasks.find((x) => x.id === props.taskId)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -27,8 +30,8 @@ export function TaskDetail(props: {
   const notes = snap.notes.filter((n) => n.task === t.id)
   const blockerTasks = t.blocked_by_tasks.map((id) => snap.tasks.find((x) => x.id === id)).filter((x): x is Task => !!x)
   const blockerMembers = t.blocked_by_members.map((id) => memberName(snap, id)).filter(Boolean)
-  const mine = canMove(t, props.me.id)
-  const primary = mine ? (t.status === 'todo' ? 'Start' : t.status === 'doing' ? 'Send to review' : null) : null
+  const mine = !preview && canMove(t, props.me.id)
+  const primary = mine ? (t.status === 'todo' ? 'Start' : t.status === 'doing' ? (props.mode === 'pm' ? 'Mark done' : 'Send to review') : null) : null
 
   async function post(e: Event) {
     e.preventDefault()
@@ -76,7 +79,7 @@ export function TaskDetail(props: {
         </section>
       )}
 
-      {t.owner === props.me.id && t.status !== 'done' && <StartDateEditor task={t} max={t.due_date} onChanged={props.onChanged} />}
+      {!preview && t.owner === props.me.id && t.status !== 'done' && <StartDateEditor task={t} max={t.due_date} onChanged={props.onChanged} />}
 
       {(mine || subtasksOf(snap, t.id).length > 0) && (
         <SubtaskList snap={snap} task={t} canEdit={mine && t.status !== 'done'} onChanged={props.onChanged} onAddMany={() => props.onAddSubtasks(t)} />
@@ -91,7 +94,7 @@ export function TaskDetail(props: {
             <span class="pre-wrap">{n.text}</span>
           </div>
         ))}
-        <form class="stack" onSubmit={post}>
+        {!preview && <form class="stack" onSubmit={post}>
           <Field label="Add a note">
             {(id) => (
               <textarea id={id} class="textarea" rows={3} maxLength={5000} value={text} onInput={(e) => setText(e.currentTarget.value)}
@@ -100,7 +103,7 @@ export function TaskDetail(props: {
           </Field>
           <ErrorBox error={error} />
           <div><button type="submit" class="btn btn-soft btn-md" disabled={busy || !text.trim()}>{busy ? 'Adding…' : 'Add note'}</button></div>
-        </form>
+        </form>}
       </section>
 
       {mine && t.status !== 'done' && (
