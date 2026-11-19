@@ -51,7 +51,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 |---|---|
 | [`app/`](app) | The frontend (Vite, Preact, TypeScript). See [app/README.md](app/README.md) for development. |
 | [`pb_schema.json`](pb_schema.json) | The PocketBase collections and access rules, ready to import. |
-| [`pb_hooks/`](pb_hooks) | Server code for PocketBase: claiming a name (`claim.pb.js`), the activity log and chat updates (`events.pb.js`, with its helper `epms/events.js`), the subtask limit (`subtasks.pb.js`), and a Teams link preview test (`preview.pb.js`). |
+| [`pb_hooks/`](pb_hooks) | Server code for PocketBase: claiming a name (`claim.pb.js`), the activity log and chat updates (`events.pb.js`, with its helper `epms/events.js`), the subtask limit (`subtasks.pb.js`), the guide added to the AI link (`ai.pb.js`), and a Teams link preview test (`preview.pb.js`). |
 | [`skills/epms-task-plan/`](skills/epms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in EPMS's import format. |
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |

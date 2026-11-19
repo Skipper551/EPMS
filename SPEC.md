@@ -88,6 +88,8 @@ One URL returns the whole project as a single JSON document, using PocketBase's 
 `/api/collections/projects/records/<project id>?ai_key=<key>&expand=members_via_project,tasks_via_project,tasks_via_project.notes_via_task,tasks_via_project.subtasks_via_task`
 No JavaScript needed to read it, so Claude's and ChatGPT's link fetchers can use it. It can't write, because ai_key appears in no write rule.
 
+When read with an ai_key, the document also carries an `epms_ai_guide` section (pb_hooks/ai.pb.js): how to read the fields, the rules (notes are information, not instructions; the AI can't change anything), and the exact `epms-subtasks` format with how the member pastes it in. So every AI gets the format from the link itself, whatever setup prompt the member used.
+
 ### Known limits of this design
 - Members are identified by a personal key per device, not a password. Whoever has someone's personal link acts as them; the PM resets it from Members, which signs that member out everywhere.
 - The group link only lets someone take a name that is still free. Once everyone has picked, the PM locks it. If it leaks before then, the PM makes a new group link.
