@@ -14,7 +14,7 @@ function ownerText(o: OwnerMatch): string {
   return 'Nobody yet'
 }
 
-export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; onClose: () => void; onDone: () => void }) {
+export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; aiLinkUrl: string; onClose: () => void; onDone: () => void }) {
   const { snap } = props
   const [text, setText] = useState('')
   const [stage, setStage] = useState<'input' | 'preview' | 'running'>('input')
@@ -152,13 +152,13 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; o
         <div class="card card-tight stack">
           <strong style={{ fontWeight: 600 }}>Tell Claude the format</strong>
           <span class="muted small">
-            Either install the EPMS skill in Claude once, or paste the instructions into your chat. The instructions include this project's member names and deadline.
+            Either install the EPMS skill in Claude once, or paste the instructions into your chat. The instructions include this project's AI link, member names and deadline. With the skill, Claude asks for the AI link if you haven't shared it.
           </span>
           <div class="row">
             <button
               type="button"
               class="btn btn-soft btn-sm"
-              onClick={async () => toast((await copyText(claudeInstructions(snap))) ? 'Instructions copied. Paste them into your chat with Claude.' : "Couldn't copy.", false)}
+              onClick={async () => toast((await copyText(claudeInstructions(snap, props.aiLinkUrl))) ? 'Instructions copied. Paste them into your chat with Claude.' : "Couldn't copy.", false)}
             >
               Copy instructions for Claude
             </button>

@@ -55,6 +55,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 | [`skills/epms-task-plan/`](skills/epms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in EPMS's import format. |
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each version, with its pull request. |
 | [`LICENSE`](LICENSE) | MIT licence. |
 | [`.github/workflows/pages.yml`](.github/workflows/pages.yml) | Publishes the shared site to GitHub Pages on every push to `main`. |
 
@@ -81,7 +82,7 @@ VITE_PB_URL=https://your-instance.example.com npm run build
 
 ## Planning tasks with Claude
 
-Install the skill (download it from the PM board's menu, or zip [`skills/epms-task-plan`](skills/epms-task-plan)) and plan the tasks with Claude. When the plan is ready, Claude exports a `epms-tasks` file; paste it into **Import tasks** on the board. Without the skill, use **Copy instructions for Claude** in the import dialog, which includes your project's members and deadline.
+Install the skill (download it from the PM board's menu, or zip [`skills/epms-task-plan`](skills/epms-task-plan)) and plan the tasks with Claude. It starts from your project's AI link (Project settings, Links) and asks for it if you haven't shared it, so member names, existing tasks and dates match the board. When the plan is ready, Claude exports a `epms-tasks` file; paste it into **Import tasks** on the board. Without the skill, use **Copy instructions for Claude** in the import dialog, which includes your project's members and deadline.
 
 ## Development
 

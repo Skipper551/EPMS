@@ -47,7 +47,7 @@ VITE_PB_URL=https://their-instance.example.com npm run build
 
 ## Version
 
-The version at the bottom of every page comes from `version` in `package.json`. Bump it before each release, for example with `npm version patch` (0.1.0 to 0.1.1) or `npm version minor` (0.1.0 to 0.2.0).
+The version comes from `version` in `package.json`; the footer shows it with the short commit the build came from (`GITHUB_SHA` in GitHub Actions, otherwise `git rev-parse`). Every pull request that changes the app bumps it and adds an entry to `../CHANGELOG.md`: features bump the middle number (`npm version minor`), fixes the last (`npm version patch`).
 
 ## How it fits together
 
