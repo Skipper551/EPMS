@@ -286,8 +286,24 @@ let memberPage
   await page.click('role=tab[name="Board"]')
   await page.waitForSelector('h1:text-is("Board")')
 
-  // Reset and lock
+  // Guidelines: long text is saved whole, and an unsaved draft survives switching view.
   await page.click('header >> text=Project settings')
+  await page.waitForSelector('#guidelines')
+  const longText = 'Aim slightly over in your section so the editor has room to cut, and cite every source in APA 7. '.repeat(32).trim()
+  await page.fill('#guidelines', longText)
+  await page.click('button:has-text("Save guidelines")')
+  await page.waitForSelector('text=Guidelines saved')
+  const storedGuidelines = (await pb.collection('projects').getOne(project.id)).guidelines
+  check('long guidelines are saved whole', storedGuidelines === longText, `${storedGuidelines.length} of ${longText.length}`)
+  await page.fill('#guidelines', longText + ' One more line.')
+  check('unsaved changes are flagged', (await page.locator('text=Unsaved changes').count()) === 1)
+  await page.click('role=tab[name="Board"]')
+  await page.click('header >> text=Project settings')
+  await page.waitForSelector('#guidelines')
+  check('an unsaved draft survives switching view', (await page.inputValue('#guidelines')).endsWith('One more line.') && (await page.locator('text=Restored your unsaved changes').count()) === 1)
+  await page.click('text=discard them')
+
+  // Reset and lock
   await page.waitForSelector('text=Set up')
   const jimmyRow = page.locator('.list-item', { hasText: 'Jimmy' })
   await jimmyRow.locator('button:has-text("Reset")').click()
@@ -305,7 +321,7 @@ let memberPage
     format: 'epms-tasks', version: 1,
     tasks: [
       { id: 'a', title: 'Collect data', owner: 'ala', due: day(6).slice(0, 10), description: 'Steps here.', subtasks: ['Export the survey', 'Clean it'] },
-      { id: 'b', title: 'Make charts', owner: 'Newbie', blocked_by: ['a'] },
+      { id: 'b', title: 'Make charts', owner: 'Newbie', blocked_by: ['a'], subtasks: [{ title: 'Pick chart types' }, { title: 'Draw them' }, { title: 'Check labels' }] },
       { title: 'Write the intro', owner: 'Jimmy' },
     ],
   }) + '\n```')
@@ -315,7 +331,8 @@ let memberPage
   await page.waitForTimeout(400)
   const charts = await page.locator('article', { hasText: 'Make charts' }).innerText()
   check('import creates tasks, members and blockers', charts.includes('Newbie') && charts.includes('Blocked by Collect data'), charts)
-  check('import adds subtasks', (await page.locator('article', { hasText: 'Collect data' }).locator('.subtask-progress').innerText()).includes('0 of 2 subtasks'))
+  check('import reads subtasks as { title } objects too', (await page.locator('article', { hasText: 'Make charts' }).locator('.subtask-progress').innerText()).includes('0 of 3 subtasks'))
+  check('import adds subtasks', (await page.locator('article:has(h3:text-is("Collect data"))').locator('.subtask-progress').innerText()).includes('0 of 2 subtasks'))
   check('import skips duplicates', (await page.locator('article h3:text-is("Write the intro")').count()) === 1)
   await ctx.close()
 }

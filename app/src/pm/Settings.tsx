@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'preact/hooks'
 import {
   aiLink, backendUrl, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, postToChat, regenerateKey, setChatWebhook, setClaimsLocked,
-  updateMember, updateProject, type StoreError,
+  StoreError, updateMember, updateProject,
 } from '../data/store'
 import type { Member, MemberKey, ProjectKeys, Snapshot } from '../data/types'
-import { copyText, groupLink, normaliseUrl, personalLink } from '../lib/util'
+import { copyText, groupLink, load, normaliseUrl, personalLink, save } from '../lib/util'
 import { Avatar, ErrorBox, Field, Toggle, toast } from '../ui/ui'
 import { markGroupLinkShared } from './GettingStarted'
 
@@ -90,9 +90,26 @@ function Details(props: { snap: Snapshot; onChanged: () => void }) {
 
 function Guidelines(props: { snap: Snapshot; onChanged: () => void }) {
   const p = props.snap.project
-  const [text, setText] = useState(p.guidelines)
+  const draftKey = `epms:pm:guidelines-draft:${p.id}`
+  // An unsaved draft survives switching views or closing the tab, so a long text is never lost halfway.
+  const [text, setText] = useState(() => load(draftKey) ?? p.guidelines)
+  const [restored, setRestored] = useState(() => { const d = load(draftKey); return d !== null && d !== p.guidelines })
   const s = useSaver()
-  useEffect(() => setText(p.guidelines), [p.id])
+  const dirty = text !== p.guidelines
+
+  useEffect(() => {
+    const d = load(draftKey)
+    setText(d ?? p.guidelines)
+    setRestored(d !== null && d !== p.guidelines)
+  }, [p.id])
+
+  useEffect(() => {
+    save(draftKey, dirty ? text : null)
+    if (!dirty) return
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [text, dirty])
 
   return (
     <section class="panel">
@@ -106,15 +123,30 @@ function Guidelines(props: { snap: Snapshot; onChanged: () => void }) {
         class="stack"
         onSubmit={async (e) => {
           e.preventDefault()
-          if (await s.run(() => updateProject(p.id, { guidelines: text }), 'Guidelines saved')) props.onChanged()
+          const ok = await s.run(async () => {
+            const saved = await updateProject(p.id, { guidelines: text })
+            // Never report success unless the whole text came back.
+            if (saved.guidelines !== text) {
+              throw new StoreError(`Only ${saved.guidelines.length.toLocaleString()} of ${text.length.toLocaleString()} characters were saved. Your full text is still here; copy it somewhere safe, then try again.`, 0)
+            }
+          }, 'Guidelines saved')
+          if (ok) {
+            save(draftKey, null)
+            setRestored(false)
+            props.onChanged()
+          }
         }}
       >
+        {restored && dirty && <div class="hint-box" style={{ padding: '10px 14px' }}>Restored your unsaved changes. Save them, or <button type="button" class="btn-text" onClick={() => { setText(p.guidelines); setRestored(false) }}>discard them</button>.</div>}
         <label class="sr-only" for="guidelines">Guidelines</label>
         <textarea id="guidelines" class="textarea" rows={8} maxLength={20000} value={text} onInput={(e) => setText(e.currentTarget.value)}
           placeholder="APA 7 for all references. Keep your section under 600 words. Send things to review by Thursday evening so I can merge on Friday." />
         <ErrorBox error={s.error} />
         <div class="row-between">
-          <button type="submit" class="btn btn-primary btn-md" disabled={s.busy || text === p.guidelines}>Save guidelines</button>
+          <div class="row">
+            <button type="submit" class="btn btn-primary btn-md" disabled={s.busy || !dirty}>Save guidelines</button>
+            {dirty && <span class="xsmall warn-text">Unsaved changes</span>}
+          </div>
           <span class="muted xsmall">{text.length.toLocaleString()} / 20,000</span>
         </div>
       </form>

@@ -65,7 +65,13 @@ EPMS (Educational Project Management Software) is a free project management app 
       "due": "2026-11-30",
       "description": "Using Ala's sources, write a 400 to 600 word introduction that sets out the research question.",
       "blocked_by": ["find-sources"],
-      "subtasks": ["Re-read the brief and the sources", "Outline the argument in 5 bullet points", "Write the first draft", "Ask Ala to read it", "Edit to under 600 words"]
+      "subtasks": [
+        { "title": "Re-read the brief and the sources" },
+        { "title": "Outline the argument in 5 bullet points" },
+        { "title": "Write the first draft" },
+        { "title": "Ask Ala to read it" },
+        { "title": "Edit to under 600 words" }
+      ]
     },
     {
       "id": "interviews",
@@ -113,12 +119,16 @@ Each task:
 | `description` | no | Instructions for the owner (max 5,000 characters). Becomes the task's first note, posted by the PM. |
 | `blocked_by` | no | List of `id`s of tasks in this file, or exact titles of tasks already on the EPMS board. |
 | `waiting_on` | no | List of member names the task waits on for something that isn't a task (for example "Kuba has to share the survey data"). |
-| `subtasks` | no | A checklist of short steps for the owner, in the order to do them, at most 30: a list of strings. The owner ticks them off in EPMS and the PM sees the percentage. Use it for bigger tasks; small ones don't need it. |
+| `subtasks` | no | A checklist of short steps for the owner, in the order to do them, at most 30: a list of `{ "title": "..." }` objects, the same shape as the `epms-subtasks` format members' AIs use. The owner ticks them off in EPMS and the PM sees the percentage. Use it for bigger tasks; small ones don't need it. |
 | `blocked_reason` | no | A short note for anything else the task waits on that isn't a task or a member, like "Waiting for the professor's feedback". |
 | `links` | no | Files or links: list of `{ "label": "...", "url": "https://..." }`. Only `http://` or `https://` addresses. |
 | `status` | no | Leave out for new tasks (they start in To do). Allowed: `todo`, `doing`, `review`, `done`. |
 
-### How EPMS reads the file
+#### Subtasks added later
+
+Members can break their own tasks into subtasks later with their own AI, using a separate format that their AI learns from the project's AI link (`epms_ai_guide`): one JSON block `{ "format": "epms-subtasks", "version": 1, "task": "<task title>", "subtasks": [{ "title": "<short step>" }] }`, pasted into the task with Add subtasks. If the PM asks you for subtasks for a task that is already on the board, give them in that format instead of a new task file.
+
+## How EPMS reads the file
 
 - Owners are matched to members by name, ignoring case. A first name alone also matches if only one member has it. Unknown names are offered to the PM as new members.
 - A task whose title matches a task already on the board is skipped by default, so importing the same file twice doesn't duplicate tasks. When revising a plan the PM has already imported, export only the new tasks unless the PM asks for the whole plan.
