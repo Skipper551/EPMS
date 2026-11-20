@@ -56,6 +56,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 | [`skills/epms-task-plan/`](skills/epms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in EPMS's import format. |
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md) | How to contribute, the code of conduct, and how to report security problems privately. |
 | [`CHANGELOG.md`](CHANGELOG.md) | What changed in each version, with its pull request. |
 | [`LICENSE`](LICENSE) | MIT licence. |
 | [`.github/workflows/pages.yml`](.github/workflows/pages.yml) | Publishes the shared site to GitHub Pages on every push to `main`. |
@@ -96,3 +97,7 @@ Early and openly vibe coded. Built and tested against a local PocketBase; first 
 ## Licence
 
 [MIT](LICENSE). Free to use, change and share, including for your own group's copy.
+
+## Contributing
+
+Issues and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and report security problems privately as described in [SECURITY.md](SECURITY.md).
