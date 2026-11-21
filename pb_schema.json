@@ -258,9 +258,9 @@
     "type": "base",
     "listRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= project) || (@collection.project_keys:k.project ?= project && @collection.project_keys:k.ai_key ?= @request.query.ai_key)",
     "viewRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= project) || (@collection.project_keys:k.project ?= project && @collection.project_keys:k.ai_key ?= @request.query.ai_key)",
-    "createRule": null,
-    "updateRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= project) && (@collection.member_keys:mk.member ?= owner || @collection.member_keys:mk.member ?= helpers.id) && @request.body.project:isset = false && @request.body.title:isset = false && @request.body.owner:isset = false && @request.body.helpers:isset = false && @request.body.everyone:isset = false && @request.body.due_date:isset = false && (@request.body.start_date:isset = false || @collection.member_keys:mk.member ?= owner) && @request.body.behind:isset = false && @request.body.behind_note:isset = false && @request.body.links:isset = false && (@request.body.status:isset = false || @request.body.status = 'doing' || @request.body.status = 'review')",
-    "deleteRule": null,
+    "createRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= project) && @request.body.mini = true",
+    "updateRule": "((@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= project) && (@collection.member_keys:mk.member ?= owner || @collection.member_keys:mk.member ?= helpers.id) && @request.body.project:isset = false && @request.body.mini:isset = false && @request.body.created_by:isset = false && @request.body.title:isset = false && @request.body.owner:isset = false && @request.body.helpers:isset = false && @request.body.everyone:isset = false && @request.body.due_date:isset = false && (@request.body.start_date:isset = false || @collection.member_keys:mk.member ?= owner) && @request.body.behind:isset = false && @request.body.behind_note:isset = false && @request.body.links:isset = false && (@request.body.status:isset = false || @request.body.status = 'doing' || @request.body.status = 'review')) || ((@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= project) && mini = true && @request.body.project:isset = false && @request.body.mini:isset = false && @request.body.created_by:isset = false)",
+    "deleteRule": "(@collection.member_keys:mk.key ?= @request.headers.x_member_key && @collection.member_keys:mk.member.project ?= project) && mini = true && @collection.member_keys:mk.member ?= created_by",
     "fields": [
       {
         "name": "id",
@@ -357,6 +357,17 @@
         "name": "links",
         "type": "json",
         "maxSize": 20000
+      },
+      {
+        "name": "mini",
+        "type": "bool"
+      },
+      {
+        "name": "created_by",
+        "type": "relation",
+        "collectionId": "pbc_ghmembers",
+        "maxSelect": 1,
+        "cascadeDelete": false
       },
       {
         "name": "created",
