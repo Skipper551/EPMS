@@ -11,6 +11,7 @@ import { AiSetup, AiSetupContent, PickName, PinInput, Tour } from './Welcome'
 import { SinceLastVisit } from './Updates'
 import { StartGuide } from './StartGuide'
 import { AddSubtasksDialog } from '../ui/Subtasks'
+import { QuickTodos } from '../ui/QuickTodos'
 
 type Route =
   | { kind: 'session'; session: Session }
@@ -316,7 +317,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
           pinPrompt={!hasPin && <SetPinPanel projectId={projectId} onDone={() => setHasPin(true)} />}
           updates={updates.length > 0 && <SinceLastVisit snap={snap} meId={me.id} events={updates} onDismiss={() => { setUpdates([]); setSince(new Date().toISOString()) }} />}
         />
-        <Sidebar snap={snap} me={me} />
+        <Sidebar snap={snap} me={me} todos={<QuickTodos snap={snap} meId={me.id} onChanged={reload} />} />
       </main>
 
       {detail && (

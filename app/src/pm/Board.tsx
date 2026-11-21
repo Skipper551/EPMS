@@ -17,7 +17,7 @@ export interface BoardActions {
 
 const UNASSIGNED = '__nobody'
 
-export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; changes: number; onUpdate: () => void }) {
+export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<string>; changes: number; onUpdate: () => void; side?: preact.ComponentChildren }) {
   const { snap, actions } = props
   const [filter, setFilter] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -88,6 +88,7 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
         </div>
       )}
 
+      <div class="board-layout">
       <div class="board-scroll">
         <div class="board">
           {STATUSES.map((status) => {
@@ -134,6 +135,8 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
             )
           })}
         </div>
+      </div>
+      {props.side && <div class="board-side">{props.side}</div>}
       </div>
     </>
   )

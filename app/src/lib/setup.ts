@@ -8,9 +8,10 @@ export const SCHEMA = schema as unknown as { name: string; fields: { name: strin
 
 export const HOOKS: { name: string; file: string; version: string; what: string }[] = [
   { name: 'claim', file: 'claim.pb.js', version: '2026-11-19', what: 'joining with the group link, PINs' },
-  { name: 'events', file: 'events.pb.js', version: '2026-11-19', what: 'updates for members and chat posts' },
-  { name: 'subtasks', file: 'subtasks.pb.js', version: '2026-11-19', what: 'the 30 subtask limit' },
-  { name: 'ai', file: 'ai.pb.js', version: '2026-11-19', what: 'the guide in the AI link' },
+  { name: 'events', file: 'events.pb.js', version: '2026-11-21', what: 'updates for members and chat posts' },
+  { name: 'subtasks', file: 'subtasks.pb.js', version: '2026-11-21', what: 'the 30 subtask limit' },
+  { name: 'todos', file: 'todos.pb.js', version: '2026-11-21', what: 'quick to-dos anyone can add' },
+  { name: 'ai', file: 'ai.pb.js', version: '2026-11-21', what: 'the guide in the AI link' },
 ]
 
 export type CollectionState = 'ok' | 'missing' | 'outdated'

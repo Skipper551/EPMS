@@ -361,3 +361,25 @@ h1, h2, h3 { margin: 0; }
 .getting-started li.is-done strong { color: var(--muted); }
 .gs-mark { flex: none; width: 26px; height: 26px; border-radius: 999px; background: var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
 .getting-started li.is-done .gs-mark { background: var(--accent-bg); color: var(--accent-text); }
+
+/* Quick to-dos: a box beside the board, and in the members' sidebar */
+.board-layout { display: flex; gap: 20px; align-items: flex-start; }
+.board-layout > .board-scroll { flex: 1 1 auto; min-width: 0; margin-right: 0; padding-right: 0; }
+.board-layout .board { grid-template-columns: repeat(4, minmax(200px, 1fr)); min-width: 848px; }
+.board-side { flex: 0 0 280px; min-width: 0; }
+@media (max-width: 1280px) {
+  .board-layout { flex-direction: column; align-items: stretch; }
+  .board-layout > .board-scroll { margin-right: calc(-1 * var(--gutter)); padding-right: var(--gutter); }
+  .board-side { flex-basis: auto; max-width: 560px; }
+}
+.todos { gap: 12px; }
+.todo-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; }
+.todo-item:first-child { border-top: 0; }
+.todo-item input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--accent); margin: 2px 0 0; flex: none; }
+.todo-body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.todo-title { overflow-wrap: anywhere; }
+.todo-item.is-done .todo-title { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(154, 161, 173, 0.5); }
+.todo-free { color: var(--accent-text); }
+.todo-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
+.todo-remove { width: 24px; height: 24px; flex: none; }

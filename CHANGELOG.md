@@ -8,6 +8,10 @@ EPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "EPMS v0.6.1 · ebbf81d".
 
+## 0.8.0
+- Quick to-dos: small things anyone in the group can add, take and tick off, with no review, like booking a room or emailing the professor. They sit in a box beside the board and in the members' sidebar, and stay out of the plan, progress and updates. The PM can turn one into a full task. At most 30 open per project.
+- Hooks: new `todos.pb.js`; `events.pb.js`, `subtasks.pb.js` and `ai.pb.js` updated. The setup check flags old copies.
+
 ## 0.7.1
 - Guidelines can't be lost silently: after saving, EPMS checks the whole text was stored and says how much if not; unsaved changes are flagged, survive switching view or closing the tab, and leaving the page asks first.
 - One subtask format everywhere: `{ "title": ... }` objects in the Paste from your AI placeholder, the import instructions and the task-plan skill, matching the AI link's guide. Plain strings still import.

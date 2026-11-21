@@ -94,6 +94,27 @@ check("member cannot add subtasks to someone else's task", (await api('subtasks/
 await api(`subtasks/records/${sub.id}`, { method: 'DELETE', headers: asAla })
 check('personal keys cannot be listed', ((await (await api('member_keys/records', { headers: asAla })).json()).items ?? []).length === 0)
 
+// Quick to-dos: anyone adds, takes and ticks off; members can only add mini tasks, and only the small fields change.
+const todo = (body) => api('tasks/records', { method: 'POST', headers: asAla, body: JSON.stringify({ project: project.id, status: 'todo', ...body }) })
+check('member cannot create a full task', (await todo({ title: 'Sneaky task' })).status !== 200)
+const quick = await (await todo({ title: '  Book a study room ', mini: true, helpers: [m.Jimmy], due_date: day(3), status: 'review' })).json()
+check('member adds a quick to-do, kept small', quick.id && quick.title === 'Book a study room' && quick.helpers.length === 0 && !quick.due_date && quick.status === 'todo' && quick.created_by === m.Ala && !quick.owner)
+check('member cannot add a to-do for someone else', (await todo({ title: 'For Jimmy', mini: true, owner: m.Jimmy })).status === 400)
+check('quick to-dos have no subtasks', (await api('subtasks/records', { method: 'POST', headers: asAla, body: JSON.stringify({ task: quick.id, title: 'x' }) })).status !== 200)
+check('member takes a to-do up for grabs', (await patch(quick.id, { owner: m.Ala })).status === 200)
+check('a to-do skips review', (await patch(quick.id, { status: 'review' })).status === 400)
+check('member cannot add a due date to a to-do', (await patch(quick.id, { due_date: day(4) })).status !== 200)
+check('member cannot turn a to-do into a task', (await patch(quick.id, { mini: false })).status !== 200)
+check('member ticks off their to-do', (await patch(quick.id, { status: 'done' })).status === 200)
+check('member cannot turn their task into a to-do', (await patch(sources.id, { mini: true })).status !== 200)
+const jimsTodo = await pb.collection('tasks').create({ project: project.id, title: 'Email the professor', owner: m.Jimmy, mini: true, status: 'todo' })
+check("member cannot tick off someone else's to-do", (await patch(jimsTodo.id, { status: 'done' })).status === 403)
+check("member cannot take someone else's to-do", (await patch(jimsTodo.id, { owner: m.Ala })).status === 400)
+check("member cannot remove a to-do they didn't add", (await api(`tasks/records/${jimsTodo.id}`, { method: 'DELETE', headers: asAla })).status !== 204)
+check('member removes their own to-do', (await api(`tasks/records/${quick.id}`, { method: 'DELETE', headers: asAla })).status === 204)
+check('quick to-dos are left out of the updates', (await pb.collection('events').getFullList({ filter: `task = "${jimsTodo.id}" || task = "${quick.id}"` })).length === 0)
+check('AI link explains quick to-dos', JSON.stringify((await (await api(`projects/records/${project.id}?ai_key=${keys.ai_key}`)).json()).epms_ai_guide).includes('mini = true'))
+
 // ---------- browser ----------
 
 const browser = await chromium.launch()
@@ -217,6 +238,25 @@ let memberPage
   await page.click('role=dialog >> button:has-text("Add subtasks")')
   await page.waitForSelector('role=dialog >> text=Write 6 questions')
   await page.keyboard.press('Escape')
+
+  // Quick to-dos in the sidebar: Jimmy adds one up for grabs and one for himself, and ticks his off.
+  await page.waitForSelector('.overlay', { state: 'detached' }).catch(() => {})
+  if (await page.locator('.overlay').count()) await page.keyboard.press('Escape')
+  const box = page.locator('section[aria-label="Quick to-dos"]')
+  check('quick to-dos box shows in the sidebar', (await box.locator('text=Email the professor').count()) === 1)
+  await box.getByLabel('New to-do').fill('Print the handouts')
+  await box.locator('button:text-is("Add")').click()
+  await box.locator('text=Print the handouts').waitFor()
+  check('a new to-do is up for grabs', (await box.locator('li', { hasText: 'Print the handouts' }).innerText()).includes('Up for grabs'))
+  await box.getByLabel('New to-do').fill('Bring the projector')
+  await box.getByLabel("I'll do it myself").check()
+  await box.locator('button:text-is("Add")').click()
+  await box.locator('text=Bring the projector').waitFor()
+  check("I'll do it myself makes it yours", (await box.locator('li', { hasText: 'Bring the projector' }).innerText()).includes('You'))
+  await box.getByLabel('Tick off: Email the professor').click()
+  await page.waitForTimeout(500)
+  check('ticked to-do leaves the open list', (await box.locator('text=Email the professor').count()) === 0 && (await box.innerText()).includes('Show 1 done'))
+  check('to-dos stay off My tasks', (await page.locator('article', { hasText: 'Print the handouts' }).count()) === 0)
   memberPage = page
 }
 
@@ -233,6 +273,15 @@ let memberPage
   await page.click('header .select-btn')
   await page.locator('role=menuitem', { hasText: name }).click()
   await page.waitForSelector('section[aria-label="Review"] >> text=Draft the conclusion')
+
+  const side = page.locator('.board-side section[aria-label="Quick to-dos"]')
+  check('PM sees quick to-dos beside the board', (await side.locator('text=Print the handouts').count()) === 1 && (await page.locator('.board article', { hasText: 'Print the handouts' }).count()) === 0)
+  await side.locator('li', { hasText: 'Print the handouts' }).locator('button:has-text("Make it a task")').click()
+  await page.waitForSelector('role=dialog')
+  check('making it a task opens it in the editor', (await page.locator('role=dialog >> input').first().inputValue()) === 'Print the handouts')
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(300)
+  check('the promoted to-do is on the board', (await page.locator('section[aria-label="To do"] >> text=Print the handouts').count()) === 1 && (await side.locator('text=Print the handouts').count()) === 0)
   await page.locator('article', { hasText: 'Find sources' }).locator('button:has-text("Approve")').click()
   await page.waitForTimeout(500)
   check('approve moves to Done', (await page.locator('section[aria-label="Done"] >> text=Find sources').count()) === 1)

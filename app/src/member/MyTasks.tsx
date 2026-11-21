@@ -188,7 +188,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
 
 // ---------- sidebar ----------
 
-export function Sidebar(props: { snap: Snapshot; me: Member }) {
+export function Sidebar(props: { snap: Snapshot; me: Member; todos?: preact.ComponentChildren }) {
   const { snap, me } = props
   const mineIds = snap.tasks.filter((t) => canMove(t, me.id) && t.status !== 'done').map((t) => t.id)
   const waiting = waitingOn(snap, { taskIds: mineIds, memberId: me.id }).filter((t) => !canMove(t, me.id))
@@ -220,6 +220,8 @@ export function Sidebar(props: { snap: Snapshot; me: Member }) {
           </div>
         ))}
       </section>
+
+      {props.todos}
 
       <section class="panel" style={{ gap: '16px' }}>
         <div class="row-between" style={{ alignItems: 'baseline' }}>
