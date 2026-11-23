@@ -8,6 +8,10 @@ EPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "EPMS v0.6.1 · ebbf81d".
 
+## 0.10.0
+- Take back from review: the lead or a helper can pull a task back from Review to In progress until the PM approves it, from the task card or the task's details. It shows in "Since your last visit" as taken back, not as sent back by the PM.
+- The AI instructions are always one click away: "Show my AI instructions" under My tasks (as well as Set up my AI in the menu), and PMs get their own copy from Task view. Frontend only, no hook or collection changes.
+
 ## 0.9.1
 - The `app` folder builds on its own, so PocketBase Cloud frontends that build from the repository work again. The setup check's schema now comes from a committed copy in `app/src/generated/`, which every full-repository build refreshes, and the hooks and skill zips fall back to their committed copies.
 

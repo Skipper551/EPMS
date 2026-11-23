@@ -14,6 +14,7 @@ export function TaskDetail(props: {
   focusNote: boolean
   busy: boolean
   onAdvance: (t: Task) => void
+  onWithdraw: (t: Task) => void
   onBlocked: (t: Task) => void
   onAddSubtasks: (t: Task) => void
   onClose: () => void
@@ -110,6 +111,7 @@ export function TaskDetail(props: {
         <div class="row" style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           {primary && <button type="button" class="btn btn-primary btn-md" disabled={props.busy} onClick={() => props.onAdvance(t)}>{primary}</button>}
           {t.status === 'review' && <span class="muted small">Waiting for the PM to approve</span>}
+          {t.status === 'review' && <button type="button" class="btn btn-soft btn-md" disabled={props.busy} onClick={() => props.onWithdraw(t)}>Take back from review</button>}
           {t.status !== 'review' && <button type="button" class="btn btn-soft btn-md" onClick={() => props.onBlocked(t)}>I'm blocked</button>}
         </div>
       )}

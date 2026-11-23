@@ -4,13 +4,14 @@
 import { useState } from 'preact/hooks'
 import { updateTask, type StoreError } from '../data/store'
 import type { Snapshot, Status, Task } from '../data/types'
-import { BlockedDialog, TaskDetail } from '../member/Dialogs'
+import { AiAgainDialog, BlockedDialog, TaskDetail } from '../member/Dialogs'
+import { AiSetupContent } from '../member/Welcome'
 import { MyTasks, Sidebar, type TaskActions } from '../member/MyTasks'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 import { QuickTodos } from '../ui/QuickTodos'
 import { toast } from '../ui/ui'
 
-export function TaskView(props: { snap: Snapshot; pmAuthorId: string; onChanged: () => Promise<void> | void }) {
+export function TaskView(props: { snap: Snapshot; pmAuthorId: string; aiKey: string; onChanged: () => Promise<void> | void }) {
   const { snap } = props
   const fallback = snap.members.find((m) => m.id === props.pmAuthorId) ?? snap.members.find((m) => m.is_pm) ?? snap.members[0]
   const [viewingId, setViewingId] = useState(fallback?.id ?? '')
@@ -19,6 +20,7 @@ export function TaskView(props: { snap: Snapshot; pmAuthorId: string; onChanged:
   const [detail, setDetail] = useState<{ id: string; focusNote: boolean } | null>(null)
   const [blocked, setBlocked] = useState<string | null>(null)
   const [addSubtasksFor, setAddSubtasksFor] = useState<string | null>(null)
+  const [aiOpen, setAiOpen] = useState(false)
 
   if (!viewing) return <div class="empty">Add members in Project settings to see task views.</div>
 
@@ -39,11 +41,25 @@ export function TaskView(props: { snap: Snapshot; pmAuthorId: string; onChanged:
     setBusy((b) => { const n = new Set(b); n.delete(t.id); return n })
   }
 
+  async function withdraw(t: Task) {
+    if (t.status !== 'review') return
+    setBusy((b) => new Set(b).add(t.id))
+    try {
+      await updateTask(t.id, { status: 'doing' })
+      toast('Taken back to In progress')
+    } catch (e) {
+      toast((e as StoreError).message, true)
+    }
+    await props.onChanged()
+    setBusy((b) => { const n = new Set(b); n.delete(t.id); return n })
+  }
+
   const actions: TaskActions = {
     advance,
     openDetail: (t, focusNote = false) => setDetail({ id: t.id, focusNote }),
     blocked: (t) => { setDetail(null); setBlocked(t.id) },
-    setUpAi: () => {},
+    withdraw,
+    setUpAi: () => setAiOpen(true),
     addSubtasks: (t) => setAddSubtasksFor(t.id),
   }
 
@@ -69,9 +85,15 @@ export function TaskView(props: { snap: Snapshot; pmAuthorId: string; onChanged:
       {detail && (
         <TaskDetail
           snap={snap} me={viewing} taskId={detail.id} focusNote={detail.focusNote} busy={busy.has(detail.id)} mode={mode}
-          onAdvance={advance} onBlocked={actions.blocked} onClose={() => setDetail(null)} onChanged={props.onChanged}
+          onAdvance={advance} onWithdraw={withdraw} onBlocked={actions.blocked} onClose={() => setDetail(null)} onChanged={props.onChanged}
           onAddSubtasks={(t) => { setDetail(null); setAddSubtasksFor(t.id) }}
         />
+      )}
+      {aiOpen && (
+        <AiAgainDialog onClose={() => setAiOpen(false)}>
+          <p class="muted" style={{ margin: 0 }}>Your own AI setup, the same one members get. Paste it once and your AI will always know the project.</p>
+          <AiSetupContent snap={snap} name={viewing.name} aiKey={props.aiKey} />
+        </AiAgainDialog>
       )}
       {blocked && mode === 'pm' && <BlockedDialog snap={snap} me={viewing} taskId={blocked} onClose={() => setBlocked(null)} onChanged={props.onChanged} />}
       {addSubtasksFor && snap.tasks.some((t) => t.id === addSubtasksFor) && (
