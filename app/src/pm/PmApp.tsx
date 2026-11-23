@@ -7,6 +7,7 @@ import { useSnapshot } from '../lib/useSnapshot'
 import { DEFAULT_PB_URL } from '../config'
 import { ChevronIcon, Dialog, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { Board, type BoardActions } from './Board'
+import { QuickTodos } from '../ui/QuickTodos'
 import { BehindDialog, SendBackDialog } from './Dialogs'
 import { ChatUpdateDialog } from './ChatUpdate'
 import { Login } from './Login'
@@ -250,7 +251,8 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onSettings={() => setView('settings')} onImport={() => setImportOpen(true)} onNewTask={() => setEditing({ id: null })}
             onCopyLink={copyGroupLink} onChat={() => setView('settings')}
           />
-          <Board snap={snap} actions={actions} busy={busy} changes={pmChangeCount(events)} onUpdate={() => setUpdateOpen(true)} />
+          <Board snap={snap} actions={actions} busy={busy} changes={pmChangeCount(events)} onUpdate={() => setUpdateOpen(true)}
+            side={<QuickTodos snap={snap} meId={author} isPm onChanged={reload} onPromoted={(id) => setEditing({ id })} />} />
         </main>
       )}
 

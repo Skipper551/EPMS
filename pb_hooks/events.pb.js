@@ -2,12 +2,15 @@
 // EPMS: activity log. Records what changed, who it concerns and who did it, in the events collection.
 // Members see the events about them under "Since your last visit"; the PM's chat summary is built from them.
 // Only these hooks write events: the collection has no create, update or delete rules.
+// Quick to-dos (mini tasks) are left out: they're too small to report. When the PM turns one into a task,
+// that counts as the task being created.
 
 onRecordCreateRequest((e) => {
   const lib = require(`${__hooks}/epms/events.js`)
   const who = lib.actorOf(e.app, e.hasSuperuserAuth(), e.requestInfo().headers["x_member_key"])
   e.next()
   const t = e.record
+  if (t.getBool("mini")) return
   lib.record(e.app, { project: t.getString("project"), task: t.id, kind: "created", actor: who.member, pm: who.pm, targets: lib.peopleOf(t, who.member) })
   if (t.getBool("behind")) {
     lib.record(e.app, { project: t.getString("project"), task: t.id, kind: "behind", actor: who.member, pm: who.pm, targets: lib.peopleOf(t, who.member), text: t.getString("behind_note") })
@@ -19,7 +22,13 @@ onRecordUpdateRequest((e) => {
   const who = lib.actorOf(e.app, e.hasSuperuserAuth(), e.requestInfo().headers["x_member_key"])
   const before = e.record.original().clone()
   e.next()
-  lib.taskChanged(e.app, before, e.record, who)
+  const t = e.record
+  if (t.getBool("mini")) return
+  if (before.getBool("mini")) {
+    lib.record(e.app, { project: t.getString("project"), task: t.id, kind: "created", actor: who.member, pm: who.pm, targets: lib.peopleOf(t, who.member) })
+    return
+  }
+  lib.taskChanged(e.app, before, t, who)
 }, "tasks")
 
 onRecordCreateRequest((e) => {
@@ -94,4 +103,4 @@ routerAdd("POST", "/api/gh/chat/{project}", (e) => {
 }, $apis.requireSuperuserAuth())
 
 // Lets the EPMS setup check see that this file is installed, and which version.
-routerAdd("GET", "/api/gh/hooks/events", (e) => e.json(200, { name: "events", version: "2026-11-19" }))
+routerAdd("GET", "/api/gh/hooks/events", (e) => e.json(200, { name: "events", version: "2026-11-21" }))

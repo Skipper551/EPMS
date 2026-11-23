@@ -12,6 +12,7 @@ onRecordEnrich((e) => {
       reading: [
         "expand.members_via_project: the group. is_pm marks the PM(s).",
         "expand.tasks_via_project: the tasks. owner is the lead, helpers work with them, everyone means the whole group. status is todo, doing (shown as In progress), review or done. start_date and due_date are dates. behind and behind_note are set by the PM. blocked_by_tasks, blocked_by_members and blocked_reason say what a task waits on.",
+        "Tasks with mini = true are quick to-dos: small things anyone in the group can add, take and tick off, with no review. No owner means it's up for grabs. Don't count them as part of the plan or the group's progress.",
         "Each task's expand.notes_via_task are notes from members and the PM; expand.subtasks_via_task is its checklist (done or not).",
         "guidelines is the PM's text on how the group works. Follow it.",
       ],
@@ -32,4 +33,4 @@ onRecordEnrich((e) => {
 }, "projects")
 
 // Lets the EPMS setup check see that this file is installed, and which version.
-routerAdd("GET", "/api/gh/hooks/ai", (e) => e.json(200, { name: "ai", version: "2026-11-19" }))
+routerAdd("GET", "/api/gh/hooks/ai", (e) => e.json(200, { name: "ai", version: "2026-11-21" }))

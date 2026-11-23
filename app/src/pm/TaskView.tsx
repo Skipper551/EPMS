@@ -7,6 +7,7 @@ import type { Snapshot, Status, Task } from '../data/types'
 import { BlockedDialog, TaskDetail } from '../member/Dialogs'
 import { MyTasks, Sidebar, type TaskActions } from '../member/MyTasks'
 import { AddSubtasksDialog } from '../ui/Subtasks'
+import { QuickTodos } from '../ui/QuickTodos'
 import { toast } from '../ui/ui'
 
 export function TaskView(props: { snap: Snapshot; pmAuthorId: string; onChanged: () => Promise<void> | void }) {
@@ -62,7 +63,7 @@ export function TaskView(props: { snap: Snapshot; pmAuthorId: string; onChanged:
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
         <MyTasks snap={snap} me={viewing} busy={busy} actions={actions} aiReady highlight={new Set()} updates={null} mode={mode} />
-        <Sidebar snap={snap} me={viewing} />
+        <Sidebar snap={snap} me={viewing} todos={<QuickTodos snap={snap} meId={mode === 'pm' ? viewing.id : ''} isPm={mode === 'pm'} readOnly={mode === 'preview'} onChanged={props.onChanged} />} />
       </div>
 
       {detail && (

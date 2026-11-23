@@ -116,6 +116,11 @@ export interface Task {
   /** Free-text blocker that isn't a task or a person, e.g. "Waiting for the professor's feedback" */
   blocked_reason: string
   links: TaskLink[]
+  /** Quick to-do: a small thing anyone in the group can add, take and tick off, with no review.
+   *  Only title, owner and status are used. Kept out of the board, progress and updates. */
+  mini: boolean
+  /** Member who added it (quick to-dos), or '' */
+  created_by: string
   created: string
   updated: string
 }
@@ -143,7 +148,10 @@ export interface Subtask {
 export interface Snapshot {
   project: Project
   members: Member[]
+  /** The plan: every task that isn't a quick to-do */
   tasks: Task[]
+  /** Quick to-dos (mini tasks), oldest first */
+  todos: Task[]
   notes: Note[]
   subtasks: Subtask[]
 }
