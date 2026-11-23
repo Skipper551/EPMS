@@ -20,8 +20,6 @@ function commit(): string {
 export default defineConfig({
   base: './',
   plugins: [preact()],
-  // The app bundles ../pb_schema.json for the setup check.
-  server: { fs: { allow: ['..'] } },
   // The version and commit shown at the bottom of every page.
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),

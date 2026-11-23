@@ -37,6 +37,8 @@ PM page: http://localhost:5173/pm.html, log in with `pm@example.com` / `devpassw
 npm run build
 ```
 
+The `app` folder builds on its own, so a PocketBase Cloud frontend can build it straight from the repository: `src/generated/pb_schema.json`, `public/epms-hooks.zip` and `public/epms-task-plan.zip` are committed copies of `../pb_schema.json`, `../pb_hooks` and `../skills`. With the whole repository present, every build refreshes them; commit the changes along with the source.
+
 `dist/` is the whole app: plain HTML, JavaScript, CSS, fonts and the Claude skill zip, with relative paths, so it works from any folder. Upload the contents of `dist/` to a PocketBase Cloud frontend slot or GitHub Pages. The instance also needs the collections in `../pb_schema.json` and the files in `../pb_hooks/`, including its `epms` folder (PocketBase Cloud: the instance's Code tab).
 
 A build without `VITE_PB_URL` is the shared site: the PM enters their instance address on the login screen, and links carry it after `#`. GitHub Actions publishes that build to GitHub Pages from `main` (`.github/workflows/pages.yml`; turn on Pages with Source: GitHub Actions in the repository settings). To give a copy a default instance instead:
@@ -71,7 +73,7 @@ npm run skill
 
 ## Setup check and hook versions
 
-After login, EPMS compares the instance with `../pb_schema.json` (bundled into the app) and asks each hook file for its version at `/api/gh/hooks/<name>`. Missing or older collections install in one click; missing or older hooks are offered as `public/epms-hooks.zip` (built by `npm run hooks`, and by every `npm run build`). When you change a hook file, bump its version string in the file and in `src/lib/setup.ts`, so PMs with the old copy are told to update.
+After login, EPMS compares the instance with `../pb_schema.json` (bundled into the app from its copy in `src/generated/`) and asks each hook file for its version at `/api/gh/hooks/<name>`. Missing or older collections install in one click; missing or older hooks are offered as `public/epms-hooks.zip` (built by `npm run hooks`, and by every `npm run build`). When you change a hook file, bump its version string in the file and in `src/lib/setup.ts`, so PMs with the old copy are told to update.
 
 ## Tests
 
