@@ -11,6 +11,8 @@ export interface TaskActions {
   openDetail: (t: Task, focusNote?: boolean) => void
   blocked: (t: Task) => void
   setUpAi: () => void
+  /** Take a task back from review to In progress, before the PM has approved it */
+  withdraw: (t: Task) => void
   addSubtasks: (t: Task) => void
 }
 
@@ -75,7 +77,7 @@ export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; 
         <SparkIcon />
         <span>
           Stuck on how to start? Ask your AI: <span style={{ color: 'var(--text)' }}>"Walk me through my next task."</span> It knows the project and the PM's guidelines.
-          {!props.aiReady && <> <button type="button" class="btn-text" onClick={actions.setUpAi}>Set up your AI</button></>}
+          {props.mode !== 'preview' && <> <button type="button" class="btn-text" onClick={actions.setUpAi}>{props.aiReady ? 'Show my AI instructions' : 'Set up your AI'}</button></>}
         </span>
       </div>
 
@@ -171,6 +173,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
             </button>
           )}
           {t.status === 'review' && <span class="muted small">Waiting for the PM to approve</span>}
+          {movable && t.status === 'review' && <button type="button" class="btn btn-soft btn-md" disabled={props.busy} onClick={() => actions.withdraw(t)}>Take back from review</button>}
           {!movable && !preview && t.status !== 'review' && <span class="muted small">{lead ? `${lead} moves this one` : 'The PM moves this one'}</span>}
           {!preview && <button type="button" class="btn btn-soft btn-md" onClick={() => actions.openDetail(t, true)}>Add a note</button>}
           {movable && t.status !== 'review' && <button type="button" class="btn btn-soft btn-md" onClick={() => actions.blocked(t)}>I'm blocked</button>}

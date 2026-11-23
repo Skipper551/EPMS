@@ -302,8 +302,24 @@ function Project(props: { session: Session; onLeave: () => void }) {
     setBusy((b) => { const n = new Set(b); n.delete(t.id); return n })
   }
 
+  // Back from review to In progress. Allowed until the PM approves; members may already set 'doing'.
+  async function withdraw(t: Task) {
+    if (t.status !== 'review') return
+    setBusy((b) => new Set(b).add(t.id))
+    patch((s: Snapshot) => ({ ...s, tasks: s.tasks.map((x) => (x.id === t.id ? { ...x, status: 'doing' as Status } : x)) }))
+    try {
+      await setStatus(t.id, 'doing')
+      toast('Taken back. Send it to review again when it\'s ready.')
+    } catch (e) {
+      toast((e as StoreError).message, true)
+    }
+    await reload()
+    setBusy((b) => { const n = new Set(b); n.delete(t.id); return n })
+  }
+
   const actions: TaskActions = {
     advance,
+    withdraw,
     openDetail: (t, focusNote = false) => setDetail({ id: t.id, focusNote }),
     blocked: (t) => { setDetail(null); setBlocked(t.id) },
     setUpAi: () => setAiOpen(true),
@@ -347,7 +363,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
       {detail && (
         <TaskDetail
           snap={snap} me={me} taskId={detail.id} focusNote={detail.focusNote} busy={busy.has(detail.id)}
-          onAdvance={advance} onBlocked={actions.blocked} onClose={() => setDetail(null)} onChanged={reload}
+          onAdvance={advance} onWithdraw={withdraw} onBlocked={actions.blocked} onClose={() => setDetail(null)} onChanged={reload}
           onAddSubtasks={(t) => { setDetail(null); setAddSubtasksFor(t.id) }}
         />
       )}

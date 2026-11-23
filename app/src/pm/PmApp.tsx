@@ -270,7 +270,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       {snap && view === 'tasks' && (
         <main class="main-board" style={{ maxWidth: '1240px' }}>
           {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
-          <TaskView key={snap.project.id} snap={snap} pmAuthorId={author} onChanged={reload} />
+          <TaskView key={snap.project.id} snap={snap} pmAuthorId={author} aiKey={keys?.project === snap.project.id ? keys.ai_key : ''} onChanged={reload} />
         </main>
       )}
 

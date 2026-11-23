@@ -16,7 +16,8 @@ export function describe(snap: Snapshot, e: ActivityEvent, meId: string): string
     case 'helper_added': return `${who} added you as a helper on ${title}`
     case 'behind': return `${who} marked ${title} behind schedule${e.text ? `: "${quote(e.text)}"` : ''}`
     case 'on_schedule': return `${title} is back on schedule`
-    case 'sent_back': return `${who} sent ${title} back to In progress`
+    // review -> doing is logged as sent_back; when a member did it, they took their own submission back.
+    case 'sent_back': return e.by_pm ? `${who} sent ${title} back to In progress` : `${who} took ${title} back from review`
     case 'approved': return `${who} approved ${title}. It's done.`
     case 'unblocked': return `${title} is unblocked: ${e.text || 'the task it waited on'} is done`
     case 'note': return `${who} added a note on ${title}: "${quote(e.text)}"`
@@ -39,7 +40,7 @@ export function SinceLastVisit(props: { snap: Snapshot; meId: string; events: Ac
       <ul class="stack-sm" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {shown.map((e) => (
           <li key={e.id} class="row small" style={{ flexWrap: 'nowrap', alignItems: 'baseline', gap: '12px' }}>
-            <span class="grow" style={{ color: e.kind === 'behind' || e.kind === 'sent_back' ? 'var(--warn)' : 'var(--text)', overflowWrap: 'anywhere' }}>
+            <span class="grow" style={{ color: e.kind === 'behind' || (e.kind === 'sent_back' && e.by_pm) ? 'var(--warn)' : 'var(--text)', overflowWrap: 'anywhere' }}>
               {describe(props.snap, e, props.meId)}
             </span>
             <span class="muted xsmall" style={{ whiteSpace: 'nowrap' }}>{when(e.created)}</span>
