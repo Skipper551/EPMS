@@ -8,6 +8,9 @@ EPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "EPMS v0.6.1 · ebbf81d".
 
+## 0.9.1
+- The `app` folder builds on its own, so PocketBase Cloud frontends that build from the repository work again. The setup check's schema now comes from a committed copy in `app/src/generated/`, which every full-repository build refreshes, and the hooks and skill zips fall back to their committed copies.
+
 ## 0.9.0
 - Group tab: members can see where everyone is, with one card per person showing what they're working on, what's next, overdue, behind and blocked flags, what's waiting for review, steps ticked, and when they were last active. A name with open work and no activity for a week is highlighted. Tasks open read only, with notes. The PM gets the same view next to Board and Task view.
 

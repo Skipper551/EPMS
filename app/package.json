@@ -1,20 +1,21 @@
 {
   "name": "epms",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "EPMS: free, open-source project management for student group projects, built around the Swim method.",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && npm run -s bundle && vite build",
+    "build": "npm run -s bundle && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "pb:dev": "bash scripts/dev-pocketbase.sh",
     "skill": "bash scripts/build-skill.sh",
     "test:e2e": "node tests/e2e.mjs",
     "hooks": "bash scripts/build-hooks.sh",
-    "bundle": "npm run -s skill && npm run -s hooks",
+    "bundle": "npm run -s schema && npm run -s skill && npm run -s hooks",
+    "schema": "bash scripts/build-schema.sh",
     "test:onboarding": "node tests/onboarding.mjs"
   },
   "dependencies": {

@@ -1,7 +1,8 @@
 // What a working EPMS instance needs, and how this one compares. Pure: the PM screens call the store for the data.
 // When a hook file changes, bump its version in pb_hooks AND here, so the setup check flags old copies.
 
-import schema from '../../../pb_schema.json'
+// A committed copy of ../pb_schema.json, refreshed by every build (scripts/build-schema.sh), so the app folder builds on its own.
+import schema from '../generated/pb_schema.json'
 import type { CollectionInfo } from '../data/store'
 
 export const SCHEMA = schema as unknown as { name: string; fields: { name: string }[]; listRule: string | null; viewRule: string | null; createRule: string | null; updateRule: string | null; deleteRule: string | null }[]
