@@ -383,3 +383,14 @@ h1, h2, h3 { margin: 0; }
 .todo-free { color: var(--accent-text); }
 .todo-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
 .todo-remove { width: 24px; height: 24px; flex: none; }
+
+/* Group view: one card per person */
+.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.person-card { gap: 16px; }
+.person-task {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; text-align: left;
+  background: var(--sunk); border: 1px solid transparent; border-radius: 8px; padding: 8px 12px; color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+}
+.person-task:hover { border-color: var(--line-strong); }
+.person-task .subtask-progress { width: 100%; }
+@media (max-width: 400px) { .group-grid { grid-template-columns: 1fr; } }

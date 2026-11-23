@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { claimName, initMember, setBackend, joinInfo, listEvents, memberStatus, setPin, setStatus, signInWithPin, type StoreError } from '../data/store'
 import type { ActivityEvent, JoinInfo, Snapshot, Status, Task } from '../data/types'
-import { copyText, personalHash, personalLink, readFragment, type LinkParts } from '../lib/util'
+import { copyText, load, personalHash, personalLink, readFragment, save, type LinkParts } from '../lib/util'
 import { useSnapshot } from '../lib/useSnapshot'
 import { ChevronIcon, Dialog, ErrorBox, Loading, toast, Toasts } from '../ui/ui'
 import { AiAgainDialog, BlockedDialog, TaskDetail } from './Dialogs'
@@ -12,6 +12,7 @@ import { SinceLastVisit } from './Updates'
 import { StartGuide } from './StartGuide'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 import { QuickTodos } from '../ui/QuickTodos'
+import { GroupView } from '../ui/Group'
 
 type Route =
   | { kind: 'session'; session: Session }
@@ -201,6 +202,12 @@ function Project(props: { session: Session; onLeave: () => void }) {
   // Updates newer than the last visit; the next visit starts from now.
   const [since, setSince] = useState(() => props.session.lastSeen || new Date().toISOString())
   const [updates, setUpdates] = useState<ActivityEvent[]>([])
+  // My tasks or the Group view; remembered per project on this device.
+  const tabKey = `epms.memberTab.${projectId}`
+  const [tab, setTabState] = useState<'mine' | 'group'>(() => (load(tabKey) === 'group' ? 'group' : 'mine'))
+  const setTab = (t: 'mine' | 'group') => { setTabState(t); save(tabKey, t === 'group' ? 'group' : null) }
+  // Recent activity of the whole group, for "last active" in the Group view.
+  const [groupEvents, setGroupEvents] = useState<ActivityEvent[] | null>(null)
 
   useEffect(() => {
     const s = patchSession(projectId, { lastSeen: new Date().toISOString() })
@@ -214,6 +221,13 @@ function Project(props: { session: Session; onLeave: () => void }) {
       .then((ev) => live && setUpdates(ev.filter((e) => e.actor !== session.memberId)), () => {})
     return () => { live = false }
   }, [snap, since])
+
+  useEffect(() => {
+    if (!snap || tab !== 'group') return
+    let live = true
+    listEvents(projectId, '').then((ev) => live && setGroupEvents(ev), () => live && setGroupEvents([]))
+    return () => { live = false }
+  }, [snap, tab])
 
   useEffect(() => {
     showPersonalHash(session)
@@ -302,6 +316,10 @@ function Project(props: { session: Session; onLeave: () => void }) {
         <div class="header-side">
           <span class="logo">EPMS</span>
           <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} onPin={() => setPinOpen(true)} hasPin={hasPin} />
+          <div class="row" style={{ gap: '6px' }} role="tablist" aria-label="View">
+            <button type="button" role="tab" class="chip" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>My tasks</button>
+            <button type="button" role="tab" class="chip" aria-selected={tab === 'group'} onClick={() => setTab('group')}>Group</button>
+          </div>
         </div>
         <div class="row" style={{ gap: '12px' }}>
           <span class="muted small">Hello <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
@@ -311,13 +329,19 @@ function Project(props: { session: Session; onLeave: () => void }) {
 
       <main style={{ width: '100%', maxWidth: '1240px', margin: '0 auto', padding: '40px var(--gutter)', display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
         {error && <div style={{ flexBasis: '100%' }}><ErrorBox error={`Couldn't refresh: ${error.message}`} /></div>}
-        <MyTasks
-          snap={snap} me={me} busy={busy} actions={actions} aiReady={!!session.ai}
-          highlight={new Set(updates.map((e) => e.task))}
-          pinPrompt={!hasPin && <SetPinPanel projectId={projectId} onDone={() => setHasPin(true)} />}
-          updates={updates.length > 0 && <SinceLastVisit snap={snap} meId={me.id} events={updates} onDismiss={() => { setUpdates([]); setSince(new Date().toISOString()) }} />}
-        />
-        <Sidebar snap={snap} me={me} todos={<QuickTodos snap={snap} meId={me.id} onChanged={reload} />} />
+        {tab === 'group' ? (
+          <GroupView snap={snap} meId={me.id} events={groupEvents} onOpen={(id) => setDetail({ id, focusNote: false })} />
+        ) : (
+          <>
+            <MyTasks
+              snap={snap} me={me} busy={busy} actions={actions} aiReady={!!session.ai}
+              highlight={new Set(updates.map((e) => e.task))}
+              pinPrompt={!hasPin && <SetPinPanel projectId={projectId} onDone={() => setHasPin(true)} />}
+              updates={updates.length > 0 && <SinceLastVisit snap={snap} meId={me.id} events={updates} onDismiss={() => { setUpdates([]); setSince(new Date().toISOString()) }} />}
+            />
+            <Sidebar snap={snap} me={me} todos={<QuickTodos snap={snap} meId={me.id} onChanged={reload} />} />
+          </>
+        )}
       </main>
 
       {detail && (
