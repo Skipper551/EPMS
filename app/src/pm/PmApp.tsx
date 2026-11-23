@@ -19,6 +19,7 @@ import { Settings } from './Settings'
 import { TaskEditor } from './TaskEditor'
 import { TaskView } from './TaskView'
 import { AddSubtasksDialog } from '../ui/Subtasks'
+import { GroupView } from '../ui/Group'
 
 
 const LAST_PROJECT = 'gh:pm:project'
@@ -51,7 +52,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [projects, setProjects] = useState<Project[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<string | null>(null)
-  const [view, setView] = useState<'board' | 'tasks' | 'settings'>('board')
+  const [view, setView] = useState<'board' | 'tasks' | 'group' | 'settings'>('board')
   const [keys, setKeys] = useState<ProjectKeys | null>(null)
   const [editing, setEditing] = useState<{ id: string | null } | null>(null)
   const [addSubtasksFor, setAddSubtasksFor] = useState<string | null>(null)
@@ -111,6 +112,15 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     listEvents(snap.project.id, keys.last_summary_at || snap.project.created).then((ev) => live && setEvents(ev), () => {})
     return () => { live = false }
   }, [snap, keys?.last_summary_at, keys?.project])
+
+  // Recent activity of everyone, for "last active" in the Group view.
+  const [groupEvents, setGroupEvents] = useState<ActivityEvent[] | null>(null)
+  useEffect(() => {
+    if (!snap || view !== 'group') return
+    let live = true
+    listEvents(snap.project.id, '').then((ev) => live && setGroupEvents(ev), () => live && setGroupEvents([]))
+    return () => { live = false }
+  }, [snap, view])
 
   // Which PM member writes notes from this browser.
   useEffect(() => {
@@ -226,6 +236,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
           <div class="row" style={{ gap: '6px' }} role="tablist" aria-label="View">
             <button type="button" role="tab" class="chip" aria-selected={view === 'board'} onClick={() => setView('board')}>Board</button>
             <button type="button" role="tab" class="chip" aria-selected={view === 'tasks'} onClick={() => setView('tasks')} disabled={!snap}>Task view</button>
+            <button type="button" role="tab" class="chip" aria-selected={view === 'group'} onClick={() => setView('group')} disabled={!snap}>Group</button>
           </div>
         </div>
         <div class="header-actions">
@@ -260,6 +271,13 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
         <main class="main-board" style={{ maxWidth: '1240px' }}>
           {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
           <TaskView key={snap.project.id} snap={snap} pmAuthorId={author} onChanged={reload} />
+        </main>
+      )}
+
+      {snap && view === 'group' && (
+        <main class="main-board" style={{ maxWidth: '1240px' }}>
+          {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
+          <GroupView snap={snap} meId={author} events={groupEvents} onOpen={(id) => setEditing({ id })} />
         </main>
       )}
 

@@ -320,6 +320,25 @@ let memberPage
   check('member sees behind with the note since their last visit', since.includes('marked Write the intro behind schedule: "Need this by Thursday"'), since)
   check('tab title counts the updates', /^\(\d+\) /.test(await memberPage.title()))
 
+  // Group tab: one card per person, read only.
+  await memberPage.click('role=tab[name="Group"]')
+  await memberPage.waitForSelector('h1:text-is("The group")')
+  const jimmyCard = memberPage.locator('article[aria-label="Jimmy"]')
+  check('Group tab shows a card for every member', (await memberPage.locator('article[aria-label="Ala"]').count()) === 1 && (await jimmyCard.count()) === 1)
+  check("Group tab flags a member's task behind", (await jimmyCard.innerText()).includes('1 behind'), await jimmyCard.innerText())
+  await memberPage.waitForSelector('article[aria-label="Jimmy"] >> text=/Active|No activity yet/')
+  check('Group tab shows when each member was last active', (await jimmyCard.innerText()).includes('Active '), await jimmyCard.innerText())
+  await memberPage.locator('article[aria-label="Pat"] button.person-task', { hasText: 'Rehearse' }).click()
+  await memberPage.waitForSelector('role=dialog')
+  check("someone else's task opens read only", (await memberPage.locator('role=dialog >> button:has-text("Start")').count()) === 0 && (await memberPage.locator('role=dialog >> button:has-text("Send to review")').count()) === 0)
+  await memberPage.keyboard.press('Escape')
+  await memberPage.click('role=tab[name="My tasks"]')
+  await memberPage.waitForSelector('h1:text-is("My tasks")')
+
+  await page.click('role=tab[name="Group"]')
+  await page.waitForSelector('h1:text-is("The group")')
+  check('PM has the Group view too', (await page.locator('article[aria-label="Jimmy"]').count()) === 1)
+
   // Task view: the PM's own tasks, and a read-only preview of a member's screen.
   await page.click('role=tab[name="Task view"]')
   await page.waitForSelector('h1:text-is("My tasks")')

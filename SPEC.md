@@ -4,7 +4,7 @@ EPMS: Educational Project Management Software (name work in progress, likely to 
 
 ## What it is
 
-A project management web app for university group projects of 3 to 7 people, run by one project manager (PM). It replaces Microsoft Loop tables with a clean interface: every member sees their own tasks and what they're waiting on, and the PM manages the board. Every member's AI (Claude or ChatGPT) can read the live project and the PM's guidelines, so members can ask their AI how to do their task and what's going on.
+A project management web app for university group projects of 3 to 7 people, run by one project manager (PM). It replaces Microsoft Loop tables with a clean interface: every member sees their own tasks and what they're waiting on, plus a Group tab showing where everyone else is, and the PM manages the board. Every member's AI (Claude or ChatGPT) can read the live project and the PM's guidelines, so members can ask their AI how to do their task and what's going on.
 
 ## The Swim method
 
@@ -47,6 +47,7 @@ EPMS is built around the Swim method: the Swim Education Project Management Meth
 - Moves their own tasks from To do to In progress (started) and from In progress to Review (finished). Only the PM moves a task to Done.
 - Adds notes to a task.
 - Adds blockers to their own tasks, pointing at another task or mentioning another member.
+- Sees where everyone else is in the Group tab: what each person is working on, what's next, flags, and when they were last active. Read only, apart from notes.
 
 ## Data model (first pass)
 
