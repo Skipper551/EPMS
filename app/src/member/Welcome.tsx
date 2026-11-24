@@ -5,6 +5,7 @@ import { aiLink } from '../data/store'
 import type { JoinInfo, Snapshot } from '../data/types'
 import { aiPrompt, copyText, joinNames, pms } from '../lib/util'
 import { ErrorBox, toast } from '../ui/ui'
+import { Logo } from '../ui/Logo'
 
 export type WelcomeStep = 'name' | 'tour' | 'ai'
 
@@ -23,7 +24,7 @@ export function WelcomeShell(props: { step: WelcomeStep; children: preact.Compon
   return (
     <div class="app">
       <header class="header">
-        <span class="logo">SPMS</span>
+        <Logo />
         <Dots step={props.step} />
       </header>
       <main class="main-center">

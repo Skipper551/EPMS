@@ -20,6 +20,7 @@ import { TaskEditor } from './TaskEditor'
 import { TaskView } from './TaskView'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 import { GroupView } from '../ui/Group'
+import { Logo } from '../ui/Logo'
 
 
 const LAST_PROJECT = 'gh:pm:project'
@@ -198,7 +199,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     return (
       <div class="app">
         <header class="header">
-          <div class="header-side"><span class="logo">SPMS</span><span class="tag-pm">PM</span></div>
+          <div class="header-side"><Logo /><span class="tag-pm">PM</span></div>
           <button type="button" class="btn btn-soft" onClick={props.onLogout}>Log out</button>
         </header>
         <main class="main-center">
@@ -221,7 +222,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     <div class="app">
       <header class="header">
         <div class="header-side">
-          <span class="logo">SPMS</span>
+          <Logo />
           <ProjectMenu
             projects={projects}
             current={current ?? null}

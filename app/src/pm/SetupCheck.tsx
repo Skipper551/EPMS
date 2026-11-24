@@ -5,6 +5,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { backendUrl, importSchema, listCollections, probeHooks, type StoreError } from '../data/store'
 import { compare, HOOKS, SCHEMA, type SetupReport } from '../lib/setup'
 import { ErrorBox, Loading, toast } from '../ui/ui'
+import { Logo } from '../ui/Logo'
 
 export function useSetupReport(): { report: SetupReport | null; error: string | null; recheck: () => Promise<SetupReport | null> } {
   const [report, setReport] = useState<SetupReport | null>(null)
@@ -126,7 +127,7 @@ export function SetupGate(props: { onReady: () => void; onLogout: () => void }) 
   return (
     <div class="app">
       <header class="header">
-        <div class="header-side"><span class="logo">SPMS</span><span class="tag-pm">PM</span></div>
+        <div class="header-side"><Logo /><span class="tag-pm">PM</span></div>
         <button type="button" class="btn btn-soft" onClick={props.onLogout}>Log out</button>
       </header>
       <main class="main-narrow" style={{ maxWidth: '720px' }}>

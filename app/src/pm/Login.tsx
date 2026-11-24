@@ -3,6 +3,7 @@ import { cleanUrl, DEFAULT_PB_URL } from '../config'
 import { backendUrl, checkInstance, initPm, pmLogin, setBackend, type StoreError } from '../data/store'
 import { load, save } from '../lib/util'
 import { ErrorBox, Field } from '../ui/ui'
+import { Logo } from '../ui/Logo'
 
 const INSTANCE = 'epms:pm:instance'
 
@@ -40,7 +41,7 @@ export function Login(props: { onDone: () => void }) {
   return (
     <div class="app">
       <header class="header">
-        <span class="logo">SPMS</span>
+        <Logo />
         <span class="tag-pm">PM</span>
       </header>
       <main class="main-center">
