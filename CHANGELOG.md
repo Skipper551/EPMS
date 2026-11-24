@@ -9,7 +9,7 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
 ## 0.11.1
-- New logo: a task card checked off a stack, in the app's blue. Shown next to "SPMS" in every page header, as the browser tab icon, and as the home-screen icon on iPhone and iPad (`apple-touch-icon.png`). Frontend only, no hook or collection changes.
+- New logo: three group members joined together, with the PM highlighted in the app's blue. Shown next to "SPMS" in every page header, as the browser tab icon, and as the home-screen icon on iPhone and iPad (`apple-touch-icon.png`). Frontend only, no hook or collection changes.
 
 ## 0.11.0
 - Renamed to SPMS, the Student Project Management System (previously EPMS, Educational Project Management Software): page titles, headings, the member welcome, the AI link's guide, the Claude skill (now `spms-task-plan`, downloaded as `spms-task-plan.zip`), the hooks download (`spms-hooks.zip`) and the docs.
