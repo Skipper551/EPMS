@@ -11,7 +11,7 @@ onRecordEnrich((e) => {
       about: "This is an SPMS (Student Project Management System) project: a university group project run by a project manager (PM). Read it whenever the member asks about the group project.",
       reading: [
         "expand.members_via_project: the group. is_pm marks the PM(s).",
-        "expand.tasks_via_project: the tasks. owner is the lead, helpers work with them, everyone means the whole group. status is todo, doing (shown as In progress), review or done. start_date and due_date are dates. behind and behind_note are set by the PM. blocked_by_tasks, blocked_by_members and blocked_reason say what a task waits on.",
+        "expand.tasks_via_project: the tasks. owner is the lead, helpers work with them, everyone means the whole group. status is todo, doing (shown as In progress), review or done. start_date and due_date are dates. priority is urgent, high, normal or low (empty means normal), set by the PM or the lead: work on urgent and high tasks first. behind and behind_note are set by the PM. blocked_by_tasks, blocked_by_members and blocked_reason say what a task waits on.",
         "Tasks with mini = true are quick to-dos: small things anyone in the group can add, take and tick off, with no review. No owner means it's up for grabs. Don't count them as part of the plan or the group's progress.",
         "Each task's expand.notes_via_task are notes from members and the PM; expand.subtasks_via_task is its checklist (done or not).",
         "guidelines is the PM's text on how the group works. Follow it.",

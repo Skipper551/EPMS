@@ -69,6 +69,13 @@ function taskChanged(app, before, after, who) {
     record(app, Object.assign({}, base, { kind: "on_schedule", targets: people }))
   }
 
+  // Priority: tasks saved before priorities existed have "" (shown as normal), so "" and "normal" are the same.
+  const prioBefore = before.getString("priority") || "normal"
+  const prioAfter = after.getString("priority") || "normal"
+  if (prioBefore !== prioAfter) {
+    record(app, Object.assign({}, base, { kind: "priority", targets: people, text: prioAfter }))
+  }
+
   const oldOwner = before.getString("owner")
   const newOwner = after.getString("owner")
   if (newOwner && newOwner !== oldOwner && newOwner !== who.member) {

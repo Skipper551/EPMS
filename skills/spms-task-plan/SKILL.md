@@ -27,6 +27,7 @@ SPMS (Student Project Management System) is a free project management app for st
 - Whole-group work (rehearsing the presentation, everyone reading the final draft, a group meeting): set `"everyone": true` with a lead, usually the PM, and no helpers.
 - Order work with blockers: a task that can't start until another is done lists it in `blocked_by`. Avoid long chains when tasks could run in parallel.
 - Start dates: give each task a `start` so members know when to begin, not only when to finish. Tasks that wait on others start when those are due.
+- Priority: most tasks need none (they're normal). Mark only the few that truly can't slip, usually the ones other tasks are blocked by, as `"high"`, and keep `"urgent"` for something due within days. Use `"low"` for nice-to-haves that can be dropped if time runs out.
 - Due dates: leave a buffer before the final deadline for merging, proofreading and rehearsal. Put review-heavy tasks earlier.
 - Descriptions are read by the task owner as the first note on their task. Write them for that person: what to do, in a few concrete steps, and what "done" looks like. Respect the PM's guidelines (citation style, word limits, tone).
 - For bigger tasks, add `subtasks`: short steps the owner can tick off in one sitting each. Members can also add their own later, with their AI or by hand.
@@ -116,6 +117,7 @@ Each task:
 | `everyone` | no | `true` for a whole-group task: it shows on every member's page. Give it a lead and no helpers. |
 | `start` | no | When work should begin, as `YYYY-MM-DD`. Stagger starts around blockers: a task should start when the work it's blocked by is due. The task's lead can move it later. |
 | `due` | no | Date as `YYYY-MM-DD`. No times. |
+| `priority` | no | `low`, `normal`, `high` or `urgent`. Leave out for normal. Urgent and high tasks sort to the top of the board and the lead's list. The PM or the lead can change it later. |
 | `description` | no | Instructions for the owner (max 5,000 characters). Becomes the task's first note, posted by the PM. |
 | `blocked_by` | no | List of `id`s of tasks in this file, or exact titles of tasks already on the SPMS board. |
 | `waiting_on` | no | List of member names the task waits on for something that isn't a task (for example "Kuba has to share the survey data"). |
@@ -144,6 +146,7 @@ Members can break their own tasks into subtasks later with their own AI, using a
 - [ ] No task repeats the title of a task already on the board, unless the PM asked to replace it.
 - [ ] `everyone` tasks have a lead and no helpers.
 - [ ] Every `blocked_by` entry is an `id` in this file or an exact existing title; no task blocks itself; no cycles.
+- [ ] Every `priority` is `low`, `normal`, `high` or `urgent`, and only a few tasks are high or urgent.
 - [ ] Every `start` and `due` is `YYYY-MM-DD`, each `start` is on or before its `due`, and every `due` is on or before the final deadline.
 - [ ] No em dashes anywhere.
 - [ ] Only the JSON goes in the code block. After it, tell the PM in one line: "In SPMS, open your board, choose Import tasks, and paste this."

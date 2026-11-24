@@ -5,7 +5,7 @@ import { STATUSES, STATUS_LABEL } from '../data/types'
 import { memberName, normaliseUrl, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
 import { SubtaskList } from '../ui/Subtasks'
-import { CloseIcon, Dialog, ErrorBox, Field, Toggle, toast } from '../ui/ui'
+import { CloseIcon, Dialog, ErrorBox, Field, PriorityPicker, Toggle, toast } from '../ui/ui'
 
 export function TaskEditor(props: {
   snap: Snapshot
@@ -20,11 +20,11 @@ export function TaskEditor(props: {
   const [form, setForm] = useState<TaskInput>(() =>
     existing
       ? {
-          title: existing.title, owner: existing.owner, helpers: existing.helpers, everyone: existing.everyone, start_date: existing.start_date, due_date: existing.due_date, status: existing.status, behind: existing.behind, behind_note: existing.behind_note, blocked_reason: existing.blocked_reason,
+          title: existing.title, owner: existing.owner, helpers: existing.helpers, everyone: existing.everyone, start_date: existing.start_date, due_date: existing.due_date, priority: existing.priority, status: existing.status, behind: existing.behind, behind_note: existing.behind_note, blocked_reason: existing.blocked_reason,
           blocked_by_tasks: existing.blocked_by_tasks, blocked_by_members: existing.blocked_by_members,
           links: existing.links.length ? existing.links : [],
         }
-      : { title: '', owner: '', helpers: [], everyone: false, start_date: '', due_date: '', status: 'todo', behind: false, behind_note: '', blocked_reason: '', blocked_by_tasks: [], blocked_by_members: [], links: [] },
+      : { title: '', owner: '', helpers: [], everyone: false, start_date: '', due_date: '', priority: 'normal', status: 'todo', behind: false, behind_note: '', blocked_reason: '', blocked_by_tasks: [], blocked_by_members: [], links: [] },
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -143,6 +143,11 @@ export function TaskEditor(props: {
           {form.start_date && form.due_date && form.start_date > form.due_date && (
             <span class="xsmall warn-text span-2">The start date is after the due date.</span>
           )}
+          <div class="field span-2">
+            <span class="field-label" id="priority-label">Priority</span>
+            <PriorityPicker value={form.priority} onChange={(p) => set('priority', p)} labelledBy="priority-label" />
+            <span class="field-help">Urgent and high tasks sort to the top of the board and of the lead's list. The lead can change it too.</span>
+          </div>
           <div class="field">
             <span class="field-label">Schedule</span>
             <Toggle checked={form.behind} onChange={(v) => set('behind', v)} label={form.behind ? 'Behind schedule' : 'On schedule'} />

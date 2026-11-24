@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'preact/hooks'
 import { addNote, createMember, createSubtasks, createTask, updateProject, updateTask, type StoreError } from '../data/store'
 import type { Snapshot } from '../data/types'
-import { STATUS_LABEL } from '../data/types'
+import { PRIORITY_LABEL, STATUS_LABEL } from '../data/types'
 import { claudeInstructions, parsePlan, previewPlan, type OwnerMatch, type Preview } from '../lib/importPlan'
 import { copyText } from '../lib/util'
 import { Dialog, ErrorBox, toast } from '../ui/ui'
@@ -77,6 +77,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; a
           everyone: row.task.everyone,
           start_date: row.task.start,
           due_date: row.task.due,
+          priority: row.task.priority,
           status: row.task.status,
           behind: false,
           behind_note: '',
@@ -256,7 +257,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; a
                 <span class="xsmall muted">{skipped ? 'Already on the board' : STATUS_LABEL[r.task.status]}</span>
               </div>
               <span class="xsmall muted">
-                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? (r.owner.kind === 'none' ? `No lead yet: ${r.helpers.map(ownerText).join(', ')}` : `${ownerText(r.owner)} leads, with ${r.helpers.map(ownerText).join(', ')}`) : ownerText(r.owner), r.startText ? `starts ${r.startText}` : '', r.dueText ? `due ${r.dueText}` : 'no due date', r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`, r.task.subtasks.length && `${r.task.subtasks.length} ${r.task.subtasks.length === 1 ? 'subtask' : 'subtasks'}`]
+                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? (r.owner.kind === 'none' ? `No lead yet: ${r.helpers.map(ownerText).join(', ')}` : `${ownerText(r.owner)} leads, with ${r.helpers.map(ownerText).join(', ')}`) : ownerText(r.owner), r.startText ? `starts ${r.startText}` : '', r.dueText ? `due ${r.dueText}` : 'no due date', r.task.priority !== 'normal' && `${PRIORITY_LABEL[r.task.priority].toLowerCase()} priority`, r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`, r.task.subtasks.length && `${r.task.subtasks.length} ${r.task.subtasks.length === 1 ? 'subtask' : 'subtasks'}`]
                   .filter(Boolean).join(' · ')}
               </span>
               {(blockers.length > 0 || waiting.length > 0) && (

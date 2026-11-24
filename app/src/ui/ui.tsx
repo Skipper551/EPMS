@@ -3,8 +3,8 @@
 import type { ComponentChildren, JSX } from 'preact'
 import { useEffect, useRef } from 'preact/hooks'
 import { signal } from '@preact/signals'
-import type { Snapshot, Status } from '../data/types'
-import { STATUS_LABEL } from '../data/types'
+import type { Priority, Snapshot, Status } from '../data/types'
+import { PRIORITIES, PRIORITY_LABEL, STATUS_LABEL } from '../data/types'
 import { initial, memberColour, memberName } from '../lib/util'
 
 // ---------- toasts ----------
@@ -128,6 +128,33 @@ export function Avatar(props: { snap: Snapshot; memberId: string; size?: number;
 
 export function StatusPill(props: { status: Status }) {
   return <span class={`pill pill-${props.status}`}>{STATUS_LABEL[props.status]}</span>
+}
+
+const PRIORITY_HINT: Record<Priority, string> = {
+  urgent: 'Urgent: do this before anything else',
+  high: 'High priority: do this soon',
+  normal: 'Normal priority',
+  low: 'Low priority: fine to leave for later',
+}
+
+/** Urgent, High or Low. Normal shows nothing, so the tag only appears when a task stands out. */
+export function PriorityTag(props: { priority: Priority }) {
+  if (props.priority === 'normal') return null
+  return <span class={`prio-tag prio-${props.priority}`} title={PRIORITY_HINT[props.priority]}>{PRIORITY_LABEL[props.priority]}</span>
+}
+
+/** Four chips, Low to Urgent, for the PM's task editor and the lead's task details. */
+export function PriorityPicker(props: { value: Priority; onChange: (p: Priority) => void; disabled?: boolean; labelledBy?: string }) {
+  return (
+    <div class="row prio-picker" style={{ gap: '8px' }} role="group" aria-labelledby={props.labelledBy}>
+      {[...PRIORITIES].reverse().map((p) => (
+        <button key={p} type="button" class={`chip prio-chip-${p}`} aria-pressed={props.value === p} disabled={props.disabled} title={PRIORITY_HINT[p]}
+          onClick={() => props.value !== p && props.onChange(p)}>
+          {PRIORITY_LABEL[p]}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 // ---------- icons ----------

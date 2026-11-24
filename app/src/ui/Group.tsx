@@ -1,6 +1,6 @@
 import type { ActivityEvent, Member, Snapshot, Task } from '../data/types'
-import { activeBlockers, canMove, dateRange, dueKey, formatDay, memberName, startState, today, when } from '../lib/util'
-import { Avatar, StatusPill } from './ui'
+import { activeBlockers, byPriorityThenDue, canMove, dateRange, formatDay, memberName, startState, today, when } from '../lib/util'
+import { Avatar, PriorityTag, StatusPill } from './ui'
 import { subtasksOf, SubtaskProgress } from './Subtasks'
 
 /** Days without any activity after which someone with open work is shown as quiet. */
@@ -25,11 +25,10 @@ interface Person {
 function person(snap: Snapshot, m: Member, events: ActivityEvent[]): Person {
   const tasks = snap.tasks.filter((t) => canMove(t, m.id))
   const open = tasks.filter((t) => t.status !== 'done')
-  const byDue = (a: Task, b: Task) => dueKey(a).localeCompare(dueKey(b))
-  const doing = open.filter((t) => t.status === 'doing').sort(byDue)
+  const doing = open.filter((t) => t.status === 'doing').sort(byPriorityThenDue)
   const todo = open.filter((t) => t.status === 'todo')
-  // Next up: what can be started now, by due date; otherwise the next one to start.
-  const next = todo.filter((t) => startState(t) !== 'upcoming').sort(byDue)[0]
+  // Next up: what can be started now, most pressing then by due date; otherwise the next one to start.
+  const next = todo.filter((t) => startState(t) !== 'upcoming').sort(byPriorityThenDue)[0]
     ?? todo.sort((a, b) => (a.start_date || '9999').localeCompare(b.start_date || '9999'))[0]
     ?? null
   const steps = tasks.flatMap((t) => subtasksOf(snap, t.id))
@@ -179,6 +178,7 @@ function TaskLine(props: { snap: Snapshot; t: Task; memberId: string; onOpen: (t
       <span class="row-between" style={{ flexWrap: 'nowrap', gap: '8px', width: '100%' }}>
         <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
         <span class="row" style={{ gap: '6px', flexWrap: 'nowrap' }}>
+          {t.status !== 'done' && <PriorityTag priority={t.priority} />}
           {t.status === 'review' && <StatusPill status={t.status} />}
         </span>
       </span>

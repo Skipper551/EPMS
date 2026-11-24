@@ -1,8 +1,8 @@
 import { useState } from 'preact/hooks'
 import type { Snapshot, Status, Task } from '../data/types'
 import { STATUSES, STATUS_LABEL } from '../data/types'
-import { daysLeftText, dueKey, formatDay, involvement, memberName, peopleText, startState, today } from '../lib/util'
-import { Avatar } from '../ui/ui'
+import { byPriorityThenDue, daysLeftText, formatDay, involvement, memberName, peopleText, startState, today } from '../lib/util'
+import { Avatar, PriorityTag } from '../ui/ui'
 import { BlockerSummary } from '../ui/BlockerSummary'
 import { SubtaskProgress } from '../ui/Subtasks'
 
@@ -92,7 +92,7 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
       <div class="board-scroll">
         <div class="board">
           {STATUSES.map((status) => {
-            const cards = visible.filter((t) => t.status === status).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
+            const cards = visible.filter((t) => t.status === status).sort(byPriorityThenDue)
             return (
               <section
                 key={status}
@@ -150,7 +150,7 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
   const people = !t.everyone && lead && t.helpers.length ? `${lead} leads +${t.helpers.length}` : full
   const faces = [t.owner, ...(t.everyone ? [] : t.helpers)].filter(Boolean).slice(0, 4)
   const overdue = t.status !== 'done' && t.due_date && t.due_date < today()
-  const cls = ['tcard', t.behind && t.status !== 'done' && 'is-behind', t.status === 'done' && 'is-done', props.dragging && 'dragging'].filter(Boolean).join(' ')
+  const cls = ['tcard', t.behind && t.status !== 'done' && 'is-behind', t.priority === 'urgent' && t.status !== 'done' && 'is-urgent', t.status === 'done' && 'is-done', props.dragging && 'dragging'].filter(Boolean).join(' ')
 
   return (
     <article
@@ -167,6 +167,7 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
         <div class="tcard-title-row">
           <h3>{t.title}</h3>
           <span class="row" style={{ gap: '6px', flexWrap: 'nowrap' }}>
+            {t.status !== 'done' && <PriorityTag priority={t.priority} />}
             {!t.owner && t.status !== 'done' && (t.everyone || t.helpers.length > 0) && <span class="behind-tag" title="Nobody is accountable for this task yet. Open it and pick a lead.">No lead</span>}
             {t.everyone && <span class="group-tag">Everyone</span>}
             {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}

@@ -1,11 +1,12 @@
 import { useState } from 'preact/hooks'
-import { addNote, setBlockers, setStartDate, type StoreError } from '../data/store'
-import type { Member, Snapshot, Task } from '../data/types'
+import { addNote, setBlockers, setPriority, setStartDate, type StoreError } from '../data/store'
+import type { Member, Priority, Snapshot, Task } from '../data/types'
+import { PRIORITY_LABEL } from '../data/types'
 import { accountabilityText, canMove, dateRange, formatDay, involvement, memberName, peopleText, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
 import { SubtaskList, subtasksOf } from '../ui/Subtasks'
 import type { TaskViewMode } from './MyTasks'
-import { BlockedIcon, Dialog, ErrorBox, Field, StatusPill, toast } from '../ui/ui'
+import { BlockedIcon, Dialog, ErrorBox, Field, PriorityPicker, PriorityTag, StatusPill, toast } from '../ui/ui'
 
 export function TaskDetail(props: {
   snap: Snapshot
@@ -54,6 +55,7 @@ export function TaskDetail(props: {
     <Dialog title={t.title} onClose={props.onClose} wide>
       <div class="row" style={{ gap: '8px 16px' }}>
         <StatusPill status={t.status} />
+        {t.status !== 'done' && <PriorityTag priority={t.priority} />}
         {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
         <span class="muted small">{dateRange(t.start_date, t.due_date) || 'No due date'}</span>
         <span class="muted small">{peopleText(snap, t)}</span>
@@ -88,6 +90,7 @@ export function TaskDetail(props: {
       )}
 
       {!preview && t.owner === props.me.id && t.status !== 'done' && <StartDateEditor task={t} max={t.due_date} onChanged={props.onChanged} />}
+      {!preview && t.owner === props.me.id && t.status !== 'done' && <PriorityEditor task={t} onChanged={props.onChanged} />}
 
       {(mine || subtasksOf(snap, t.id).length > 0) && (
         <SubtaskList snap={snap} task={t} canEdit={mine && t.status !== 'done'} onChanged={props.onChanged} onAddMany={() => props.onAddSubtasks(t)} />
@@ -184,6 +187,32 @@ export function BlockedDialog(props: { snap: Snapshot; me: Member; taskId: strin
 
 export function AiAgainDialog(props: { children: preact.ComponentChildren; onClose: () => void }) {
   return <Dialog title="Connect your AI" onClose={props.onClose} wide>{props.children}</Dialog>
+}
+
+/** The task's lead can say how pressing it is (the PM can too, from the board). Saves on tap. */
+function PriorityEditor(props: { task: Task; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  async function pick(p: Priority) {
+    setBusy(true)
+    setError(null)
+    try {
+      await setPriority(props.task.id, p)
+      toast(`Priority set to ${PRIORITY_LABEL[p].toLowerCase()}`)
+      props.onChanged()
+    } catch (err) {
+      setError((err as StoreError).message)
+    }
+    setBusy(false)
+  }
+  return (
+    <div class="field">
+      <span class="field-label" id="lead-priority-label">Priority</span>
+      <PriorityPicker value={props.task.priority} onChange={pick} disabled={busy} labelledBy="lead-priority-label" />
+      <span class="field-help">You lead this task, so you can change how pressing it is. Your PM sees it on the board.</span>
+      <ErrorBox error={error} />
+    </div>
+  )
 }
 
 /** The task's lead can say when they'll start (the PM can too, from the board). */
