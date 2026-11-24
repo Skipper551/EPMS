@@ -35,6 +35,8 @@ export interface ProjectKeys {
   claims_locked: boolean
   /** Teams Workflows, Discord or Slack webhook for the PM's chat updates, or '' */
   chat_webhook: string
+  /** Discord, Slack, Teams Workflows or any JSON webhook that hears when a member sends a task to review, or '' */
+  review_webhook: string
   /** When the PM last shared an update with the chat (ISO), or '' */
   last_summary_at: string
 }

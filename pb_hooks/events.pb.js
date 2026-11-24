@@ -29,6 +29,10 @@ onRecordUpdateRequest((e) => {
     return
   }
   lib.taskChanged(e.app, before, t, who)
+  // Review alert: only when a member sends the task to review, not when the PM moves it there.
+  if (!who.pm && who.member && before.getString("status") !== "review" && t.getString("status") === "review") {
+    require(`${__hooks}/epms/review.js`).submitted(e.app, t, who.member)
+  }
 }, "tasks")
 
 onRecordCreateRequest((e) => {
@@ -102,5 +106,19 @@ routerAdd("POST", "/api/gh/chat/{project}", (e) => {
   return e.json(200, { ok: true })
 }, $apis.requireSuperuserAuth())
 
+// Test message for the PM's review alerts, from Project settings.
+routerAdd("POST", "/api/gh/review-test/{project}", (e) => {
+  const review = require(`${__hooks}/epms/review.js`)
+  const projectId = e.request.pathValue("project")
+  const url = review.urlFor(e.app, projectId)
+  if (!url) throw new BadRequestError("Add a review alert webhook in Project settings first.")
+  try {
+    review.post(url, "SPMS review alerts are connected. You'll get a message here when a member sends a task to review.", { event: "test", project: { id: projectId } })
+  } catch (err) {
+    throw new BadRequestError("The webhook didn't accept the test message. Check the address in Project settings.")
+  }
+  return e.json(200, { ok: true })
+}, $apis.requireSuperuserAuth())
+
 // Lets the SPMS setup check see that this file is installed, and which version.
-routerAdd("GET", "/api/gh/hooks/events", (e) => e.json(200, { name: "events", version: "2026-11-21" }))
+routerAdd("GET", "/api/gh/hooks/events", (e) => e.json(200, { name: "events", version: "2026-11-24" }))

@@ -164,7 +164,7 @@ function toSubtask(r: RecordModel): Subtask {
 
 function toKeys(r: RecordModel): ProjectKeys {
   return { id: r.id, project: str(r.project), member_key: str(r.member_key), ai_key: str(r.ai_key), claims_locked: !!r.claims_locked,
-    chat_webhook: str(r.chat_webhook), last_summary_at: str(r.last_summary_at) }
+    chat_webhook: str(r.chat_webhook), review_webhook: str(r.review_webhook), last_summary_at: str(r.last_summary_at) }
 }
 
 const byCreated = <T extends { created: string }>(a: T, b: T) => a.created.localeCompare(b.created)
@@ -504,6 +504,20 @@ export function listEvents(projectId: string, sinceIso: string, forMember = ''):
 
 export function setChatWebhook(keysId: string, url: string): Promise<ProjectKeys> {
   return run(async () => toKeys(await client().collection('project_keys').update(keysId, { chat_webhook: url })))
+}
+
+export function setReviewWebhook(keysId: string, url: string): Promise<ProjectKeys> {
+  return run(async () => toKeys(await client().collection('project_keys').update(keysId, { review_webhook: url })))
+}
+
+/** Send a test message to the PM's review alert webhook. */
+export async function testReviewWebhook(projectId: string): Promise<void> {
+  try {
+    await client().send(`/api/gh/review-test/${projectId}`, { method: 'POST' })
+  } catch (e) {
+    if (e instanceof ClientResponseError && e.response?.message && e.status === 400) throw new StoreError(e.response.message, 400)
+    throw friendly(e)
+  }
 }
 
 /** Post the PM's update to the group chat; the server sends it to the webhook and records the time. */

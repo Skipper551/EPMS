@@ -117,6 +117,10 @@
         "type": "url"
       },
       {
+        "name": "review_webhook",
+        "type": "url"
+      },
+      {
         "name": "last_summary_at",
         "type": "date"
       }

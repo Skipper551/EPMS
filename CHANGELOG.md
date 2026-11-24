@@ -8,6 +8,10 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.12.0
+- Review alerts: the PM can add an optional webhook in Project settings and get a short message (the task, who sent it, the project) whenever a member sends a task to review. Moving a task to Review yourself doesn't send one. Works with Discord, Slack, Teams Workflows, or any address that takes a JSON post, and has a "Send a test message" button. At most one alert per task every 10 minutes, and a failed alert never stops the member's submit. The address is stored with the project's private keys, so members and AIs can't see it.
+- Hook update: `events.pb.js` (new `epms/review.js` helper). Collection update: `project_keys` gains `review_webhook`. The setup check asks live instances to upload the new hooks zip and update the collections.
+
 ## 0.11.3
 - Phones: the PM board scrolls left and right like on a computer, one column per swipe, with the next column peeking in so you can see there is more. It snaps to each column and the rest of the page stays still.
 - Phones: tidier header. The logo and project menu sit on one line, the views (Board, Task view, Group or My tasks, Group) become one full-width switch, and the PM's buttons form an even two by two grid with New task first. Every button is at least 44px tall for easy tapping. Computers and tablets look exactly as before. Frontend only, no hook or collection changes.
