@@ -1,6 +1,6 @@
-# EPMS
+# SPMS
 
-**Educational Project Management Software** (name work in progress, previously Group Hub).
+**Student Project Management System** (previously EPMS, and before that Group Hub).
 
 Free, open-source project management for university group projects of 3 to 7 people. Built around the **Swim method** (Swim Education Project Management Method, name work in progress): every group has one project manager (PM) who runs the board, and everyone else just does their tasks.
 
@@ -53,7 +53,7 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 | [`app/`](app) | The frontend (Vite, Preact, TypeScript). See [app/README.md](app/README.md) for development. |
 | [`pb_schema.json`](pb_schema.json) | The PocketBase collections and access rules, ready to import. |
 | [`pb_hooks/`](pb_hooks) | Server code for PocketBase: claiming a name (`claim.pb.js`), the activity log and chat updates (`events.pb.js`, with its helper `epms/events.js`), the subtask limit (`subtasks.pb.js`), the guide added to the AI link (`ai.pb.js`), and a Teams link preview test (`preview.pb.js`). |
-| [`skills/epms-task-plan/`](skills/epms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in EPMS's import format. |
+| [`skills/spms-task-plan/`](skills/spms-task-plan) | A Claude skill for planning tasks with Claude and exporting them in SPMS's import format. |
 | [`design/`](design) | Design references for the three main screens. |
 | [`SPEC.md`](SPEC.md) | The product spec: method, principles, data model, access rules, decisions. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), [`SECURITY.md`](SECURITY.md) | How to contribute, the code of conduct, and how to report security problems privately. |
@@ -63,13 +63,13 @@ The full design, data model and access rules are in [SPEC.md](SPEC.md).
 
 ## Start a group (PM)
 
-Open the shared EPMS site, **https://skipper551.github.io/EPMS/**, and choose **Set up EPMS**. In short:
+Open the shared SPMS site, **https://skipper551.github.io/EPMS/**, and choose **Set up SPMS**. In short:
 
 1. **Create a free PocketBase instance** on [PocketBase Cloud](https://pocketbasecloud.com): one instance, 50 MB, 5,000 requests an hour. The free plan asks for a card to start a subscription that costs 0 through Stripe; it is never charged. You can also self-host PocketBase.
 2. **Set its superuser** email and password in the instance dashboard, and copy the instance's address.
-3. **Log in to EPMS** with the address, email and password. EPMS checks your instance:
+3. **Log in to SPMS** with the address, email and password. SPMS checks your instance:
    - **Collections:** installed or updated in one click.
-   - **Hooks:** download them from the setup check and upload them in the instance's Code tab, keeping the `epms` folder. PocketBase only accepts hook files through its dashboard. **Check setup** in the project menu re-runs the check any time, for example after an EPMS update.
+   - **Hooks:** download them from the setup check and upload them in the instance's Code tab, keeping the `epms` folder. PocketBase only accepts hook files through its dashboard. **Check setup** in the project menu re-runs the check any time, for example after an SPMS update.
 4. **Create your project.** A Getting started checklist on the board walks you through adding your group, writing the guidelines, planning the tasks and sharing the group link.
 
 The shared site is only the app: it holds no data and has no server. Your projects live in your own instance, and group and personal links carry its address after `#`, so members' browsers know where to connect.
@@ -84,7 +84,7 @@ VITE_PB_URL=https://your-instance.example.com npm run build
 
 ## Planning tasks with Claude
 
-Install the skill (download it from the PM board's menu, or zip [`skills/epms-task-plan`](skills/epms-task-plan)) and plan the tasks with Claude. It starts from your project's AI link (Project settings, Links) and asks for it if you haven't shared it, so member names, existing tasks and dates match the board. When the plan is ready, Claude exports a `epms-tasks` file; paste it into **Import tasks** on the board. Without the skill, use **Copy instructions for Claude** in the import dialog, which includes your project's members and deadline.
+Install the skill (download it from the PM board's menu, or zip [`skills/spms-task-plan`](skills/spms-task-plan)) and plan the tasks with Claude. It starts from your project's AI link (Project settings, Links) and asks for it if you haven't shared it, so member names, existing tasks and dates match the board. When the plan is ready, Claude exports a `epms-tasks` file; paste it into **Import tasks** on the board. Without the skill, use **Copy instructions for Claude** in the import dialog, which includes your project's members and deadline.
 
 ## Development
 

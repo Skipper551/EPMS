@@ -1,4 +1,4 @@
-// EPMS activity log helpers, loaded by events.pb.js with require().
+// SPMS activity log helpers, loaded by events.pb.js with require().
 // Not a hook file itself (no .pb.js), so PocketBase only runs it when required.
 
 /** Who made this request: { member: member id or "", pm: true when the PM (superuser) did it }.
@@ -34,7 +34,7 @@ function record(app, data) {
     ev.set("text", (data.text || "").slice(0, 2000))
     app.save(ev)
   } catch (err) {
-    console.log("EPMS: could not record event", data.kind, err)
+    console.log("SPMS: could not record event", data.kind, err)
   }
 }
 

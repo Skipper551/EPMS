@@ -1,6 +1,6 @@
-# Contributing to EPMS
+# Contributing to SPMS
 
-Thanks for helping. EPMS is a free project management app for university group projects, built around the Swim method: one PM runs the board and everyone else does their tasks. Read [SPEC.md](SPEC.md) first; it explains the method, the data model and why things are the way they are.
+Thanks for helping. SPMS is a free project management app for university group projects, built around the Swim method: one PM runs the board and everyone else does their tasks. Read [SPEC.md](SPEC.md) first; it explains the method, the data model and why things are the way they are.
 
 By taking part you agree to the [code of conduct](CODE_OF_CONDUCT.md). Report security problems privately, as described in [SECURITY.md](SECURITY.md).
 
@@ -12,7 +12,7 @@ By taking part you agree to the [code of conduct](CODE_OF_CONDUCT.md). Report se
 
 ## Ground rules
 
-These keep EPMS what it is. Pull requests that break them won't be merged.
+These keep SPMS what it is. Pull requests that break them won't be merged.
 
 1. **Free forever.** No paid services, and nothing that can bill. Everything must run on PocketBase's free tier and static hosting.
 2. **Private by default.** The only personal data is a name. No tracking, analytics, emails or third-party calls with project data.
@@ -52,7 +52,7 @@ VITE_PB_URL=http://127.0.0.1:8090 npm run dev
    Changes to setup or links should also pass `npm run test:onboarding` (see the top of `app/tests/onboarding.mjs`).
 4. **Bump the version** in `app/package.json` and add an entry to [CHANGELOG.md](CHANGELOG.md): new features bump the middle number (`npm version minor`), fixes and small changes the last (`npm version patch`).
 5. **Changed a hook?** Bump its version string in the hook file and in `app/src/lib/setup.ts`, so the setup check tells PMs to update.
-6. **Changed the task file format?** Update the importer (`app/src/lib/importPlan.ts`), the skill (`skills/epms-task-plan/SKILL.md` and `example.json`) and the AI link's guide (`pb_hooks/ai.pb.js`) together, and run `npm run skill`.
+6. **Changed the task file format?** Update the importer (`app/src/lib/importPlan.ts`), the skill (`skills/spms-task-plan/SKILL.md` and `example.json`) and the AI link's guide (`pb_hooks/ai.pb.js`) together, and run `npm run skill`.
 7. **Open a pull request** and fill in the template.
 
 ## Code style
@@ -64,4 +64,4 @@ VITE_PB_URL=http://127.0.0.1:8090 npm run dev
 
 ## Licence
 
-EPMS is MIT licensed. By contributing, you agree your work is released under the same [licence](LICENSE).
+SPMS is MIT licensed. By contributing, you agree your work is released under the same [licence](LICENSE).

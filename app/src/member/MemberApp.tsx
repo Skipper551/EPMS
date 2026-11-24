@@ -75,7 +75,7 @@ export function MemberApp() {
 function Shell(props: { children: preact.ComponentChildren }) {
   return (
     <div class="app">
-      <header class="header"><span class="logo">EPMS</span></header>
+      <header class="header"><span class="logo">SPMS</span></header>
       <main class="main-center"><div class="center-col">{props.children}</div></main>
     </div>
   )
@@ -91,7 +91,7 @@ function NoLink() {
         <h1 class="h1-xl">This link isn't complete</h1>
         <p class="muted" style={{ margin: 0 }}>
           {noInstance
-            ? "This link doesn't say which instance the project lives on; it may be from an older version of EPMS. Ask your PM to copy the group link again and share the new one."
+            ? "This link doesn't say which instance the project lives on; it may be from an older version of SPMS. Ask your PM to copy the group link again and share the new one."
             : 'Part of the link is missing. Copy the whole link from the group chat and open it again.'}
         </p>
       </Shell>
@@ -100,8 +100,8 @@ function NoLink() {
   return (
     <Shell>
       <div class="stack-sm">
-        <span class="muted small">Educational Project Management Software</span>
-        <h1 class="h1-xl">Welcome to EPMS</h1>
+        <span class="muted small">Student Project Management System</span>
+        <h1 class="h1-xl">Welcome to SPMS</h1>
         <p class="muted" style={{ margin: 0 }}>Free, open-source project management for university group projects, run by one project manager.</p>
       </div>
       <div class="card stack-sm">
@@ -111,10 +111,10 @@ function NoLink() {
       <div class="card stack">
         <div class="stack-sm">
           <strong style={{ fontWeight: 600 }}>Running a group project?</strong>
-          <span class="muted small">Set up EPMS for your group in about 10 minutes. Free, and your data stays in your own instance.</span>
+          <span class="muted small">Set up SPMS for your group in about 10 minutes. Free, and your data stays in your own instance.</span>
         </div>
         <div class="row">
-          <a class="btn btn-primary btn-md" href="#start">Set up EPMS</a>
+          <a class="btn btn-primary btn-md" href="#start">Set up SPMS</a>
           <a class="btn btn-soft btn-md" href="./pm.html">Log in to my board</a>
         </div>
       </div>
@@ -244,7 +244,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
 
   useEffect(() => {
     if (!snap) return
-    document.title = `${updates.length ? `(${updates.length}) ` : ''}${snap.project.name} · EPMS`
+    document.title = `${updates.length ? `(${updates.length}) ` : ''}${snap.project.name} · SPMS`
     if (snap.project.name !== session.name) { const s = patchSession(projectId, { name: snap.project.name }); if (s) setSession(s) }
   }, [snap?.project.name, updates.length])
 
@@ -330,7 +330,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
     <div class="app">
       <header class="header">
         <div class="header-side">
-          <span class="logo">EPMS</span>
+          <span class="logo">SPMS</span>
           <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} onPin={() => setPinOpen(true)} hasPin={hasPin} />
           <div class="row" style={{ gap: '6px' }} role="tablist" aria-label="View">
             <button type="button" role="tab" class="chip" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>My tasks</button>

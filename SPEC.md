@@ -1,6 +1,6 @@
-# EPMS: spec (draft 1)
+# SPMS: spec (draft 1)
 
-EPMS: Educational Project Management Software (name work in progress, likely to stay for the foreseeable future). Previously called Group Hub. Open source, openly vibe coded, free forever for students.
+SPMS: Student Project Management System. Previously called EPMS (Educational Project Management Software), and before that Group Hub. Open source, openly vibe coded, free forever for students.
 
 ## What it is
 
@@ -8,7 +8,7 @@ A project management web app for university group projects of 3 to 7 people, run
 
 ## The Swim method
 
-EPMS is built around the Swim method: the Swim Education Project Management Method (name work in progress). It replaces the earlier name S.W.I.M.S. (Student Workgroup Integrated Management System), along with the SWIMS ambigram logo idea that went with it.
+SPMS is built around the Swim method: the Swim Education Project Management Method (name work in progress). It replaces the earlier name S.W.I.M.S. (Student Workgroup Integrated Management System), along with the SWIMS ambigram logo idea that went with it.
 
 - Every group has a PM.
 - The PM accepts that the extra work and effort of managing the project is the price of a good grade.
@@ -126,7 +126,7 @@ Decisions from design review:
 
 ## PM onboarding
 
-- **Start page:** the shared site without a link welcomes members ("open your PM's link") and PMs ("Set up EPMS"), with a 5-step guide at `#start`: PocketBase Cloud free plan (card on file, never charged), superuser, log in.
+- **Start page:** the shared site without a link welcomes members ("open your PM's link") and PMs ("Set up SPMS"), with a 5-step guide at `#start`: PocketBase Cloud free plan (card on file, never charged), superuser, log in.
 - **Setup check after login:** compares the instance with the bundled pb_schema.json (collections, fields, rules) and asks each hook file for its version (`/api/gh/hooks/<name>`). Collections install or update in one click (superuser import, never deletes); hooks are offered as a zip with steps for the Code tab. Also under Check setup in the project menu.
 - **Getting started checklist** on a new project's board: add your group, write the guidelines, plan the tasks, share the group link, set up chat updates (optional). Ticks itself; hideable.
 
@@ -166,7 +166,7 @@ PocketBase JS hooks work on the free plan (instance Code tab in the PocketBase C
 - Do Claude and ChatGPT reliably read a link in standing instructions?
 - Do Kozminski students get ChatGPT Edu?
 - Teams link preview: does a static GitHub Pages link show a useful card?
-- Final names for the app (EPMS for now) and the method (the Swim method for now).
+- Final name for the method (the Swim method for now).
 
 ## Handoff notes for building
 

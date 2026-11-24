@@ -1,7 +1,7 @@
-# Publishes the shared EPMS site to GitHub Pages on every push to main.
+# Publishes the shared SPMS site to GitHub Pages on every push to main.
 # The build has no built-in PocketBase instance: each PM enters their own address when they log in.
 # One-time setup: repository Settings, Pages, Source: GitHub Actions.
-name: Publish the EPMS site
+name: Publish the SPMS site
 
 on:
   push:

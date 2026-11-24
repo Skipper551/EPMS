@@ -97,7 +97,7 @@ export function BehindDialog(props: { snap: Snapshot; taskId: string; onClose: (
       <form id="behind-form" class="stack" onSubmit={submit}>
         <p class="soft" style={{ margin: 0 }}>
           <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{task.title}</strong>
-          {task.owner ? ` (${memberName(props.snap, task.owner)})` : ''}. They see it in their updates the next time they open EPMS.
+          {task.owner ? ` (${memberName(props.snap, task.owner)})` : ''}. They see it in their updates the next time they open SPMS.
         </p>
         <Field label="Note for them (optional)">
           {(id) => <input id={id} class="input" maxLength={300} value={note} placeholder="Need this by Thursday" onInput={(e) => setNote(e.currentTarget.value)} data-autofocus />}

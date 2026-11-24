@@ -1,5 +1,5 @@
 /// <reference path="../pb_data/types.d.ts" />
-// EPMS: claim your name once.
+// SPMS: claim your name once.
 //
 // The group link carries the project's group key (project_keys.member_key). It is only good for these two routes:
 //   GET  /api/gh/join/{project}   list the members, which names are taken, and whether joining is locked
@@ -128,7 +128,7 @@ routerAdd("POST", "/api/gh/signin/{project}", (e) => {
     throw new BadRequestError("That name isn't set up yet. Pick it and choose a PIN to join.")
   }
   if (!pins.has(mk)) {
-    throw new BadRequestError("This name has no PIN yet. Open EPMS on the device you joined with to set one, or ask the PM for your personal link.")
+    throw new BadRequestError("This name has no PIN yet. Open SPMS on the device you joined with to set one, or ask the PM for your personal link.")
   }
   const result = pins.check($app, mk, pin)
   if (!result.ok) {
@@ -157,5 +157,5 @@ routerAdd("POST", "/api/gh/pin/{project}", (e) => {
   return e.json(200, { ok: true })
 })
 
-// Lets the EPMS setup check see that this file is installed, and which version.
+// Lets the SPMS setup check see that this file is installed, and which version.
 routerAdd("GET", "/api/gh/hooks/claim", (e) => e.json(200, { name: "claim", version: "2026-11-19" }))

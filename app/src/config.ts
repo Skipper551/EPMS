@@ -1,6 +1,6 @@
-// Which PocketBase instance EPMS talks to.
+// Which PocketBase instance SPMS talks to.
 //
-// The shared EPMS site has no built-in instance: the PM enters their own address when they log in, and group and
+// The shared SPMS site has no built-in instance: the PM enters their own address when they log in, and group and
 // personal links carry it (after #) so members' browsers know where to connect. A PM who builds their own copy can
 // set VITE_PB_URL (see .env.example) to give it a default address instead.
 export const DEFAULT_PB_URL: string = cleanUrl((import.meta.env.VITE_PB_URL as string | undefined) ?? '')

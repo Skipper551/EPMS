@@ -1,5 +1,5 @@
 /// <reference path="../pb_data/types.d.ts" />
-// EPMS: quick to-dos (tasks with mini = true). Members may add them (the tasks create rule only lets members
+// SPMS: quick to-dos (tasks with mini = true). Members may add them (the tasks create rule only lets members
 // create mini tasks); these hooks keep them small, cap the open ones at 30 per project, and limit what
 // members can change. Ordinary tasks are untouched.
 
@@ -23,5 +23,5 @@ onRecordUpdateRequest((e) => {
   e.next()
 }, "tasks")
 
-// Lets the EPMS setup check see that this file is installed, and which version.
+// Lets the SPMS setup check see that this file is installed, and which version.
 routerAdd("GET", "/api/gh/hooks/todos", (e) => e.json(200, { name: "todos", version: "2026-11-21" }))

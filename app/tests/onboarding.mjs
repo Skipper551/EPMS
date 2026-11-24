@@ -1,4 +1,4 @@
-// Onboarding check for the shared EPMS site (a build without VITE_PB_URL) against a brand-new PocketBase.
+// Onboarding check for the shared SPMS site (a build without VITE_PB_URL) against a brand-new PocketBase.
 // Never point this at your live instance: it installs collections and creates a project.
 //
 // Needs:
@@ -34,9 +34,9 @@ const p = await ctx.newPage()
 p.on('pageerror', (e) => errors.push(e.message))
 
 await p.goto(APP)
-await p.waitForSelector('text=Welcome to EPMS')
-await p.click('a:has-text("Set up EPMS")')
-await p.waitForSelector('h1:text-is("Set up EPMS for your group")')
+await p.waitForSelector('text=Welcome to SPMS')
+await p.click('a:has-text("Set up SPMS")')
+await p.waitForSelector('h1:text-is("Set up SPMS for your group")')
 check('start guide opens', true)
 await p.click('text=I have an instance: log in')
 await p.waitForSelector('text=Log in to your board')
@@ -52,7 +52,7 @@ await p.click('button[type=submit]')
 await p.locator('text=Finish setting up your instance').or(p.locator('h1:text-is("Board")')).or(p.locator('text=Set up your first project')).first().waitFor()
 if (await p.locator('text=Install collections').count()) {
   await p.click('text=Install collections')
-  // With the hooks already in place, finishing the collections completes setup and EPMS moves on by itself.
+  // With the hooks already in place, finishing the collections completes setup and SPMS moves on by itself.
   await p.locator('text=Your instance has every collection').or(p.locator('text=Set up your first project')).first().waitFor()
   check('collections install in one click', true)
 }

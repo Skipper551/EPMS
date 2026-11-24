@@ -429,7 +429,7 @@ function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: 
   const clean = url.trim()
   const valid = !clean || /^https?:\/\/\S+$/i.test(clean)
   // Teams Workflows addresses carry a signature (&sig=...) unless the workflow only accepts signed-in users,
-  // in which case posting from EPMS fails with 401.
+  // in which case posting from SPMS fails with 401.
   const teamsUnsigned = /(powerplatform\.com|logic\.azure\.com|powerautomate)/i.test(clean) && !/[?&]sig=/i.test(clean)
 
   return (
@@ -455,7 +455,7 @@ function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: 
         {!valid && <span class="xsmall warn-text">That doesn't look like a web address. It should start with https://</span>}
         {valid && teamsUnsigned && (
           <span class="xsmall warn-text">
-            This Teams address has no signature (it should end with &amp;sig=...), so Teams will refuse posts from EPMS. Either the copy was cut short, or the workflow only accepts signed-in users: in Power Automate, open the workflow, click its first step, set "Who can trigger the flow?" to Anyone, save, and copy the address again.
+            This Teams address has no signature (it should end with &amp;sig=...), so Teams will refuse posts from SPMS. Either the copy was cut short, or the workflow only accepts signed-in users: in Power Automate, open the workflow, click its first step, set "Who can trigger the flow?" to Anyone, save, and copy the address again.
           </span>
         )}
         <div class="row">
@@ -464,7 +464,7 @@ function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: 
             type="button"
             class="btn btn-soft btn-md"
             disabled={!keys?.chat_webhook || s.busy}
-            onClick={() => s.run(() => postToChat(props.snap.project.id, `EPMS is connected to this chat for ${props.snap.project.name}.\n\nThe PM's board updates will appear here.`), 'Test message sent')}
+            onClick={() => s.run(() => postToChat(props.snap.project.id, `SPMS is connected to this chat for ${props.snap.project.name}.\n\nThe PM's board updates will appear here.`), 'Test message sent')}
           >
             Send a test message
           </button>

@@ -1,6 +1,6 @@
 # Security policy
 
-EPMS holds group projects: names, tasks, notes and the keys that link members to them. If you find a way to read or change a project you shouldn't be able to, act as another member, or get at a PM's instance, please tell us privately first.
+SPMS holds group projects: names, tasks, notes and the keys that link members to them. If you find a way to read or change a project you shouldn't be able to, act as another member, or get at a PM's instance, please tell us privately first.
 
 ## Reporting a vulnerability
 
@@ -11,7 +11,7 @@ Please don't open a public issue, pull request or discussion about a vulnerabili
 A useful report says:
 - what an attacker could do, and what they need first (a group link, a personal link, the AI link, nothing);
 - the steps to reproduce it, against your own local PocketBase (see `app/README.md`), never someone else's instance;
-- the EPMS version (bottom of every page) and PocketBase version.
+- the SPMS version (bottom of every page) and PocketBase version.
 
 You'll get a reply within a week. Once it's fixed, the fix is released in a new version and noted in `CHANGELOG.md`, with credit if you'd like it.
 

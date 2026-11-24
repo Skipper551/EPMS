@@ -203,7 +203,7 @@ export function AddSubtasksDialog(props: { snap: Snapshot; task: Task; onClose: 
       ) : (
         <div class="stack">
           <span class="muted small">
-            Ask your AI: <span style={{ color: 'var(--text)' }}>"Help me break {props.task.title} into subtasks for EPMS."</span> When you're happy with the list, paste its reply here.
+            Ask your AI: <span style={{ color: 'var(--text)' }}>"Help me break {props.task.title} into subtasks for SPMS."</span> When you're happy with the list, paste its reply here.
           </span>
           <div class="field">
             <label class="field-label" for="subtasks-paste">Your AI's reply</label>

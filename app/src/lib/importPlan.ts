@@ -1,6 +1,6 @@
 // Reads a "epms-tasks" file (usually written by Claude) and works out what importing it would do.
 // Pure: no backend calls. The PM import dialog shows the preview, then runs the plan through the store.
-// Format reference: skills/epms-task-plan/SKILL.md
+// Format reference: skills/spms-task-plan/SKILL.md
 
 import type { Snapshot, Status, TaskLink } from '../data/types'
 import { formatDay, today } from './util'
@@ -105,14 +105,14 @@ export function parsePlan(text: string): ParseResult {
   try {
     data = extractJson(text)
   } catch {
-    return { plan: null, errors: ["That isn't an EPMS task file. It should be JSON; ask Claude for the epms-tasks file again."], warnings }
+    return { plan: null, errors: ["That isn't an SPMS task file. It should be JSON; ask Claude for the epms-tasks file again."], warnings }
   }
 
   const root = (Array.isArray(data) ? { tasks: data } : data) as Record<string, unknown>
   if (!root || typeof root !== 'object') return { plan: null, errors: ["That file doesn't contain any tasks."], warnings }
   // Files made before the rename say "group-hub-tasks"; they are the same format.
   if (root.format && root.format !== FORMAT && root.format !== 'group-hub-tasks') warnings.push(`The file says its format is "${s(root.format)}", not "${FORMAT}". Reading it anyway.`)
-  if (root.version && Number(root.version) > 1) warnings.push(`The file is format version ${s(root.version)}; this copy of EPMS knows version 1.`)
+  if (root.version && Number(root.version) > 1) warnings.push(`The file is format version ${s(root.version)}; this copy of SPMS knows version 1.`)
 
   const members: PlanMember[] = (Array.isArray(root.members) ? root.members : [])
     .map((m: unknown) => (typeof m === 'string' ? { name: m } : (m as Record<string, unknown>)) ?? {})
@@ -269,7 +269,7 @@ export function previewPlan(plan: Plan, snap: Snapshot): Preview {
 export function claudeInstructions(snap: Snapshot, aiLinkUrl = ''): string {
   const people = snap.members.map((m) => `- ${m.name}${m.role ? ` (${m.role})` : ''}${m.is_pm ? ', PM' : ''}`).join('\n') || '- (no members added yet)'
   const open = snap.tasks.filter((t) => t.status !== 'done').map((t) => `- ${t.title}`).slice(0, 60).join('\n')
-  return `When we've agreed the task plan for my group project, give it to me as an EPMS task file so I can import it.
+  return `When we've agreed the task plan for my group project, give it to me as an SPMS task file so I can import it.
 
 ${aiLinkUrl ? `Read the project first: ${aiLinkUrl}\nIt is the live project as JSON (members with exact names, tasks already on the board, guidelines, deadline). Use it as the source of truth.\n\n` : ''}Project: ${snap.project.name}${snap.project.course ? ` (${snap.project.course})` : ''}
 Final deadline: ${snap.project.final_deadline || 'not set'}

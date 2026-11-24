@@ -1,4 +1,4 @@
-// EPMS quick to-dos helpers, loaded by todos.pb.js with require().
+// SPMS quick to-dos helpers, loaded by todos.pb.js with require().
 // A quick to-do is a task with mini = true: a small thing anyone in the group can add, take and tick off,
 // with no review step. It has a title, an optional owner and nothing else.
 

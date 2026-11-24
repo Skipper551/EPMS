@@ -1,5 +1,5 @@
 /// <reference path="../pb_data/types.d.ts" />
-// EPMS: subtasks stay a checklist, at most 30 per task, and only on real tasks (not quick to-dos).
+// SPMS: subtasks stay a checklist, at most 30 per task, and only on real tasks (not quick to-dos).
 
 onRecordCreateRequest((e) => {
   const taskId = e.record.getString("task")
@@ -17,5 +17,5 @@ onRecordCreateRequest((e) => {
   e.next()
 }, "subtasks")
 
-// Lets the EPMS setup check see that this file is installed, and which version.
+// Lets the SPMS setup check see that this file is installed, and which version.
 routerAdd("GET", "/api/gh/hooks/subtasks", (e) => e.json(200, { name: "subtasks", version: "2026-11-21" }))

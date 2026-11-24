@@ -1,4 +1,4 @@
-// After login: does this PocketBase instance have everything EPMS needs? Installs the collections in one click
+// After login: does this PocketBase instance have everything SPMS needs? Installs the collections in one click
 // and walks the PM through uploading the hook files (PocketBase can't install those remotely).
 
 import { useEffect, useState } from 'preact/hooks'
@@ -63,12 +63,12 @@ export function SetupCheckContent(props: { report: SetupReport; recheck: () => P
           {report.schemaOk && <span class="xsmall" style={{ color: 'var(--accent-text)' }}>All set</span>}
         </div>
         {report.schemaOk ? (
-          <span class="muted small">Your instance has every collection EPMS needs, with the current access rules.</span>
+          <span class="muted small">Your instance has every collection SPMS needs, with the current access rules.</span>
         ) : (
           <>
             <span class="soft small">
-              {anyMissing ? 'Your instance is missing' : 'Your instance has older versions of'} {missingCols.length === 1 ? 'one collection' : `${missingCols.length} collections`} EPMS needs:{' '}
-              {missingCols.map((c) => c.name).join(', ')}. One click sets them up. It only adds or updates EPMS's own collections and never deletes anything.
+              {anyMissing ? 'Your instance is missing' : 'Your instance has older versions of'} {missingCols.length === 1 ? 'one collection' : `${missingCols.length} collections`} SPMS needs:{' '}
+              {missingCols.map((c) => c.name).join(', ')}. One click sets them up. It only adds or updates SPMS's own collections and never deletes anything.
             </span>
             <div><button type="button" class="btn btn-primary btn-md" disabled={busy} onClick={install}>{busy ? 'Working…' : anyMissing ? 'Install collections' : 'Update collections'}</button></div>
           </>
@@ -105,7 +105,7 @@ export function SetupCheckContent(props: { report: SetupReport; recheck: () => P
           </div>
         )}
         <div class="row">
-          {!report.hooksOk && <a class="btn btn-primary btn-md" href="./epms-hooks.zip" download>Download the hooks</a>}
+          {!report.hooksOk && <a class="btn btn-primary btn-md" href="./spms-hooks.zip" download>Download the hooks</a>}
           <button type="button" class="btn btn-soft btn-md" disabled={busy} onClick={checkAgain}>{busy ? 'Checking…' : 'Check again'}</button>
         </div>
       </section>
@@ -126,14 +126,14 @@ export function SetupGate(props: { onReady: () => void; onLogout: () => void }) 
   return (
     <div class="app">
       <header class="header">
-        <div class="header-side"><span class="logo">EPMS</span><span class="tag-pm">PM</span></div>
+        <div class="header-side"><span class="logo">SPMS</span><span class="tag-pm">PM</span></div>
         <button type="button" class="btn btn-soft" onClick={props.onLogout}>Log out</button>
       </header>
       <main class="main-narrow" style={{ maxWidth: '720px' }}>
         <div class="stack-sm">
           <span class="muted small">Almost there</span>
           <h1 class="h1-xl">Finish setting up your instance</h1>
-          <p class="muted" style={{ margin: 0 }}>EPMS needs two things on your PocketBase instance. This page checks them and helps you add what's missing.</p>
+          <p class="muted" style={{ margin: 0 }}>SPMS needs two things on your PocketBase instance. This page checks them and helps you add what's missing.</p>
         </div>
         {error && <ErrorBox error={error} />}
         {!report && !error && <Loading text="Checking your instance…" />}

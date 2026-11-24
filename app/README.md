@@ -1,6 +1,6 @@
-# EPMS frontend
+# SPMS frontend
 
-Static web app for EPMS (see `../SPEC.md`). Vite + Preact + TypeScript, talking to one PocketBase instance with the PocketBase JS SDK. No server of its own, nothing that can bill.
+Static web app for SPMS (see `../SPEC.md`). Vite + Preact + TypeScript, talking to one PocketBase instance with the PocketBase JS SDK. No server of its own, nothing that can bill.
 
 - `index.html` is the member page, opened from the group link or a personal link.
 - `pm.html` is the project manager (PM) page, reached only by logging in as a superuser of the instance.
@@ -37,7 +37,7 @@ PM page: http://localhost:5173/pm.html, log in with `pm@example.com` / `devpassw
 npm run build
 ```
 
-The `app` folder builds on its own, so a PocketBase Cloud frontend can build it straight from the repository: `src/generated/pb_schema.json`, `public/epms-hooks.zip` and `public/epms-task-plan.zip` are committed copies of `../pb_schema.json`, `../pb_hooks` and `../skills`. With the whole repository present, every build refreshes them; commit the changes along with the source.
+The `app` folder builds on its own, so a PocketBase Cloud frontend can build it straight from the repository: `src/generated/pb_schema.json`, `public/spms-hooks.zip` and `public/spms-task-plan.zip` are committed copies of `../pb_schema.json`, `../pb_hooks` and `../skills`. With the whole repository present, every build refreshes them; commit the changes along with the source.
 
 `dist/` is the whole app: plain HTML, JavaScript, CSS, fonts and the Claude skill zip, with relative paths, so it works from any folder. Upload the contents of `dist/` to a PocketBase Cloud frontend slot or GitHub Pages. The instance also needs the collections in `../pb_schema.json` and the files in `../pb_hooks/`, including its `epms` folder (PocketBase Cloud: the instance's Code tab).
 
@@ -63,9 +63,9 @@ The version comes from `version` in `package.json`; the footer shows it with the
 
 ## Importing tasks from Claude
 
-The PM board has **Import tasks**. Plan the tasks with Claude, then paste Claude's `epms-tasks` JSON (or upload the file). EPMS shows a preview, matches owners by name, offers to add new members, skips tasks already on the board, links blockers, and adds each description as the task's first note.
+The PM board has **Import tasks**. Plan the tasks with Claude, then paste Claude's `epms-tasks` JSON (or upload the file). SPMS shows a preview, matches owners by name, offers to add new members, skips tasks already on the board, links blockers, and adds each description as the task's first note.
 
-The format and planning workflow live in the Claude skill at `../skills/epms-task-plan/SKILL.md`. After editing it, rebuild the downloadable zip:
+The format and planning workflow live in the Claude skill at `../skills/spms-task-plan/SKILL.md`. After editing it, rebuild the downloadable zip:
 
 ```bash
 npm run skill
@@ -73,7 +73,7 @@ npm run skill
 
 ## Setup check and hook versions
 
-After login, EPMS compares the instance with `../pb_schema.json` (bundled into the app from its copy in `src/generated/`) and asks each hook file for its version at `/api/gh/hooks/<name>`. Missing or older collections install in one click; missing or older hooks are offered as `public/epms-hooks.zip` (built by `npm run hooks`, and by every `npm run build`). When you change a hook file, bump its version string in the file and in `src/lib/setup.ts`, so PMs with the old copy are told to update.
+After login, SPMS compares the instance with `../pb_schema.json` (bundled into the app from its copy in `src/generated/`) and asks each hook file for its version at `/api/gh/hooks/<name>`. Missing or older collections install in one click; missing or older hooks are offered as `public/spms-hooks.zip` (built by `npm run hooks`, and by every `npm run build`). When you change a hook file, bump its version string in the file and in `src/lib/setup.ts`, so PMs with the old copy are told to update.
 
 ## Tests
 
