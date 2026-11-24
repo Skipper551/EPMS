@@ -8,6 +8,9 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.11.3
+- Phones: the PM board scrolls left and right like on a computer, one column per swipe, with the next column peeking in so you can see there is more. It snaps to each column and the rest of the page stays still. Frontend only, no hook or collection changes.
+
 ## 0.11.2
 - New logo: three group members joined together, with the PM highlighted in the app's blue. Shown next to "SPMS" in every page header, as the browser tab icon, and as the home-screen icon on iPhone and iPad (`apple-touch-icon.png`). Frontend only, no hook or collection changes.
 
