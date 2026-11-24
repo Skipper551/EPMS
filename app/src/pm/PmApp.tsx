@@ -220,7 +220,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
 
   return (
     <div class="app">
-      <header class="header">
+      <header class="header header-pm">
         <div class="header-side">
           <Logo />
           <ProjectMenu
@@ -234,7 +234,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onLogout={props.onLogout}
           />
           <span class="tag-pm">PM</span>
-          <div class="row" style={{ gap: '6px' }} role="tablist" aria-label="View">
+          <div class="row view-tabs" style={{ gap: '6px' }} role="tablist" aria-label="View">
             <button type="button" role="tab" class="chip" aria-selected={view === 'board'} onClick={() => setView('board')}>Board</button>
             <button type="button" role="tab" class="chip" aria-selected={view === 'tasks'} onClick={() => setView('tasks')} disabled={!snap}>Task view</button>
             <button type="button" role="tab" class="chip" aria-selected={view === 'group'} onClick={() => setView('group')} disabled={!snap}>Group</button>
