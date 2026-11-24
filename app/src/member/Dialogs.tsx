@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import { addNote, setBlockers, setStartDate, type StoreError } from '../data/store'
 import type { Member, Snapshot, Task } from '../data/types'
-import { canMove, dateRange, formatDay, memberName, peopleText, when } from '../lib/util'
+import { accountabilityText, canMove, dateRange, formatDay, involvement, memberName, peopleText, when } from '../lib/util'
 import { BlockerPicker } from '../ui/BlockerPicker'
 import { SubtaskList, subtasksOf } from '../ui/Subtasks'
 import type { TaskViewMode } from './MyTasks'
@@ -58,6 +58,13 @@ export function TaskDetail(props: {
         <span class="muted small">{dateRange(t.start_date, t.due_date) || 'No due date'}</span>
         <span class="muted small">{peopleText(snap, t)}</span>
       </div>
+
+      {t.status !== 'done' && accountabilityText(snap, t, props.me.id) && (
+        <div class="lead-box" role="note">
+          <strong>{involvement(t, props.me.id) === 'lead' ? 'You are accountable' : t.owner ? `${memberName(snap, t.owner)} is accountable` : 'No lead yet'}</strong>
+          <span>{accountabilityText(snap, t, props.me.id)}</span>
+        </div>
+      )}
 
       {(blockerTasks.length > 0 || blockerMembers.length > 0 || !!t.blocked_reason) && (
         <section class="stack-sm">

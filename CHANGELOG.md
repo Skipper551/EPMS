@@ -8,6 +8,16 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.12.0
+- Clearer task leads. Every task has one lead who is accountable for it, and the app now says so everywhere:
+  - My tasks: tasks you lead get a solid "You lead" tag and a blue edge down the left side; tasks you help on get a "Helping" tag and say "Led by Ola, you're helping". Your own lead tasks list your helpers as "Kuba helps you".
+  - Task details: a box at the top says who is accountable, for example "You lead this task. You are accountable for getting it done: you start it, keep your helpers in the loop and send it to review", or "Ola leads this task and is accountable for it. You are helping".
+  - PM board: the lead's face has a blue ring and is shown first, with "Ola leads +2" beside it (the full list on hover). A task with helpers but no lead gets a "No lead" tag.
+  - Group tab: each person shows how many tasks they lead, and tasks they only help on say "Helping Ola".
+  - Chat summaries and the import preview say "Ala leads" or "Ala leads, with Kuba".
+- Phones: the tags on a My tasks card (You lead, Helping, Behind, status) sit on their own line above the title, so the title keeps the full width.
+- Frontend only, no hook or collection changes, nothing stored changes.
+
 ## 0.11.3
 - Phones: the PM board scrolls left and right like on a computer, one column per swipe, with the next column peeking in so you can see there is more. It snaps to each column and the rest of the page stays still.
 - Phones: tidier header. The logo and project menu sit on one line, the views (Board, Task view, Group or My tasks, Group) become one full-width switch, and the PM's buttons form an even two by two grid with New task first. Every button is at least 44px tall for easy tapping. Computers and tablets look exactly as before. Frontend only, no hook or collection changes.

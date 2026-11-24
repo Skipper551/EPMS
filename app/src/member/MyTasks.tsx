@@ -105,10 +105,12 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
   const role = involvement(t, props.me.id)
   const lead = memberName(snap, t.owner)
   const others = t.helpers.filter((id) => id !== props.me.id).map((id) => memberName(snap, id)).filter(Boolean)
+  // Who answers for it, from this member's side: the lead is named first, helpers after.
   const withText =
-    t.everyone ? (lead && role !== 'lead' ? `Whole group, led by ${lead}` : 'Whole group') :
-    role === 'helper' ? `Helping ${[lead, ...others].filter(Boolean).length ? joinNames([lead, ...others].filter(Boolean)) : 'out'}` :
-    others.length ? `With ${joinNames(others)}` : ''
+    t.everyone ? (role === 'lead' ? 'Whole group, led by you' : lead ? `Whole group, led by ${lead}` : 'Whole group, no lead yet') :
+    role === 'helper' ? (lead ? `Led by ${lead}, you're helping${others.length ? ` with ${joinNames(others)}` : ''}` : `No lead yet, you're helping${others.length ? ` with ${joinNames(others)}` : ''}`) :
+    role === 'lead' ? (others.length ? `${joinNames(others)} ${others.length === 1 ? 'helps' : 'help'} you` : '') : ''
+  const leadsIt = role === 'lead' && t.status !== 'done'
   const preview = props.mode === 'preview'
   const movable = !preview && canMove(t, props.me.id)
   const meta = [
@@ -123,8 +125,8 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
     t.status === 'doing' ? (props.mode === 'pm' ? 'Mark done' : 'Send to review') : null
 
   return (
-    <article class="card stack" style={{ opacity: t.status === 'done' ? 0.7 : props.quiet ? 0.85 : 1, borderColor: props.fresh ? 'var(--accent)' : undefined }}>
-      <div class="row-between" style={{ alignItems: 'flex-start' }}>
+    <article class={leadsIt ? 'card stack is-lead' : 'card stack'} style={{ opacity: t.status === 'done' ? 0.7 : props.quiet ? 0.85 : 1, borderColor: props.fresh ? 'var(--accent)' : undefined }}>
+      <div class="row-between task-head" style={{ alignItems: 'flex-start' }}>
         <div class="stack-sm grow" style={{ gap: '4px' }}>
           <h2 style={{ fontSize: '17px', fontWeight: 600 }}>
             <button type="button" class="tcard-open" style={{ display: 'inline', fontWeight: 600, fontSize: '17px' }} onClick={() => actions.openDetail(t)}>{t.title}</button>
@@ -141,8 +143,10 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
             </button>
           )}
         </div>
-        <div class="row" style={{ gap: '8px' }}>
+        <div class="row task-tags" style={{ gap: '8px' }}>
           {props.fresh && <span class="group-tag">Updated</span>}
+          {role === 'lead' && <span class="lead-tag" title="You are accountable for this task: you start it, keep it moving and send it to review">You lead</span>}
+          {role === 'helper' && <span class="helper-tag" title={lead ? `${lead} leads and is accountable for this task` : 'Nobody leads this task yet'}>Helping</span>}
           {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
           <StatusPill status={t.status} />
         </div>

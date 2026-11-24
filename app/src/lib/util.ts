@@ -120,13 +120,25 @@ export const canMove = (task: Task, memberId: string) => {
   return i === 'lead' || i === 'helper'
 }
 
-/** "Ala", "Ala with Ola", "Ala with Ola and Kuba", "Everyone, led by Malcolm" */
+/** "Ala leads", "Ala leads, with Ola and Kuba", "Everyone, led by Malcolm", "No lead yet: Ola" */
 export function peopleText(snap: Snapshot, task: Task): string {
   const lead = memberName(snap, task.owner)
-  if (task.everyone) return lead ? `Everyone, led by ${lead}` : 'Everyone'
+  if (task.everyone) return lead ? `Everyone, led by ${lead}` : 'Everyone, no lead yet'
   const helpers = task.helpers.map((id) => memberName(snap, id)).filter(Boolean)
-  if (!lead) return helpers.length ? joinNames(helpers) : 'Nobody yet'
-  return helpers.length ? `${lead} with ${joinNames(helpers)}` : lead
+  if (!lead) return helpers.length ? `No lead yet: ${joinNames(helpers)}` : 'Nobody yet'
+  return helpers.length ? `${lead} leads, with ${joinNames(helpers)}` : `${lead} leads`
+}
+
+/** One line on who answers for a task, from the point of view of the member reading it. '' when there is nothing to say. */
+export function accountabilityText(snap: Snapshot, task: Task, memberId: string): string {
+  const lead = memberName(snap, task.owner)
+  const i = involvement(task, memberId)
+  if (i === 'lead') return task.everyone
+    ? 'You lead this whole-group task. You are accountable for it: you start it, keep everyone on track and send it to review.'
+    : 'You lead this task. You are accountable for getting it done: you start it, keep your helpers in the loop and send it to review.'
+  if (!lead) return i ? 'Nobody leads this task yet. Ask the PM who is accountable for it.' : ''
+  if (i === 'helper') return `${lead} leads this task and is accountable for it. You are helping: agree with ${lead} what is yours.`
+  return `${lead} leads this task and is accountable for it.`
 }
 
 // ---------- blockers ----------
