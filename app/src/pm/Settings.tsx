@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks'
 import {
-  aiLink, backendUrl, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, postToChat, regenerateKey, setChatWebhook, setClaimsLocked,
-  StoreError, updateMember, updateProject,
+  aiLink, backendUrl, createMember, createMemberKey, deleteMember, deleteMemberKey, deleteProject, listMemberKeys, postToChat, regenerateKey, setChatWebhook, setClaimsLocked, setReviewWebhook,
+  StoreError, testReviewWebhook, updateMember, updateProject,
 } from '../data/store'
 import type { Member, MemberKey, ProjectKeys, Snapshot } from '../data/types'
 import { copyText, groupLink, load, normaliseUrl, personalLink, save } from '../lib/util'
@@ -28,6 +28,7 @@ export function Settings(props: {
       <Members snap={props.snap} keys={props.keys} pmAuthorId={props.pmAuthorId} onPmAuthor={props.onPmAuthor} onChanged={props.onChanged} />
       <Links snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
       <ChatUpdates snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
+      <ReviewAlerts snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
       <DeleteProject snap={props.snap} onDeleted={props.onDeleted} />
     </>
   )
@@ -480,6 +481,48 @@ function ChatUpdates(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: 
           <span class="muted xsmall">The address is stored with the project's private keys: members and AIs can't see it.</span>
         </div>
       </details>
+    </section>
+  )
+}
+
+function ReviewAlerts(props: { snap: Snapshot; keys: ProjectKeys | null; onKeys: (k: ProjectKeys) => void }) {
+  const { keys } = props
+  const [url, setUrl] = useState(keys?.review_webhook ?? '')
+  const s = useSaver()
+  useEffect(() => setUrl(keys?.review_webhook ?? ''), [keys?.id, keys?.review_webhook])
+  const clean = url.trim()
+  const valid = !clean || /^https?:\/\/\S+$/i.test(clean)
+
+  return (
+    <section class="panel">
+      <div class="stack-sm">
+        <h2 class="eyebrow">Review alerts</h2>
+        <span class="muted small">
+          Optional: get a short message when a member sends a task to review, with the task, who sent it and the project. Moving a task to Review yourself doesn't send one.
+          Works with a Discord, Slack or Teams webhook, or any address that takes a JSON post. A private channel works best, so the group isn't pinged.
+        </span>
+      </div>
+      <form
+        class="stack"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (!keys || !valid) return
+          if (await s.run(async () => props.onKeys(await setReviewWebhook(keys.id, clean)), clean ? 'Review alerts on' : 'Review alerts off')) setUrl(clean)
+        }}
+      >
+        <Field label="Review alert webhook address">
+          {(id) => <input id={id} class="input" type="text" inputMode="url" maxLength={2000} placeholder="https://…" value={url} onInput={(e) => setUrl(e.currentTarget.value)} />}
+        </Field>
+        {!valid && <span class="xsmall warn-text">That doesn't look like a web address. It should start with https://</span>}
+        <div class="row">
+          <button type="submit" class="btn btn-primary btn-md" disabled={!keys || s.busy || !valid || clean === (keys?.review_webhook ?? '')}>Save</button>
+          <button type="button" class="btn btn-soft btn-md" disabled={!keys?.review_webhook || s.busy} onClick={() => s.run(() => testReviewWebhook(props.snap.project.id), 'Test message sent')}>
+            Send a test message
+          </button>
+        </div>
+        <ErrorBox error={s.error} />
+        <span class="muted xsmall">Stored with the project's private keys: members and AIs can't see it. At most one alert per task every 10 minutes.</span>
+      </form>
     </section>
   )
 }

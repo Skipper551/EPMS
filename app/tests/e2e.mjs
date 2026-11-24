@@ -27,10 +27,11 @@ const check = (name, ok, detail = '') => {
   if (!ok) failures++
 }
 
-// ---------- a stand-in for the Teams webhook ----------
+// ---------- stand-ins for the Teams chat webhook and the review alert webhook ----------
 
 const posted = []
-const receiver = http.createServer((req, res) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => { posted.push(b); res.writeHead(202); res.end() }) })
+const alerts = []
+const receiver = http.createServer((req, res) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => { (req.url === '/review' ? alerts : posted).push(b); res.writeHead(202); res.end() }) })
 await new Promise((r) => receiver.listen(0, '127.0.0.1', r))
 const webhook = `http://127.0.0.1:${receiver.address().port}/teams`
 
@@ -42,7 +43,7 @@ await pb.collection('_superusers').authWithPassword(EMAIL, PASSWORD)
 const day = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) + ' 12:00:00.000Z' }
 const name = `E2E ${Date.now()}`
 const project = await pb.collection('projects').create({ name, course: 'Testing', final_deadline: day(20), guidelines: 'Be kind.', chat_url: 'https://example.com/chat' })
-const keys = await pb.collection('project_keys').create({ project: project.id, chat_webhook: webhook })
+const keys = await pb.collection('project_keys').create({ project: project.id, chat_webhook: webhook, review_webhook: `http://127.0.0.1:${receiver.address().port}/review` })
 const m = {}
 for (const [n, role, is_pm] of [['Pat', 'PM', true], ['Ala', 'Research', false], ['Jimmy', 'Writing', false]]) {
   m[n] = (await pb.collection('members').create({ project: project.id, name: n, role, is_pm })).id
@@ -167,6 +168,8 @@ let memberPage
   await card.locator('button:has-text("Send to review")').click()
   await page.waitForTimeout(400)
   check('member sends it to review again', (await card.locator('.pill').innerText()) === 'Review')
+  const alert = alerts[0] ? JSON.parse(alerts[0]) : {}
+  check('review alert posted once, with task, member and project', alerts.length === 1 && alert.event === 'task_submitted' && alert.task?.title === 'Draft the conclusion' && !!alert.member?.name && alert.project?.name === name, alerts.join(' | '))
   await page.click('button:has-text("Show my AI instructions")')
   check('AI instructions open again after setup', (await page.locator('role=dialog >> .prompt-box').innerText()).includes(`ai_key=${keys.ai_key}`))
   await page.click('role=dialog >> button[aria-label="Close"]')
@@ -421,6 +424,11 @@ let memberPage
   check('import skips duplicates', (await page.locator('article h3:text-is("Write the intro")').count()) === 1)
   await ctx.close()
 }
+
+await pb.collection('tasks').update(intro.id, { status: 'doing' })
+await pb.collection('tasks').update(intro.id, { status: 'review' })
+await new Promise((r) => setTimeout(r, 500))
+check('no review alert when the PM moves a task to review', alerts.length === 1, alerts.join(' | '))
 
 await browser.close()
 receiver.close()
