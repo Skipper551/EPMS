@@ -329,17 +329,17 @@ function Project(props: { session: Session; onLeave: () => void }) {
 
   return (
     <div class="app">
-      <header class="header">
+      <header class="header header-member">
         <div class="header-side">
           <Logo />
           <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} onPin={() => setPinOpen(true)} hasPin={hasPin} />
-          <div class="row" style={{ gap: '6px' }} role="tablist" aria-label="View">
+          <div class="row view-tabs" style={{ gap: '6px' }} role="tablist" aria-label="View">
             <button type="button" role="tab" class="chip" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>My tasks</button>
             <button type="button" role="tab" class="chip" aria-selected={tab === 'group'} onClick={() => setTab('group')}>Group</button>
           </div>
         </div>
-        <div class="row" style={{ gap: '12px' }}>
-          <span class="muted small">Hello <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
+        <div class="row header-extra" style={{ gap: '12px' }}>
+          <span class="muted small header-hello">Hello <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{me.name}</strong></span>
           {snap.project.chat_url && <a class="btn" href={snap.project.chat_url} target="_blank" rel="noopener noreferrer">Open group chat</a>}
         </div>
       </header>

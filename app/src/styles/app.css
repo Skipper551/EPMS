@@ -397,11 +397,45 @@ h1, h2, h3 { margin: 0; }
 .person-task .subtask-progress { width: 100%; }
 @media (max-width: 400px) { .group-grid { grid-template-columns: 1fr; } }
 
-/* Phones: these come last so they win over the board-layout rules above. One board column,
-   no sideways page scroll, and 16px form text so iPhone Safari does not zoom in on focus. */
+/* Phones: these come last so they win over the board-layout rules above. The board swipes left
+   and right one column at a time, edge to edge, with the next column peeking in; the page itself
+   never scrolls sideways. 16px form text so iPhone Safari does not zoom in on focus. */
 @media (max-width: 760px) {
-  .board-layout > .board-scroll { margin-right: 0; padding-right: 0; }
-  .board-layout .board { grid-template-columns: 1fr; min-width: 0; }
+  .board-scroll, .board-layout > .board-scroll {
+    overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
+    margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter) 8px; scroll-padding: 0 var(--gutter);
+    scrollbar-width: none;
+  }
+  .board-scroll::-webkit-scrollbar { display: none; }
+  .board, .board-layout .board {
+    grid-template-columns: repeat(4, calc(100vw - 2 * var(--gutter) - 36px)); min-width: 0; width: max-content; gap: 12px;
+  }
+  .column { scroll-snap-align: start; }
   .board-side { max-width: none; }
   .input, .select, .textarea { font-size: 16px; }
+
+  /* Header: logo and project menu on one line, the views as a full-width segmented control under
+     them, then the PM's actions as an even 2 by 2 grid with New task first. Every target is 44px. */
+  .header-pm, .header-member {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px 10px; align-items: center;
+    grid-template-areas: 'logo menu tag' 'tabs tabs tabs' 'actions actions actions';
+  }
+  .header-member { grid-template-areas: 'logo menu hello' 'tabs tabs tabs' 'chat chat chat'; }
+  .header-member:not(:has(.header-extra > .btn)) { grid-template-areas: 'logo menu hello' 'tabs tabs tabs'; }
+  .header-pm > .header-side, .header-member > .header-side, .header-member > .header-extra { display: contents; }
+  .header-pm .logo, .header-member .logo { grid-area: logo; }
+  .header-pm .menu-wrap, .header-member .menu-wrap { grid-area: menu; min-width: 0; justify-self: start; max-width: 100%; }
+  .header-pm .select-btn, .header-member .select-btn { max-width: 100% !important; min-height: 44px; }
+  .header-pm .tag-pm { grid-area: tag; }
+  .header-hello { grid-area: hello; text-align: right; white-space: nowrap; }
+  .header-member > .header-extra > .btn { grid-area: chat; min-height: 44px; }
+  .view-tabs {
+    grid-area: tabs; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px;
+    background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; padding: 4px;
+  }
+  .view-tabs .chip { border: 0; border-radius: 7px; min-height: 40px; padding: 6px 8px; font-size: 14px; }
+  .view-tabs .chip[aria-selected='false'] { background: transparent; }
+  .header-pm > .header-actions { grid-area: actions; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .header-pm > .header-actions .btn { min-height: 44px; padding-left: 8px; padding-right: 8px; }
+  .header-pm > .header-actions .btn-primary { order: -1; }
 }
