@@ -147,12 +147,12 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; a
         }
       >
         <p class="soft small" style={{ margin: 0 }}>
-          Plan the tasks with Claude, go back and forth until they're right, then ask for the EPMS task file and paste it here. You'll see a preview before anything is created.
+          Plan the tasks with Claude, go back and forth until they're right, then ask for the SPMS task file and paste it here. You'll see a preview before anything is created.
         </p>
         <div class="card card-tight stack">
           <strong style={{ fontWeight: 600 }}>Tell Claude the format</strong>
           <span class="muted small">
-            Either install the EPMS skill in Claude once, or paste the instructions into your chat. The instructions include this project's AI link, member names and deadline. With the skill, Claude asks for the AI link if you haven't shared it.
+            Either install the SPMS skill in Claude once, or paste the instructions into your chat. The instructions include this project's AI link, member names and deadline. With the skill, Claude asks for the AI link if you haven't shared it.
           </span>
           <div class="row">
             <button
@@ -162,7 +162,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; a
             >
               Copy instructions for Claude
             </button>
-            <a class="btn btn-soft btn-sm" href="./epms-task-plan.zip" download>Download the Claude skill</a>
+            <a class="btn btn-soft btn-sm" href="./spms-task-plan.zip" download>Download the Claude skill</a>
           </div>
           <span class="muted xsmall">To install the skill, upload the downloaded file under Skills in Claude's settings.</span>
         </div>

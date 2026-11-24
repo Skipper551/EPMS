@@ -40,7 +40,7 @@ export function Login(props: { onDone: () => void }) {
   return (
     <div class="app">
       <header class="header">
-        <span class="logo">EPMS</span>
+        <span class="logo">SPMS</span>
         <span class="tag-pm">PM</span>
       </header>
       <main class="main-center">
@@ -74,7 +74,7 @@ export function Login(props: { onDone: () => void }) {
 
           <div class="card card-tight row-between">
             <span class="small soft">No instance yet? Setting one up is free and takes about 10 minutes.</span>
-            <a class="btn btn-soft btn-sm" href="./#start">Set up EPMS</a>
+            <a class="btn btn-soft btn-sm" href="./#start">Set up SPMS</a>
           </div>
         </div>
       </main>

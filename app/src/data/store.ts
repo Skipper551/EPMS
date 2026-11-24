@@ -564,14 +564,14 @@ export function listCollections(): Promise<CollectionInfo[]> {
   })
 }
 
-/** Create or update EPMS's collections from the bundled schema. Never deletes anything else on the instance. */
+/** Create or update SPMS's collections from the bundled schema. Never deletes anything else on the instance. */
 export function importSchema(schema: unknown[]): Promise<void> {
   return run(async () => {
     await client().collections.import(schema as never, false)
   })
 }
 
-/** Which EPMS hook files answer, and their versions. */
+/** Which SPMS hook files answer, and their versions. */
 export async function probeHooks(names: string[]): Promise<Record<string, string | null>> {
   const out: Record<string, string | null> = {}
   await Promise.all(

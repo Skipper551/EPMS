@@ -1,4 +1,4 @@
-// What a working EPMS instance needs, and how this one compares. Pure: the PM screens call the store for the data.
+// What a working SPMS instance needs, and how this one compares. Pure: the PM screens call the store for the data.
 // When a hook file changes, bump its version in pb_hooks AND here, so the setup check flags old copies.
 
 // A committed copy of ../pb_schema.json, refreshed by every build (scripts/build-schema.sh), so the app folder builds on its own.
@@ -12,7 +12,7 @@ export const HOOKS: { name: string; file: string; version: string; what: string 
   { name: 'events', file: 'events.pb.js', version: '2026-11-21', what: 'updates for members and chat posts' },
   { name: 'subtasks', file: 'subtasks.pb.js', version: '2026-11-21', what: 'the 30 subtask limit' },
   { name: 'todos', file: 'todos.pb.js', version: '2026-11-21', what: 'quick to-dos anyone can add' },
-  { name: 'ai', file: 'ai.pb.js', version: '2026-11-21', what: 'the guide in the AI link' },
+  { name: 'ai', file: 'ai.pb.js', version: '2026-11-24', what: 'the guide in the AI link' },
 ]
 
 export type CollectionState = 'ok' | 'missing' | 'outdated'

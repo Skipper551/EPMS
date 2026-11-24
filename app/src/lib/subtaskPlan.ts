@@ -45,5 +45,5 @@ export function parseFromAi(text: string): SubtaskParse {
   }
   const lines = parseLines(t).filter((l) => !/^```/.test(l))
   if (lines.length >= 2) return { titles: lines, error: null }
-  return { titles: [], error: "Couldn't find a list of subtasks in that. Ask your AI for the EPMS subtasks block again." }
+  return { titles: [], error: "Couldn't find a list of subtasks in that. Ask your AI for the SPMS subtasks block again." }
 }

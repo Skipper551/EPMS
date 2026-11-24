@@ -1,4 +1,4 @@
-// EPMS member PINs, loaded with require() by claim.pb.js.
+// SPMS member PINs, loaded with require() by claim.pb.js.
 // A 4-digit PIN lets a member sign in on another device without the PM. Only a salted hash is stored,
 // and 5 wrong tries lock that name for 15 minutes, which is what actually protects a 4-digit PIN.
 

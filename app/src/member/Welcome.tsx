@@ -23,7 +23,7 @@ export function WelcomeShell(props: { step: WelcomeStep; children: preact.Compon
   return (
     <div class="app">
       <header class="header">
-        <span class="logo">EPMS</span>
+        <span class="logo">SPMS</span>
         <Dots step={props.step} />
       </header>
       <main class="main-center">
@@ -220,7 +220,7 @@ export function AiSetupContent(props: { snap: Snapshot; name: string; aiKey: str
           </div>
         </>
       ) : (
-        <div class="error-box">This link doesn't include the AI link. Ask your PM to send you your personal link from EPMS, then open it.</div>
+        <div class="error-box">This link doesn't include the AI link. Ask your PM to send you your personal link from SPMS, then open it.</div>
       )}
     </>
   )

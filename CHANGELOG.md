@@ -1,12 +1,17 @@
 # Changelog
 
-EPMS uses version numbers like 0.6.1. Every pull request that changes the app bumps it:
+SPMS uses version numbers like 0.6.1. Every pull request that changes the app bumps it:
 
 - **New features** bump the middle number (0.5.0 to 0.6.0).
 - **Fixes and small changes** bump the last number (0.6.0 to 0.6.1).
 - It stays at 0.x until the first public launch, which will be 1.0.0.
 
-The footer of every page shows the version and the commit it was built from, for example "EPMS v0.6.1 · ebbf81d".
+The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
+
+## 0.11.0
+- Renamed to SPMS, the Student Project Management System (previously EPMS, Educational Project Management Software): page titles, headings, the member welcome, the AI link's guide, the Claude skill (now `spms-task-plan`, downloaded as `spms-task-plan.zip`), the hooks download (`spms-hooks.zip`) and the docs.
+- Kept unchanged so nothing breaks: the task file formats (`epms-tasks`, `epms-subtasks`), the AI link's `epms_ai_guide` field, the PIN hash salt, saved browser settings (`epms:` keys), the hooks' `epms` folder, the GitHub repository and the shared site address (skipper551.github.io/EPMS).
+- Hook update: `ai.pb.js` (its guide now names SPMS). No collection changes.
 
 ## 0.10.0
 - Take back from review: the lead or a helper can pull a task back from Review to In progress until the PM approves it, from the task card or the task's details. It shows in "Since your last visit" as taken back, not as sent back by the PM.
@@ -23,7 +28,7 @@ The footer of every page shows the version and the commit it was built from, for
 - Hooks: new `todos.pb.js`; `events.pb.js`, `subtasks.pb.js` and `ai.pb.js` updated. The setup check flags old copies.
 
 ## 0.7.1
-- Guidelines can't be lost silently: after saving, EPMS checks the whole text was stored and says how much if not; unsaved changes are flagged, survive switching view or closing the tab, and leaving the page asks first.
+- Guidelines can't be lost silently: after saving, SPMS checks the whole text was stored and says how much if not; unsaved changes are flagged, survive switching view or closing the tab, and leaving the page asks first.
 - One subtask format everywhere: `{ "title": ... }` objects in the Paste from your AI placeholder, the import instructions and the task-plan skill, matching the AI link's guide. Plain strings still import.
 
 ## 0.7.0
@@ -35,7 +40,7 @@ The footer of every page shows the version and the commit it was built from, for
 - The footer shows the commit the site was built from; versions now follow pull requests.
 
 ## 0.6.0 ([#8](https://github.com/Skipper551/EPMS/pull/8))
-- One shared EPMS site on GitHub Pages: PMs enter their PocketBase address at login, and links carry it.
+- One shared SPMS site on GitHub Pages: PMs enter their PocketBase address at login, and links carry it.
 - Setup check after login: one-click collections, hooks download with steps, version checks.
 - Getting started checklist on new boards, and a start page with a setup guide.
 - Chat updates list what's due in the next 3 days.
@@ -61,7 +66,7 @@ The footer of every page shows the version and the commit it was built from, for
 ## 0.2.0 ([#2](https://github.com/Skipper551/EPMS/pull/2))
 - Claim your name once with personal links; access rules check who you are.
 - Lead, helpers and whole-group tasks; optional group chat link.
-- Renamed to EPMS and the Swim method; MIT licence; version in the footer.
+- Renamed to SPMS and the Swim method; MIT licence; version in the footer.
 
 ## 0.1.0 ([#1](https://github.com/Skipper551/EPMS/pull/1))
 - First version: PM board, member view, first visit and AI setup, task import from Claude.

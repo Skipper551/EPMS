@@ -1,6 +1,6 @@
 # Code of conduct
 
-EPMS is built by and for students. Everyone who takes part, in issues, pull requests, discussions or anywhere else the project lives, should be able to do so without harassment, whatever their age, background, ability, identity, experience or opinions.
+SPMS is built by and for students. Everyone who takes part, in issues, pull requests, discussions or anywhere else the project lives, should be able to do so without harassment, whatever their age, background, ability, identity, experience or opinions.
 
 ## What we expect
 
@@ -26,7 +26,7 @@ The maintainer may edit or remove comments, commits, issues and pull requests th
 
 ## Where it applies
 
-This code applies in every space of the EPMS project, and when someone represents the project elsewhere.
+This code applies in every space of the SPMS project, and when someone represents the project elsewhere.
 
 ## Credit
 

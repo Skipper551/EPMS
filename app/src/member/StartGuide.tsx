@@ -1,4 +1,4 @@
-// "Starting a group?": how a PM gets their own free EPMS backend, in plain words. Shown at #start.
+// "Starting a group?": how a PM gets their own free SPMS backend, in plain words. Shown at #start.
 
 export function StartGuide() {
   const steps = [
@@ -6,7 +6,7 @@ export function StartGuide() {
       title: 'Create a free PocketBase Cloud account',
       body: (
         <>
-          Go to <a href="https://pocketbasecloud.com" target="_blank" rel="noopener noreferrer">pocketbasecloud.com</a> and sign up. EPMS keeps your projects in
+          Go to <a href="https://pocketbasecloud.com" target="_blank" rel="noopener noreferrer">pocketbasecloud.com</a> and sign up. SPMS keeps your projects in
           your own PocketBase instance, so nobody else holds your group's data.
         </>
       ),
@@ -24,16 +24,16 @@ export function StartGuide() {
       title: 'Create your instance and its superuser',
       body: (
         <>
-          Create an instance, open its dashboard, and set the superuser email and password when it asks. That account is your PM login for EPMS. Copy the instance's
+          Create an instance, open its dashboard, and set the superuser email and password when it asks. That account is your PM login for SPMS. Copy the instance's
           address too; it looks like <code style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>https://abc123.pocketbasecloud.com</code>.
         </>
       ),
     },
     {
-      title: 'Log in to EPMS',
+      title: 'Log in to SPMS',
       body: (
         <>
-          Paste the address and log in with the superuser email and password. EPMS checks your instance, sets up its collections with one click, and gives you the
+          Paste the address and log in with the superuser email and password. SPMS checks your instance, sets up its collections with one click, and gives you the
           hook files to upload in the instance's Code tab.
         </>
       ),
@@ -46,12 +46,12 @@ export function StartGuide() {
 
   return (
     <div class="app">
-      <header class="header"><a class="logo" href="./">EPMS</a></header>
+      <header class="header"><a class="logo" href="./">SPMS</a></header>
       <main class="main-center">
         <div class="center-col" style={{ maxWidth: '680px' }}>
           <div class="stack-sm">
             <span class="muted small">For project managers</span>
-            <h1 class="h1-xl">Set up EPMS for your group</h1>
+            <h1 class="h1-xl">Set up SPMS for your group</h1>
             <p class="muted" style={{ margin: 0 }}>
               Free, private, about 10 minutes. You run your own copy of the backend; this site is only the app, with no data of its own.
             </p>
@@ -72,7 +72,7 @@ export function StartGuide() {
             <a class="btn btn-soft btn-lg" href="https://pocketbasecloud.com" target="_blank" rel="noopener noreferrer">Open PocketBase Cloud</a>
           </div>
           <p class="muted xsmall" style={{ margin: 0 }}>
-            Prefer to run it yourself? PocketBase is free, open source software you can host anywhere; EPMS works with any PocketBase instance.
+            Prefer to run it yourself? PocketBase is free, open source software you can host anywhere; SPMS works with any PocketBase instance.
           </p>
         </div>
       </main>

@@ -1,8 +1,8 @@
 {
-  "name": "epms",
+  "name": "spms",
   "private": true,
-  "version": "0.10.0",
-  "description": "EPMS: free, open-source project management for student group projects, built around the Swim method.",
+  "version": "0.11.0",
+  "description": "SPMS: free, open-source project management for student group projects, built around the Swim method.",
   "license": "MIT",
   "type": "module",
   "scripts": {

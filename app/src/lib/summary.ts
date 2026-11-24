@@ -45,7 +45,7 @@ export function buildSummary(snap: Snapshot, events: ActivityEvent[], pmName: st
     block('Behind schedule', behind.map((t) => `${t.title} (${by(snap, t)})${t.behind_note ? `: ${t.behind_note}` : ''}`)),
     block('Back on schedule', onSchedule.map((t) => `${t.title} (${by(snap, t)})`)),
     created.length > 6
-      ? `${created.length} new tasks are on the board. Open EPMS to see yours.`
+      ? `${created.length} new tasks are on the board. Open SPMS to see yours.`
       : block('New tasks', created.map((t) => `${t.title} (${by(snap, t)}${due(t)})`)),
     block('Changed hands', reassigned.map((t) => `${t.title} is now with ${by(snap, t)}`)),
     block('Starting in the next 7 days', startingSoon.map((t) => `${t.title} (${by(snap, t)}, starts ${formatDay(t.start_date)})`)),
@@ -55,7 +55,7 @@ export function buildSummary(snap: Snapshot, events: ActivityEvent[], pmName: st
     })),
     [
       snap.project.final_deadline ? `Final deadline ${formatDay(snap.project.final_deadline)}, ${daysLeftText(snap.project.final_deadline)}.` : '',
-      `Open EPMS: ${appUrl}`,
+      `Open SPMS: ${appUrl}`,
     ].filter(Boolean).join(' '),
   ].filter(Boolean)
 

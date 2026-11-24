@@ -1,5 +1,5 @@
 /// <reference path="../pb_data/types.d.ts" />
-// EPMS: activity log. Records what changed, who it concerns and who did it, in the events collection.
+// SPMS: activity log. Records what changed, who it concerns and who did it, in the events collection.
 // Members see the events about them under "Since your last visit"; the PM's chat summary is built from them.
 // Only these hooks write events: the collection has no create, update or delete rules.
 // Quick to-dos (mini tasks) are left out: they're too small to report. When the PM turns one into a task,
@@ -44,7 +44,7 @@ onRecordCreateRequest((e) => {
       targets: lib.peopleOf(task, author), text: n.getString("text"),
     })
   } catch (err) {
-    console.log("EPMS: could not record note event", err)
+    console.log("SPMS: could not record note event", err)
   }
 }, "notes")
 
@@ -102,5 +102,5 @@ routerAdd("POST", "/api/gh/chat/{project}", (e) => {
   return e.json(200, { ok: true })
 }, $apis.requireSuperuserAuth())
 
-// Lets the EPMS setup check see that this file is installed, and which version.
+// Lets the SPMS setup check see that this file is installed, and which version.
 routerAdd("GET", "/api/gh/hooks/events", (e) => e.json(200, { name: "events", version: "2026-11-21" }))
