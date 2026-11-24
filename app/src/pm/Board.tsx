@@ -144,7 +144,10 @@ export function Board(props: { snap: Snapshot; actions: BoardActions; busy: Set<
 
 function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; busy: boolean; dragging: boolean; onDrag: (on: boolean) => void }) {
   const { snap, task: t, actions } = props
-  const people = t.everyone ? (t.owner ? `Led by ${memberName(snap, t.owner)}` : 'No lead yet') : peopleText(snap, t)
+  // Short on the card (the full line is in the tooltip): the lead by name, helpers as a count.
+  const lead = memberName(snap, t.owner)
+  const full = t.everyone ? (lead ? `Led by ${lead}` : 'No lead yet') : peopleText(snap, t)
+  const people = !t.everyone && lead && t.helpers.length ? `${lead} leads +${t.helpers.length}` : full
   const faces = [t.owner, ...(t.everyone ? [] : t.helpers)].filter(Boolean).slice(0, 4)
   const overdue = t.status !== 'done' && t.due_date && t.due_date < today()
   const cls = ['tcard', t.behind && t.status !== 'done' && 'is-behind', t.status === 'done' && 'is-done', props.dragging && 'dragging'].filter(Boolean).join(' ')
@@ -164,14 +167,15 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
         <div class="tcard-title-row">
           <h3>{t.title}</h3>
           <span class="row" style={{ gap: '6px', flexWrap: 'nowrap' }}>
+            {!t.owner && t.status !== 'done' && (t.everyone || t.helpers.length > 0) && <span class="behind-tag" title="Nobody is accountable for this task yet. Open it and pick a lead.">No lead</span>}
             {t.everyone && <span class="group-tag">Everyone</span>}
             {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
           </span>
         </div>
         <div class="tcard-meta">
           <span class="tcard-owner">
-            {faces.length > 0 && <span class="avatars">{faces.map((id) => <Avatar key={id} snap={snap} memberId={id} />)}</span>}
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={people}>{people}</span>
+            {faces.length > 0 && <span class="avatars">{faces.map((id) => <Avatar key={id} snap={snap} memberId={id} lead={id === t.owner} />)}</span>}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={full}>{people}</span>
           </span>
           {(t.due_date || t.start_date) && (
             <span class={overdue ? 'warn-text' : undefined} style={{ whiteSpace: 'nowrap' }}>

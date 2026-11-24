@@ -1,5 +1,5 @@
 import type { ActivityEvent, Member, Snapshot, Task } from '../data/types'
-import { activeBlockers, canMove, dateRange, dueKey, formatDay, startState, today, when } from '../lib/util'
+import { activeBlockers, canMove, dateRange, dueKey, formatDay, memberName, startState, today, when } from '../lib/util'
 import { Avatar, StatusPill } from './ui'
 import { subtasksOf, SubtaskProgress } from './Subtasks'
 
@@ -13,6 +13,8 @@ interface Person {
   review: Task[]
   next: Task | null
   done: number
+  /** Tasks this person leads, so is accountable for (done ones included). */
+  leads: number
   steps: { done: number; total: number }
   overdue: number
   behind: number
@@ -43,6 +45,7 @@ function person(snap: Snapshot, m: Member, events: ActivityEvent[]): Person {
     review: open.filter((t) => t.status === 'review'),
     next,
     done: tasks.length - open.length,
+    leads: tasks.filter((t) => t.owner === m.id).length,
     steps: { done: steps.filter((s) => s.done).length, total: steps.length },
     overdue: open.filter((t) => t.status !== 'review' && !!t.due_date && t.due_date < now).length,
     behind: open.filter((t) => t.behind).length,
@@ -125,7 +128,7 @@ function PersonCard(props: { snap: Snapshot; p: Person; me: boolean; loaded: boo
         <>
           <div class="stack-sm" style={{ gap: '6px' }}>
             <div class="row-between small">
-              <span>{p.done} of {plural(p.tasks.length, 'task')} done</span>
+              <span>{p.done} of {plural(p.tasks.length, 'task')} done{p.leads > 0 && <span class="muted"> · leads {p.leads}</span>}</span>
               {p.steps.total > 0 && <span class="muted">{p.steps.done} of {plural(p.steps.total, 'step')}</span>}
             </div>
             <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }} role="progressbar" aria-valuenow={p.done} aria-valuemin={0} aria-valuemax={p.tasks.length} aria-label={`${p.m.name}: ${p.done} of ${p.tasks.length} tasks done`}>
@@ -142,20 +145,20 @@ function PersonCard(props: { snap: Snapshot; p: Person; me: boolean; loaded: boo
           <div class="stack-sm" style={{ gap: '6px' }}>
             <h3 class="eyebrow" style={{ fontSize: '12px' }}>Working on</h3>
             {p.doing.length === 0 && <span class="muted small">{open === 0 ? 'All done.' : 'Nothing in progress.'}</span>}
-            {p.doing.map((t) => <TaskLine key={t.id} snap={snap} t={t} onOpen={props.onOpen} />)}
+            {p.doing.map((t) => <TaskLine key={t.id} snap={snap} t={t} memberId={p.m.id} onOpen={props.onOpen} />)}
           </div>
 
           {p.review.length > 0 && (
             <div class="stack-sm" style={{ gap: '6px' }}>
               <h3 class="eyebrow" style={{ fontSize: '12px' }}>Waiting for review</h3>
-              {p.review.map((t) => <TaskLine key={t.id} snap={snap} t={t} onOpen={props.onOpen} />)}
+              {p.review.map((t) => <TaskLine key={t.id} snap={snap} t={t} memberId={p.m.id} onOpen={props.onOpen} />)}
             </div>
           )}
 
           {p.next && (
             <div class="stack-sm" style={{ gap: '6px' }}>
               <h3 class="eyebrow" style={{ fontSize: '12px' }}>Up next</h3>
-              <TaskLine snap={snap} t={p.next} onOpen={props.onOpen} />
+              <TaskLine snap={snap} t={p.next} memberId={p.m.id} onOpen={props.onOpen} />
             </div>
           )}
         </>
@@ -164,8 +167,10 @@ function PersonCard(props: { snap: Snapshot; p: Person; me: boolean; loaded: boo
   )
 }
 
-function TaskLine(props: { snap: Snapshot; t: Task; onOpen: (taskId: string) => void }) {
+function TaskLine(props: { snap: Snapshot; t: Task; memberId: string; onOpen: (taskId: string) => void }) {
   const { snap, t } = props
+  const leads = t.owner === props.memberId
+  const lead = memberName(snap, t.owner)
   const late = t.status !== 'done' && t.status !== 'review' && !!t.due_date && t.due_date < today()
   const dates = dateRange(t.status === 'todo' ? t.start_date : '', t.due_date)
   const hasSteps = subtasksOf(snap, t.id).length > 0
@@ -173,9 +178,15 @@ function TaskLine(props: { snap: Snapshot; t: Task; onOpen: (taskId: string) => 
     <button type="button" class="person-task" onClick={() => props.onOpen(t.id)}>
       <span class="row-between" style={{ flexWrap: 'nowrap', gap: '8px', width: '100%' }}>
         <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-        {t.status === 'review' && <StatusPill status={t.status} />}
+        <span class="row" style={{ gap: '6px', flexWrap: 'nowrap' }}>
+          {t.status === 'review' && <StatusPill status={t.status} />}
+        </span>
       </span>
-      {dates && <span class={`xsmall ${late ? 'warn-text' : 'muted'}`}>{dates}{late ? ' · overdue' : ''}</span>}
+      {(dates || !leads) && (
+        <span class={`xsmall ${late ? 'warn-text' : 'muted'}`}>
+          {[!leads && (lead ? `Helping ${lead}` : 'Helping, no lead yet'), dates && `${dates}${late ? ' · overdue' : ''}`].filter(Boolean).join(' · ')}
+        </span>
+      )}
       {hasSteps && <SubtaskProgress snap={snap} task={t} />}
     </button>
   )
