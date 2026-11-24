@@ -152,7 +152,14 @@ export function Loading(props: { text?: string }) {
   return <div class="loading">{props.text ?? 'Loading…'}</div>
 }
 
-/** Small line at the bottom of every page with the app version. */
+const IDEAS_URL = 'https://github.com/Skipper551/SPMS/discussions/categories/ideas'
+
+/** Small line at the bottom of every page with the app version and a link to suggest ideas. */
 export function VersionFooter() {
-  return <footer class="version">SPMS v{__APP_VERSION__}{__APP_COMMIT__ ? ` · ${__APP_COMMIT__}` : ''}</footer>
+  return (
+    <footer class="version">
+      <div>Have an idea? You can suggest it <a href={IDEAS_URL} target="_blank" rel="noopener noreferrer">here</a>.</div>
+      <div>SPMS v{__APP_VERSION__}{__APP_COMMIT__ ? ` · ${__APP_COMMIT__}` : ''}</div>
+    </footer>
+  )
 }
