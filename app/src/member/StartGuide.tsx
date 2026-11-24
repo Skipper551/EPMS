@@ -1,5 +1,7 @@
 // "Starting a group?": how a PM gets their own free SPMS backend, in plain words. Shown at #start.
 
+import { Logo } from '../ui/Logo'
+
 export function StartGuide() {
   const steps = [
     {
@@ -46,7 +48,7 @@ export function StartGuide() {
 
   return (
     <div class="app">
-      <header class="header"><a class="logo" href="./">SPMS</a></header>
+      <header class="header"><Logo href="./" /></header>
       <main class="main-center">
         <div class="center-col" style={{ maxWidth: '680px' }}>
           <div class="stack-sm">

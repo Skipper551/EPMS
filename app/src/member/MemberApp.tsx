@@ -13,6 +13,7 @@ import { StartGuide } from './StartGuide'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 import { QuickTodos } from '../ui/QuickTodos'
 import { GroupView } from '../ui/Group'
+import { Logo } from '../ui/Logo'
 
 type Route =
   | { kind: 'session'; session: Session }
@@ -75,7 +76,7 @@ export function MemberApp() {
 function Shell(props: { children: preact.ComponentChildren }) {
   return (
     <div class="app">
-      <header class="header"><span class="logo">SPMS</span></header>
+      <header class="header"><Logo /></header>
       <main class="main-center"><div class="center-col">{props.children}</div></main>
     </div>
   )
@@ -330,7 +331,7 @@ function Project(props: { session: Session; onLeave: () => void }) {
     <div class="app">
       <header class="header">
         <div class="header-side">
-          <span class="logo">SPMS</span>
+          <Logo />
           <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} onPin={() => setPinOpen(true)} hasPin={hasPin} />
           <div class="row" style={{ gap: '6px' }} role="tablist" aria-label="View">
             <button type="button" role="tab" class="chip" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>My tasks</button>
