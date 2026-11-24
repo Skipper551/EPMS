@@ -256,7 +256,7 @@ export function ImportTasksDialog(props: { snap: Snapshot; pmAuthorId: string; a
                 <span class="xsmall muted">{skipped ? 'Already on the board' : STATUS_LABEL[r.task.status]}</span>
               </div>
               <span class="xsmall muted">
-                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? `${ownerText(r.owner)} with ${r.helpers.map(ownerText).join(', ')}` : ownerText(r.owner), r.startText ? `starts ${r.startText}` : '', r.dueText ? `due ${r.dueText}` : 'no due date', r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`, r.task.subtasks.length && `${r.task.subtasks.length} ${r.task.subtasks.length === 1 ? 'subtask' : 'subtasks'}`]
+                {[r.task.everyone ? `Everyone, led by ${ownerText(r.owner)}` : r.helpers.length ? (r.owner.kind === 'none' ? `No lead yet: ${r.helpers.map(ownerText).join(', ')}` : `${ownerText(r.owner)} leads, with ${r.helpers.map(ownerText).join(', ')}`) : ownerText(r.owner), r.startText ? `starts ${r.startText}` : '', r.dueText ? `due ${r.dueText}` : 'no due date', r.task.links.length && `${r.task.links.length} ${r.task.links.length === 1 ? 'link' : 'links'}`, r.task.subtasks.length && `${r.task.subtasks.length} ${r.task.subtasks.length === 1 ? 'subtask' : 'subtasks'}`]
                   .filter(Boolean).join(' · ')}
               </span>
               {(blockers.length > 0 || waiting.length > 0) && (

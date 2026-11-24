@@ -119,11 +119,11 @@ export function Toggle(props: { checked: boolean; onChange: (v: boolean) => void
 
 // ---------- people and status ----------
 
-export function Avatar(props: { snap: Snapshot; memberId: string; size?: number }) {
+export function Avatar(props: { snap: Snapshot; memberId: string; size?: number; lead?: boolean }) {
   const name = memberName(props.snap, props.memberId)
   const size = props.size ?? 22
   const style: JSX.CSSProperties = { background: memberColour(props.snap, props.memberId), width: size, height: size, fontSize: Math.round(size / 2) }
-  return <span class="avatar" style={style} aria-hidden="true">{name ? initial(name) : '?'}</span>
+  return <span class={props.lead ? 'avatar is-lead' : 'avatar'} style={style} aria-hidden="true">{name ? initial(name) : '?'}</span>
 }
 
 export function StatusPill(props: { status: Status }) {
