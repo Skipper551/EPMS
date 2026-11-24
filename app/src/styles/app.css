@@ -394,3 +394,12 @@ h1, h2, h3 { margin: 0; }
 .person-task:hover { border-color: var(--line-strong); }
 .person-task .subtask-progress { width: 100%; }
 @media (max-width: 400px) { .group-grid { grid-template-columns: 1fr; } }
+
+/* Phones: these come last so they win over the board-layout rules above. One board column,
+   no sideways page scroll, and 16px form text so iPhone Safari does not zoom in on focus. */
+@media (max-width: 760px) {
+  .board-layout > .board-scroll { margin-right: 0; padding-right: 0; }
+  .board-layout .board { grid-template-columns: 1fr; min-width: 0; }
+  .board-side { max-width: none; }
+  .input, .select, .textarea { font-size: 16px; }
+}
