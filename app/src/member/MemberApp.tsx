@@ -14,6 +14,7 @@ import { AddSubtasksDialog } from '../ui/Subtasks'
 import { QuickTodos } from '../ui/QuickTodos'
 import { GroupView } from '../ui/Group'
 import { Logo } from '../ui/Logo'
+import { RetroScreen } from '../ui/Retro'
 
 type Route =
   | { kind: 'session'; session: Session }
@@ -318,6 +319,9 @@ function Project(props: { session: Session; onLeave: () => void }) {
     setBusy((b) => { const n = new Set(b); n.delete(t.id); return n })
   }
 
+  // Once the PM wraps the project up, it's read-only: the retrospective (later the results) replaces My tasks.
+  const locked = !!snap.project.phase
+
   const actions: TaskActions = {
     advance,
     withdraw,
@@ -334,7 +338,13 @@ function Project(props: { session: Session; onLeave: () => void }) {
           <Logo />
           <MemberMenu snap={snap} session={session} onAi={() => setAiOpen(true)} onPin={() => setPinOpen(true)} hasPin={hasPin} />
           <div class="row view-tabs" style={{ gap: '6px' }} role="tablist" aria-label="View">
-            <button type="button" role="tab" class="chip" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>My tasks</button>
+            {locked ? (
+              <button type="button" role="tab" class="chip" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>
+                {snap.project.phase === 'archived' ? 'My results' : 'Retrospective'}
+              </button>
+            ) : (
+              <button type="button" role="tab" class="chip" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>My tasks</button>
+            )}
             <button type="button" role="tab" class="chip" aria-selected={tab === 'group'} onClick={() => setTab('group')}>Group</button>
           </div>
         </div>
@@ -347,7 +357,9 @@ function Project(props: { session: Session; onLeave: () => void }) {
       <main style={{ width: '100%', maxWidth: '1240px', margin: '0 auto', padding: '40px var(--gutter)', display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
         {error && <div style={{ flexBasis: '100%' }}><ErrorBox error={`Couldn't refresh: ${error.message}`} /></div>}
         {tab === 'group' ? (
-          <GroupView snap={snap} meId={me.id} events={groupEvents} onOpen={(id) => setDetail({ id, focusNote: false })} />
+          <GroupView snap={snap} meId={me.id} events={groupEvents} onOpen={(id) => !locked && setDetail({ id, focusNote: false })} />
+        ) : locked ? (
+          <RetroScreen snap={snap} meId={me.id} />
         ) : (
           <>
             <MyTasks

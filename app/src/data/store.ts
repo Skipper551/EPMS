@@ -7,7 +7,7 @@
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
 import { DEFAULT_PB_URL } from '../config'
 import type {
-  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Priority, Project, ProjectInput, ProjectKeys, Snapshot, Subtask, Status, Task, TaskInput, TaskLink,
+  ActivityEvent, Claim, EventKind, JoinInfo, Phase, RetroInfo, RetroReview, Member, MemberInput, MemberKey, Note, Priority, Project, ProjectInput, ProjectKeys, Snapshot, Subtask, Status, Task, TaskInput, TaskLink,
 } from './types'
 import { PRIORITIES } from './types'
 
@@ -128,7 +128,10 @@ const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typ
 function toProject(r: RecordModel): Project {
   return {
     id: r.id, name: str(r.name), course: str(r.course), final_deadline: dateOnly(r.final_deadline),
-    guidelines: str(r.guidelines), chat_url: str(r.chat_url), created: str(r.created), updated: str(r.updated),
+    guidelines: str(r.guidelines), chat_url: str(r.chat_url),
+    phase: r.phase === 'retro' || r.phase === 'archived' ? (r.phase as Phase) : '',
+    retro_due: str(r.retro_due), wrapped_at: str(r.wrapped_at), archived_at: str(r.archived_at),
+    created: str(r.created), updated: str(r.updated),
   }
 }
 
@@ -156,7 +159,9 @@ function toTask(r: RecordModel): Task {
     start_date: dateOnly(r.start_date), due_date: dateOnly(r.due_date), priority: toPriority(r.priority),
     status, behind: !!r.behind, behind_note: str(r.behind_note), blocked_by_tasks: ids(r.blocked_by_tasks), blocked_by_members: ids(r.blocked_by_members),
     blocked_reason: str(r.blocked_reason),
-    links: toLinks(r.links), mini: !!r.mini, created_by: str(r.created_by), created: str(r.created), updated: str(r.updated),
+    links: toLinks(r.links), mini: !!r.mini, created_by: str(r.created_by),
+    closed_from: (['todo', 'doing', 'review'] as Status[]).includes(r.closed_from) ? (r.closed_from as Status) : '',
+    created: str(r.created), updated: str(r.updated),
   }
 }
 
@@ -544,6 +549,42 @@ export async function postToChat(projectId: string, text: string): Promise<void>
 /** Record that the PM shared an update some other way (copied it into the chat). */
 export function markUpdateShared(keysId: string): Promise<ProjectKeys> {
   return run(async () => toKeys(await client().collection('project_keys').update(keysId, { last_summary_at: pbTime(new Date().toISOString()) })))
+}
+
+// ---------- retrospective ----------
+
+/** The server's own message: the retrospective routes are written for people. */
+function retroError(e: unknown): StoreError {
+  if (e instanceof ClientResponseError && (e.status === 400 || e.status === 403) && e.response?.message) return new StoreError(e.response.message, e.status)
+  return friendly(e)
+}
+
+/** PM: wrap up the project. Closes every open task and opens the retrospective until `dueIso`. */
+export async function startRetro(projectId: string, dueIso: string): Promise<{ closed: number; notified: boolean }> {
+  try {
+    return await client().send(`/api/gh/retro/${projectId}/start`, { method: 'POST', body: { due: dueIso } })
+  } catch (e) {
+    throw retroError(e)
+  }
+}
+
+/** Where the retrospective stands for this person, and their own results once archived.
+ *  The PM passes which PM member they are; the server refuses anyone else. */
+export async function retroInfo(projectId: string, asPm = ''): Promise<RetroInfo> {
+  try {
+    return await client().send(`/api/gh/retro/${projectId}`, { method: 'GET', query: asPm ? { as: asPm } : {} })
+  } catch (e) {
+    throw retroError(e)
+  }
+}
+
+/** Submit all of this person's reviews at once. Final: they can't be changed afterwards. */
+export async function submitRetro(projectId: string, reviews: RetroReview[], asPm = ''): Promise<void> {
+  try {
+    await client().send(`/api/gh/retro/${projectId}/submit`, { method: 'POST', body: asPm ? { reviews, as: asPm } : { reviews } })
+  } catch (e) {
+    throw retroError(e)
+  }
 }
 
 // ---------- subtasks ----------

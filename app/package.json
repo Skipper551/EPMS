@@ -1,7 +1,7 @@
 {
   "name": "spms",
   "private": true,
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "SPMS: free, open-source project management for student group projects, built around the Swim method.",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,8 @@
     "hooks": "bash scripts/build-hooks.sh",
     "bundle": "npm run -s schema && npm run -s skill && npm run -s hooks",
     "schema": "bash scripts/build-schema.sh",
-    "test:onboarding": "node tests/onboarding.mjs"
+    "test:onboarding": "node tests/onboarding.mjs",
+    "test:retro": "node tests/retro.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

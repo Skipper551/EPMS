@@ -33,9 +33,20 @@ export interface Project {
   guidelines: string
   /** Optional link to the group's chat (Teams, WhatsApp, Discord…), or '' */
   chat_url: string
+  /** '' while the project runs; 'retro' once the PM wraps it up; 'archived' when the retrospective is over. */
+  phase: Phase
+  /** When the retrospective closes (ISO), or '' */
+  retro_due: string
+  /** When the PM wrapped the project up (ISO), or '' */
+  wrapped_at: string
+  /** When the project was archived (ISO), or '' */
+  archived_at: string
   created: string
   updated: string
 }
+
+/** Where a project is in its life. Wrapped-up projects (retro or archived) are read-only for everyone. */
+export type Phase = '' | 'retro' | 'archived'
 
 export interface ProjectKeys {
   id: string
@@ -137,6 +148,8 @@ export interface Task {
   mini: boolean
   /** Member who added it (quick to-dos), or '' */
   created_by: string
+  /** Set when the task was still open at wrap-up and was closed then: the status it had ('todo', 'doing', 'review'). */
+  closed_from: Status | ''
   created: string
   updated: string
 }
@@ -201,4 +214,54 @@ export interface TaskInput {
   blocked_by_members: string[]
   blocked_reason: string
   links: TaskLink[]
+}
+
+// ---------- retrospective ----------
+
+export type RetroScore = 'overall' | 'quality' | 'punctuality' | 'organization' | 'communication' | 'fairness'
+
+/** Scores everyone gets. */
+export const RETRO_SCORES: RetroScore[] = ['overall', 'quality', 'punctuality']
+/** Extra scores for PMs only. */
+export const PM_RETRO_SCORES: RetroScore[] = ['organization', 'communication', 'fairness']
+
+/** One reviewer's review of one teammate. Scores go from -2 to +2; 0 means "didn't see enough to say". */
+export interface RetroReview {
+  member: string
+  overall: number
+  quality: number
+  punctuality: number
+  organization?: number
+  communication?: number
+  fairness?: number
+  /** Task ids the reviewer commended */
+  commends: string[]
+  comment: string
+  /** When true the comment shows no name */
+  anonymous: boolean
+}
+
+/** A person's own retrospective results. Totals only: the server never returns individual scores or reviewers. */
+export interface RetroResults {
+  is_pm: boolean
+  /** Everyone else in the project; averages divide by this, so a skipped review counts as 0 */
+  teammates: number
+  /** How many teammates submitted reviews */
+  reviewed_by: number
+  averages: Partial<Record<RetroScore, number>>
+  commends: { task: string; count: number }[]
+  /** author is '' for an anonymous comment */
+  comments: { text: string; author: string }[]
+}
+
+export interface RetroInfo {
+  phase: Phase
+  due: string
+  member: string
+  submitted: boolean
+  /** How many people have submitted, out of total */
+  done: number
+  total: number
+  /** Only once the project is archived */
+  results: RetroResults | null
 }

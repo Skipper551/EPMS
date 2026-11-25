@@ -16,6 +16,7 @@ export function Settings(props: {
   onPmAuthor: (id: string) => void
   onChanged: () => void
   onDeleted: () => void
+  onWrapUp: () => void
 }) {
   return (
     <>
@@ -29,6 +30,15 @@ export function Settings(props: {
       <Links snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
       <ChatUpdates snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
       <ReviewAlerts snap={props.snap} keys={props.keys} onKeys={props.onKeys} />
+      {!props.snap.project.phase && (
+        <section class="panel">
+          <div class="stack-sm">
+            <h2 class="eyebrow">Wrap up project</h2>
+            <span class="muted small">When the project is over: close open tasks, run a retrospective where everyone reviews each other, then archive the project read-only.</span>
+          </div>
+          <div><button type="button" class="btn btn-md" onClick={props.onWrapUp}>Wrap up project</button></div>
+        </section>
+      )}
       <DeleteProject snap={props.snap} onDeleted={props.onDeleted} />
     </>
   )

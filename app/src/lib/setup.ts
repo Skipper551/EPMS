@@ -11,8 +11,9 @@ export const HOOKS: { name: string; file: string; version: string; what: string 
   { name: 'claim', file: 'claim.pb.js', version: '2026-11-19', what: 'joining with the group link, PINs' },
   { name: 'events', file: 'events.pb.js', version: '2026-11-24', what: 'updates for members, chat posts and review alerts' },
   { name: 'subtasks', file: 'subtasks.pb.js', version: '2026-11-21', what: 'the 30 subtask limit' },
-  { name: 'todos', file: 'todos.pb.js', version: '2026-11-21', what: 'quick to-dos anyone can add' },
-  { name: 'ai', file: 'ai.pb.js', version: '2026-11-24', what: 'the guide in the AI link' },
+  { name: 'todos', file: 'todos.pb.js', version: '2026-11-25', what: 'quick to-dos anyone can add' },
+  { name: 'ai', file: 'ai.pb.js', version: '2026-11-25', what: 'the guide in the AI link' },
+  { name: 'retro', file: 'retro.pb.js', version: '2026-11-25', what: 'wrapping up, the retrospective and the archive' },
 ]
 
 export type CollectionState = 'ok' | 'missing' | 'outdated'
