@@ -166,10 +166,10 @@ function TaskCard(props: { snap: Snapshot; task: Task; actions: BoardActions; bu
       <button type="button" class="tcard-open" onClick={() => actions.open(t.id)} aria-label={`Edit task: ${t.title}`}>
         <div class="tcard-title-row">
           <h3>{t.title}</h3>
-          <span class="row" style={{ gap: '6px', flexWrap: 'nowrap' }}>
+          <span class="tcard-tags">
+            {t.everyone && <span class="group-tag">Everyone</span>}
             {t.status !== 'done' && <PriorityTag priority={t.priority} />}
             {!t.owner && t.status !== 'done' && (t.everyone || t.helpers.length > 0) && <span class="behind-tag" title="Nobody is accountable for this task yet. Open it and pick a lead.">No lead</span>}
-            {t.everyone && <span class="group-tag">Everyone</span>}
             {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
           </span>
         </div>

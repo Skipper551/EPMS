@@ -8,6 +8,9 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.15.1
+- Board cards: the tags next to a task title (Everyone, Urgent, No lead, Behind) now stack in a column, with Everyone on top and the priority under it, instead of sitting side by side. On phones the side-by-side tags left long titles only a few letters wide.
+
 ## 0.15.0
 - Wrap up project: when the project is over, the PM chooses "Wrap up project" (project menu or Project settings) and sets a retrospective due date (3 days by default). Every open task is closed (the archive remembers which ones were still open), the board and project become read-only for everyone, and the group chat gets a message that the retrospective is open.
 - Retrospective: everyone, the PM included, can review everyone else. Three scores from -2 to +2 (overall, quality of work, punctuality), with 0 meaning "not enough to say": you didn't work with them enough or see enough of their work. The quality step lists the person's tasks, each with a "Commend" button (with a small burst of confetti) for work that was really well done. PMs are also scored on organization, communication and fair task distribution. An optional comment is anonymous unless the reviewer chooses to show their name. Reviewing is optional (a skipped review counts as 0), everything is submitted once at the end, and it can't be changed afterwards. Drafts are kept on the device until then.
