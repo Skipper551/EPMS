@@ -24,4 +24,4 @@ onRecordUpdateRequest((e) => {
 }, "tasks")
 
 // Lets the SPMS setup check see that this file is installed, and which version.
-routerAdd("GET", "/api/gh/hooks/todos", (e) => e.json(200, { name: "todos", version: "2026-11-21" }))
+routerAdd("GET", "/api/gh/hooks/todos", (e) => e.json(200, { name: "todos", version: "2026-11-25" }))

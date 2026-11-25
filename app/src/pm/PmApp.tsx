@@ -21,6 +21,8 @@ import { TaskView } from './TaskView'
 import { AddSubtasksDialog } from '../ui/Subtasks'
 import { GroupView } from '../ui/Group'
 import { Logo } from '../ui/Logo'
+import { RetroScreen } from '../ui/Retro'
+import { WrapUpDialog } from './WrapUp'
 
 
 const LAST_PROJECT = 'gh:pm:project'
@@ -53,7 +55,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [projects, setProjects] = useState<Project[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<string | null>(null)
-  const [view, setView] = useState<'board' | 'tasks' | 'group' | 'settings'>('board')
+  const [view, setView] = useState<'board' | 'tasks' | 'group' | 'settings' | 'retro'>('board')
   const [keys, setKeys] = useState<ProjectKeys | null>(null)
   const [editing, setEditing] = useState<{ id: string | null } | null>(null)
   const [addSubtasksFor, setAddSubtasksFor] = useState<string | null>(null)
@@ -65,6 +67,7 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
   const [behindFor, setBehindFor] = useState<string | null>(null)
   const [updateOpen, setUpdateOpen] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
+  const [wrapOpen, setWrapOpen] = useState(false)
   const [events, setEvents] = useState<ActivityEvent[]>([])
 
   const { snap, error, reload, patch } = useSnapshot(projectId)
@@ -75,7 +78,8 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       setProjects(list)
       setListError(null)
       const wanted = select ?? load(LAST_PROJECT)
-      const next = list.find((p) => p.id === wanted)?.id ?? list[0]?.id ?? null
+      // Running projects first, then those in their retrospective, archived ones last.
+      const next = list.find((p) => p.id === wanted)?.id ?? sortProjects(list)[0]?.id ?? null
       choose(next)
     } catch (e) {
       const err = e as StoreError
@@ -131,10 +135,17 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
     setAuthor(pmMembers.find((m) => m.id === saved)?.id ?? pmMembers[0]?.id ?? '')
   }, [snap?.project.id, snap?.members.map((m) => `${m.id}${m.is_pm}`).join()])
 
-  // Keep the project list in step with renames.
+  // Keep the project list in step with renames and wrap-ups.
   useEffect(() => {
     if (snap && projects) setProjects(projects.map((p) => (p.id === snap.project.id ? snap.project : p)))
-  }, [snap?.project.name])
+  }, [snap?.project.name, snap?.project.phase])
+
+  // A wrapped-up project is read-only: the board and task view give way to the retrospective.
+  const locked = !!snap?.project.phase
+  useEffect(() => {
+    if (locked && (view === 'board' || view === 'tasks')) setView('retro')
+    if (!locked && view === 'retro') setView('board')
+  }, [locked, snap?.project.id])
 
   async function withBusy(id: string, fn: () => Promise<unknown>) {
     setBusy((b) => new Set(b).add(id))
@@ -231,22 +242,31 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onSettings={() => setView('settings')}
             onUpdate={() => setUpdateOpen(true)}
             onSetup={() => setSetupOpen(true)}
+            onWrapUp={() => setWrapOpen(true)}
             onLogout={props.onLogout}
           />
           <span class="tag-pm">PM</span>
           <div class="row view-tabs" style={{ gap: '6px' }} role="tablist" aria-label="View">
-            <button type="button" role="tab" class="chip" aria-selected={view === 'board'} onClick={() => setView('board')}>Board</button>
-            <button type="button" role="tab" class="chip" aria-selected={view === 'tasks'} onClick={() => setView('tasks')} disabled={!snap}>Task view</button>
+            {locked ? (
+              <button type="button" role="tab" class="chip" aria-selected={view === 'retro'} onClick={() => setView('retro')}>
+                {snap?.project.phase === 'archived' ? 'Results' : 'Retrospective'}
+              </button>
+            ) : (
+              <>
+                <button type="button" role="tab" class="chip" aria-selected={view === 'board'} onClick={() => setView('board')}>Board</button>
+                <button type="button" role="tab" class="chip" aria-selected={view === 'tasks'} onClick={() => setView('tasks')} disabled={!snap}>Task view</button>
+              </>
+            )}
             <button type="button" role="tab" class="chip" aria-selected={view === 'group'} onClick={() => setView('group')} disabled={!snap}>Group</button>
           </div>
         </div>
         <div class="header-actions">
           {view !== 'settings'
             ? <button type="button" class="btn" onClick={() => setView('settings')} disabled={!snap}>Project settings</button>
-            : <button type="button" class="btn" onClick={() => setView('board')}>Back to board</button>}
+            : <button type="button" class="btn" onClick={() => setView(locked ? 'retro' : 'board')}>{locked ? 'Back' : 'Back to board'}</button>}
           <button type="button" class="btn" onClick={copyGroupLink} disabled={!projectId}>Copy group link</button>
-          <button type="button" class="btn" onClick={() => setImportOpen(true)} disabled={!snap}>Import tasks</button>
-          <button type="button" class="btn btn-primary" onClick={() => setEditing({ id: null })} disabled={!snap}>New task</button>
+          {!locked && <button type="button" class="btn" onClick={() => setImportOpen(true)} disabled={!snap}>Import tasks</button>}
+          {!locked && <button type="button" class="btn btn-primary" onClick={() => setEditing({ id: null })} disabled={!snap}>New task</button>}
         </div>
       </header>
 
@@ -278,12 +298,27 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
       {snap && view === 'group' && (
         <main class="main-board" style={{ maxWidth: '1240px' }}>
           {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
-          <GroupView snap={snap} meId={author} events={groupEvents} onOpen={(id) => setEditing({ id })} />
+          <GroupView snap={snap} meId={author} events={groupEvents} onOpen={(id) => !locked && setEditing({ id })} />
+        </main>
+      )}
+
+      {snap && view === 'retro' && locked && (
+        <main class="main-board" style={{ maxWidth: '1240px' }}>
+          {error && <ErrorBox error={`Couldn't refresh: ${error.message}`} />}
+          <RetroScreen key={`${snap.project.id}:${author}`} snap={snap} meId={author} asPm={author} />
         </main>
       )}
 
       {snap && view === 'settings' && (
         <main class="main-narrow">
+          {locked && (
+            <div class="hint-box small">
+              <span>
+                {snap.project.phase === 'archived' ? 'This project is archived.' : 'This project is wrapped up.'} Its details, group and tasks are read-only.
+                The links, the chat webhook and deleting the project still work.
+              </span>
+            </div>
+          )}
           <Settings
             snap={snap}
             keys={keys}
@@ -292,11 +327,17 @@ function PmHome(props: { onLogout: () => void; onExpired: () => void }) {
             onPmAuthor={(id) => { setAuthor(id); save(authorKey(snap.project.id), id) }}
             onChanged={reload}
             onDeleted={() => { setView('board'); save(LAST_PROJECT, null); refreshProjects() }}
+            onWrapUp={() => setWrapOpen(true)}
           />
         </main>
       )}
 
       {setupOpen && <SetupDialog onClose={() => setSetupOpen(false)} />}
+      {snap && wrapOpen && !locked && (
+        <WrapUpDialog snap={snap} keys={keys} onClose={() => setWrapOpen(false)}
+          onOpenSettings={() => { setWrapOpen(false); setView('settings') }}
+          onDone={() => { setWrapOpen(false); reload().then(() => setView('retro')) }} />
+      )}
       {snap && behindFor && <BehindDialog snap={snap} taskId={behindFor} onClose={() => setBehindFor(null)} onDone={reload} />}
       {snap && keys && updateOpen && (
         <ChatUpdateDialog
@@ -334,6 +375,7 @@ function ProjectMenu(props: {
   onSettings: () => void
   onUpdate: () => void
   onSetup: () => void
+  onWrapUp: () => void
   onLogout: () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -362,9 +404,11 @@ function ProjectMenu(props: {
       {open && (
         <div class="menu" role="menu">
           <span class="menu-label">Projects</span>
-          {props.projects.map((p) => (
+          {sortProjects(props.projects).map((p) => (
             <button key={p.id} type="button" role="menuitem" class="menu-item" aria-current={p.id === props.current?.id} onClick={pick(() => props.onPick(p.id))}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+              {p.phase === 'archived' && <span class="archived-tag">Archived</span>}
+              {p.phase === 'retro' && <span class="archived-tag">Retrospective</span>}
               {p.id === props.current?.id && <span class="xsmall muted">Open</span>}
             </button>
           ))}
@@ -372,6 +416,9 @@ function ProjectMenu(props: {
           <div class="menu-sep" />
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onUpdate)}>Update the group chat</button>
           <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onSettings)}>Project settings</button>
+          {props.current && !props.current.phase && (
+            <button type="button" role="menuitem" class="menu-item" onClick={pick(props.onWrapUp)}>Wrap up project</button>
+          )}
           <a role="menuitem" class="menu-item" href="./spms-task-plan.zip" download onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
             Download the Claude skill
           </a>
@@ -384,6 +431,12 @@ function ProjectMenu(props: {
       )}
     </div>
   )
+}
+
+/** Running projects first, then ones in their retrospective, archived ones last; newest first within each. */
+function sortProjects(list: Project[]): Project[] {
+  const rank = (p: Project) => (p.phase === 'archived' ? 2 : p.phase === 'retro' ? 1 : 0)
+  return [...list].sort((a, b) => rank(a) - rank(b))
 }
 
 function SetupDialog(props: { onClose: () => void }) {
