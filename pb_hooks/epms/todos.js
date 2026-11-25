@@ -19,7 +19,7 @@ function memberOf(app, memberKey, projectId) {
 
 /** Fields a quick to-do never uses. They stay empty, whoever creates it. */
 const UNUSED = ["helpers", "blocked_by_tasks", "blocked_by_members"]
-const UNUSED_TEXT = ["start_date", "due_date", "behind_note", "blocked_reason"]
+const UNUSED_TEXT = ["start_date", "due_date", "priority", "behind_note", "blocked_reason"]
 
 function tidyNew(app, r, who) {
   const title = r.getString("title").trim()
@@ -56,7 +56,7 @@ function checkMemberEdit(before, after, who) {
 
   const same = (f) => before.getString(f) === after.getString(f)
   const sameList = (f) => JSON.stringify(before.getStringSlice(f)) === JSON.stringify(after.getStringSlice(f))
-  const fixed = ["project", "created_by", "start_date", "due_date", "behind_note", "blocked_reason", "links"]
+  const fixed = ["project", "created_by", "start_date", "due_date", "priority", "behind_note", "blocked_reason", "links"]
   if (!fixed.every(same) || !UNUSED.every(sameList) || before.getBool("everyone") !== after.getBool("everyone") || before.getBool("behind") !== after.getBool("behind")) {
     throw new BadRequestError("A to-do only has a title, a person and a tick.")
   }

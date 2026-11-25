@@ -2,6 +2,7 @@ import { DEFAULT_PB_URL, cleanUrl } from '../config'
 // Small helpers shared by both pages. No backend code here.
 
 import type { Member, Snapshot, Task } from '../data/types'
+import { PRIORITIES } from '../data/types'
 
 // ---------- dates (all date-only strings, YYYY-MM-DD) ----------
 
@@ -75,6 +76,12 @@ export function startState(t: Task): 'upcoming' | 'late' | null {
 
 /** Sort key that puts tasks without a due date last. */
 export const dueKey = (t: Task) => t.due_date || '9999-99-99'
+
+/** Urgent 0, high 1, normal 2, low 3. */
+export const priorityRank = (t: Task) => PRIORITIES.indexOf(t.priority)
+
+/** The order task lists use: most pressing first, then soonest due. */
+export const byPriorityThenDue = (a: Task, b: Task) => priorityRank(a) - priorityRank(b) || dueKey(a).localeCompare(dueKey(b))
 
 // ---------- members ----------
 

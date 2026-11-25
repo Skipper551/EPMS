@@ -8,6 +8,14 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.14.0
+- Task priority: every task is Low, Normal, High or Urgent. The PM sets it in the task editor, and the task's lead can change it from the task details (helpers can't). Normal shows nothing, so tags only appear on tasks that stand out: a solid orange "Urgent", an outlined "High" and a quiet "Low", on the board, My tasks, task details and the Group tab. Urgent cards on the board also get an orange edge.
+- Sorting: board columns, My tasks and the Group tab's "Up next" put urgent and high tasks first, then sort by due date. My tasks' summary line says how many urgent tasks you have, for example "4 tasks · 1 urgent · next due Thu 26 Nov".
+- Updates: changing a task's priority shows under "Since your last visit" for its lead and helpers ("Pat marked Find 5 sources urgent").
+- Import: task files take an optional `"priority"` (`low`, `normal`, `high`, `urgent`); the import preview shows it, and the Claude instructions and the task plan skill explain when to use it. The AI link's guide tells members' AIs to work on urgent and high tasks first.
+- Existing tasks keep working: tasks saved before this have no priority and count as Normal.
+- Hook update: `events.pb.js` (via `epms/events.js`), `todos.pb.js` (via `epms/todos.js`, to-dos never have a priority) and `ai.pb.js`. Collection update: `tasks` gains `priority`, and the access rule lets only the lead (or the PM) change it. The setup check asks live instances to upload the new hooks zip and update the collections.
+
 ## 0.13.0
 - Review alerts: the PM can add an optional webhook in Project settings and get a short message (the task, who sent it, the project) whenever a member sends a task to review. Moving a task to Review yourself doesn't send one. Works with Discord, Slack, Teams Workflows, or any address that takes a JSON post, and has a "Send a test message" button. At most one alert per task every 10 minutes, and a failed alert never stops the member's submit. The address is stored with the project's private keys, so members and AIs can't see it.
 - Hook update: `events.pb.js` (new `epms/review.js` helper). Collection update: `project_keys` gains `review_webhook`. The setup check asks live instances to upload the new hooks zip and update the collections.

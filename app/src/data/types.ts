@@ -12,6 +12,18 @@ export const STATUS_LABEL: Record<Status, string> = {
   done: 'Done',
 }
 
+export type Priority = 'low' | 'normal' | 'high' | 'urgent'
+
+/** Most pressing first: the order tasks sort in. */
+export const PRIORITIES: Priority[] = ['urgent', 'high', 'normal', 'low']
+
+export const PRIORITY_LABEL: Record<Priority, string> = {
+  urgent: 'Urgent',
+  high: 'High',
+  normal: 'Normal',
+  low: 'Low',
+}
+
 export interface Project {
   id: string
   name: string
@@ -43,7 +55,7 @@ export interface ProjectKeys {
 
 export type EventKind =
   | 'created' | 'assigned' | 'helper_added' | 'started' | 'submitted' | 'sent_back' | 'approved' | 'moved'
-  | 'behind' | 'on_schedule' | 'blocked' | 'unblocked' | 'note'
+  | 'behind' | 'on_schedule' | 'blocked' | 'unblocked' | 'note' | 'priority'
 
 /** One entry in the activity log, written by the server. */
 export interface ActivityEvent {
@@ -109,6 +121,8 @@ export interface Task {
   start_date: string
   /** YYYY-MM-DD or '' */
   due_date: string
+  /** How pressing it is. Set by the PM or the task's lead. Tasks saved before priorities existed read as normal. */
+  priority: Priority
   status: Status
   behind: boolean
   /** Optional note the PM adds when marking behind, e.g. "Need this by Thursday" */
@@ -179,6 +193,7 @@ export interface TaskInput {
   everyone: boolean
   start_date: string
   due_date: string
+  priority: Priority
   status: Status
   behind: boolean
   behind_note: string

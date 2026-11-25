@@ -21,6 +21,7 @@
       "owner": "Ala",
       "start": "2026-11-16",
       "due": "2026-11-20",
+      "priority": "high",
       "description": "Find five peer-reviewed sources on open innovation in mid-sized firms. Save each in the shared References doc in APA 7 with its DOI. Done when all five are in the doc with a one-line summary each.",
       "blocked_by": [],
       "waiting_on": [],

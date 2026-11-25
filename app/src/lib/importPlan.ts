@@ -2,7 +2,7 @@
 // Pure: no backend calls. The PM import dialog shows the preview, then runs the plan through the store.
 // Format reference: skills/spms-task-plan/SKILL.md
 
-import type { Snapshot, Status, TaskLink } from '../data/types'
+import type { Priority, Snapshot, Status, TaskLink } from '../data/types'
 import { formatDay, today } from './util'
 
 export const FORMAT = 'epms-tasks'
@@ -17,6 +17,7 @@ export interface PlanTask {
   everyone: boolean
   start: string
   due: string
+  priority: Priority
   status: Status
   description: string
   blockedBy: string[]
@@ -46,6 +47,13 @@ const STATUS_ALIASES: Record<string, Status> = {
   doing: 'doing', 'in progress': 'doing', 'in-progress': 'doing', started: 'doing',
   review: 'review', 'in review': 'review',
   done: 'done', complete: 'done', completed: 'done',
+}
+
+const PRIORITY_ALIASES: Record<string, Priority> = {
+  urgent: 'urgent', critical: 'urgent', asap: 'urgent',
+  high: 'high', important: 'high',
+  normal: 'normal', medium: 'normal', default: 'normal',
+  low: 'low', 'nice to have': 'low', optional: 'low',
 }
 
 const s = (v: unknown) => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '')
@@ -142,6 +150,10 @@ export function parsePlan(text: string): ParseResult {
     const status = statusRaw ? STATUS_ALIASES[statusRaw] : 'todo'
     if (statusRaw && !status) warnings.push(`${where}: unknown status "${s(r.status)}", so it starts in To do.`)
 
+    const priorityRaw = norm(s(r.priority))
+    const priority = priorityRaw ? PRIORITY_ALIASES[priorityRaw] : 'normal'
+    if (priorityRaw && !priority) warnings.push(`${where}: unknown priority "${s(r.priority)}", so it's normal.`)
+
     let description = s(r.description ?? r.details ?? r.notes)
     if (description.length > 5000) {
       warnings.push(`${where}: the description was cut to 5,000 characters.`)
@@ -156,6 +168,7 @@ export function parsePlan(text: string): ParseResult {
       everyone: r.everyone === true || r.whole_group === true,
       start: toDate(r.start ?? r.start_date ?? r.starts, where, warnings),
       due: toDate(r.due ?? r.due_date ?? r.deadline, where, warnings),
+      priority: priority ?? 'normal',
       status: status ?? 'todo',
       description,
       blockedBy: list(r.blocked_by ?? r.depends_on ?? r.after),
@@ -292,6 +305,7 @@ Format: one JSON code block, nothing else in it.
       "helpers": [],
       "start": "2026-11-16",
       "due": "2026-11-20",
+      "priority": "high",
       "description": "What to do, step by step, and what done looks like.",
       "blocked_by": [],
       "waiting_on": [],
@@ -309,6 +323,7 @@ Rules:
 - "everyone": true makes it a whole-group task (rehearsals, reading the final draft); give it a lead, usually the PM, and no helpers.
 - "start" is an optional YYYY-MM-DD for when work should begin; stagger starts so a task begins when the work it's blocked by is due.
 - "due" is YYYY-MM-DD, on or before the final deadline.
+- "priority" is optional: "low", "high" or "urgent" (leave it out for normal). Mark only the few tasks that can't slip as high, and keep urgent for something due within days.
 - "description" is shown to the owner as the task's first note; write it for them.
 - "blocked_by" lists ids of tasks in this file, or exact titles of tasks already on the board.
 - "waiting_on" lists member names the task waits on that aren't a task.

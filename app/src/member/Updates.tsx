@@ -23,6 +23,7 @@ export function describe(snap: Snapshot, e: ActivityEvent, meId: string): string
     case 'note': return `${who} added a note on ${title}: "${quote(e.text)}"`
     case 'started': return `${who} started ${title}`
     case 'submitted': return `${who} sent ${title} to review`
+    case 'priority': return e.text === 'normal' ? `${who} set ${title} back to normal priority` : `${who} marked ${title} ${e.text === 'urgent' ? 'urgent' : `${e.text} priority`}`
     case 'blocked': return `${who} flagged ${title} as blocked${e.text ? `: ${quote(e.text)}` : ''}`
     default: return `${who} moved ${title} to ${STATUS_LABEL[e.text as Status] ?? 'a new column'}`
   }
@@ -40,7 +41,7 @@ export function SinceLastVisit(props: { snap: Snapshot; meId: string; events: Ac
       <ul class="stack-sm" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {shown.map((e) => (
           <li key={e.id} class="row small" style={{ flexWrap: 'nowrap', alignItems: 'baseline', gap: '12px' }}>
-            <span class="grow" style={{ color: e.kind === 'behind' || (e.kind === 'sent_back' && e.by_pm) ? 'var(--warn)' : 'var(--text)', overflowWrap: 'anywhere' }}>
+            <span class="grow" style={{ color: e.kind === 'behind' || (e.kind === 'priority' && e.text === 'urgent') || (e.kind === 'sent_back' && e.by_pm) ? 'var(--warn)' : 'var(--text)', overflowWrap: 'anywhere' }}>
               {describe(props.snap, e, props.meId)}
             </span>
             <span class="muted xsmall" style={{ whiteSpace: 'nowrap' }}>{when(e.created)}</span>

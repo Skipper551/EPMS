@@ -1,8 +1,8 @@
 import { useState } from 'preact/hooks'
 import type { Member, Snapshot, Task } from '../data/types'
 import { STATUS_LABEL } from '../data/types'
-import { activeBlockers, canMove, dateRange, dueKey, formatDay, startState, involvement, joinNames, memberName, today, waitingOn } from '../lib/util'
-import { SparkIcon, StatusPill } from '../ui/ui'
+import { activeBlockers, byPriorityThenDue, canMove, dateRange, formatDay, startState, involvement, joinNames, memberName, today, waitingOn } from '../lib/util'
+import { PriorityTag, SparkIcon, StatusPill } from '../ui/ui'
 import { BlockerSummary } from '../ui/BlockerSummary'
 import { SubtaskProgress, subtasksOf } from '../ui/Subtasks'
 
@@ -34,16 +34,19 @@ export type TaskViewMode = 'member' | 'pm' | 'preview'
 export function MyTasks(props: { snap: Snapshot; me: Member; busy: Set<string>; actions: TaskActions; aiReady: boolean; highlight: Set<string>; updates: preact.ComponentChildren; pinPrompt?: preact.ComponentChildren; mode?: TaskViewMode }) {
   const { snap, me, actions } = props
   const [showDone, setShowDone] = useState(false)
-  const mine = snap.tasks.filter((t) => involvement(t, me.id)).sort((a, b) => dueKey(a).localeCompare(dueKey(b)))
+  const mine = snap.tasks.filter((t) => involvement(t, me.id)).sort(byPriorityThenDue)
   const active = mine.filter((t) => t.status !== 'done')
   // Tasks whose start date is still ahead wait in "Coming up", so the main list is what to work on now.
   const comingUp = active.filter((t) => startState(t) === 'upcoming').sort((a, b) => a.start_date.localeCompare(b.start_date))
   const open = active.filter((t) => startState(t) !== 'upcoming')
   const done = mine.filter((t) => t.status === 'done')
-  const nextDue = open.find((t) => t.due_date && t.status !== 'review')
+  // The list is sorted by priority first, so find the soonest due date on its own.
+  const nextDue = open.filter((t) => t.due_date && t.status !== 'review').sort((a, b) => a.due_date.localeCompare(b.due_date))[0]
+  const urgent = open.filter((t) => t.priority === 'urgent' && t.status !== 'review').length
 
   const summary = [
     `${open.length} ${open.length === 1 ? 'task' : 'tasks'}`,
+    urgent > 0 && `${urgent} urgent`,
     nextDue && `next due ${formatDay(nextDue.due_date)}`,
   ].filter(Boolean).join(' · ')
 
@@ -147,6 +150,7 @@ function TaskCard(props: { snap: Snapshot; me: Member; task: Task; busy: boolean
           {props.fresh && <span class="group-tag">Updated</span>}
           {role === 'lead' && <span class="lead-tag" title="You are accountable for this task: you start it, keep it moving and send it to review">You lead</span>}
           {role === 'helper' && <span class="helper-tag" title={lead ? `${lead} leads and is accountable for this task` : 'Nobody leads this task yet'}>Helping</span>}
+          {t.status !== 'done' && <PriorityTag priority={t.priority} />}
           {t.behind && t.status !== 'done' && <span class="behind-tag">Behind</span>}
           <StatusPill status={t.status} />
         </div>

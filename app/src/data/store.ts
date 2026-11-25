@@ -7,8 +7,9 @@
 import PocketBase, { BaseAuthStore, ClientResponseError, type RecordModel } from 'pocketbase'
 import { DEFAULT_PB_URL } from '../config'
 import type {
-  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Project, ProjectInput, ProjectKeys, Snapshot, Subtask, Status, Task, TaskInput, TaskLink,
+  ActivityEvent, Claim, EventKind, JoinInfo, Member, MemberInput, MemberKey, Note, Priority, Project, ProjectInput, ProjectKeys, Snapshot, Subtask, Status, Task, TaskInput, TaskLink,
 } from './types'
+import { PRIORITIES } from './types'
 
 const SNAPSHOT_EXPAND =
   'members_via_project,tasks_via_project,tasks_via_project.notes_via_task,tasks_via_project.subtasks_via_task'
@@ -143,11 +144,16 @@ function toLinks(v: unknown): TaskLink[] {
     .filter((l) => l.url)
 }
 
+/** Tasks saved before priorities existed have none: they count as normal. */
+function toPriority(v: unknown): Priority {
+  return (PRIORITIES as unknown[]).includes(v) ? (v as Priority) : 'normal'
+}
+
 function toTask(r: RecordModel): Task {
   const status = (['todo', 'doing', 'review', 'done'] as Status[]).includes(r.status) ? (r.status as Status) : 'todo'
   return {
     id: r.id, project: str(r.project), title: str(r.title), owner: str(r.owner), helpers: ids(r.helpers), everyone: !!r.everyone,
-    start_date: dateOnly(r.start_date), due_date: dateOnly(r.due_date),
+    start_date: dateOnly(r.start_date), due_date: dateOnly(r.due_date), priority: toPriority(r.priority),
     status, behind: !!r.behind, behind_note: str(r.behind_note), blocked_by_tasks: ids(r.blocked_by_tasks), blocked_by_members: ids(r.blocked_by_members),
     blocked_reason: str(r.blocked_reason),
     links: toLinks(r.links), mini: !!r.mini, created_by: str(r.created_by), created: str(r.created), updated: str(r.updated),
@@ -344,6 +350,11 @@ export function setStatus(id: string, status: Status): Promise<Task> {
 /** Lead or PM: set or clear when work on a task begins. Sends nothing but the start date. */
 export function setStartDate(id: string, date: string): Promise<Task> {
   return run(async () => toTask(await client().collection('tasks').update(id, { start_date: toPbDate(date) })))
+}
+
+/** Lead or PM: set how pressing a task is. Sends nothing but the priority. */
+export function setPriority(id: string, priority: Priority): Promise<Task> {
+  return run(async () => toTask(await client().collection('tasks').update(id, { priority })))
 }
 
 /** Member or PM: replace a task's blockers. Sends nothing but the blocker fields. */
