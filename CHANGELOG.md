@@ -8,6 +8,9 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.16.4
+- New preview page at `/test` (skipper551.github.io/SPMS/test): a student-facing landing page with screenshots of the app in action, how it works, features, price and questions. It is hidden from search engines, not linked from the site, and leaves the current start page and setup guide unchanged, so it can be tried out before it replaces them.
+
 ## 0.16.3
 - Board cards: the start and due dates no longer slide under the assignee's avatar on narrow cards. The avatars keep their size, and when the name and dates don't fit on one line the dates move to a second line.
 
