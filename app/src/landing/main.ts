@@ -1,10 +1,16 @@
-// Landing page preview (/test). Static HTML; this only loads the fonts and styles and opens screenshots larger on click.
-import '@fontsource/inter/400.css'
-import '@fontsource/inter/500.css'
-import '@fontsource/inter/600.css'
-import '@fontsource/space-grotesk/500.css'
-import '@fontsource/space-grotesk/600.css'
+// The landing page at the site root (see member/main.ts). Opens screenshots larger on click, and hands over to the
+// app when a link on the page changes the address to an app address such as #start.
 import './landing.css'
+
+const ANCHORS = /^#(how|features|open-source|faq)?$/
+
+window.addEventListener('hashchange', () => {
+  if (ANCHORS.test(location.hash)) return
+  // Open the app at the top, not at the spot the landing page was scrolled to.
+  history.scrollRestoration = 'manual'
+  window.scrollTo(0, 0)
+  location.reload()
+})
 
 const dialog = document.querySelector<HTMLDialogElement>('dialog.zoom')
 const big = dialog?.querySelector('img')
@@ -16,7 +22,6 @@ document.querySelectorAll<HTMLImageElement>('img[data-zoom]').forEach((img) => {
     if (!dialog || !big) return
     big.src = img.currentSrc || img.src
     big.alt = img.alt
-    dialog.classList.toggle('zoom-tall', img.naturalHeight > img.naturalWidth)
     dialog.showModal()
   }
   img.addEventListener('click', open)

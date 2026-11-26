@@ -27,8 +27,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      // test/: preview of the student-facing landing page, not linked from the site.
-      input: { member: 'index.html', pm: 'pm.html', landing: 'test/index.html' },
+      input: { member: 'index.html', pm: 'pm.html' },
     },
   },
 })
