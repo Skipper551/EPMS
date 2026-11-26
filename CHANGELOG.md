@@ -8,6 +8,12 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.17.1
+- Setup guide (`#start`): the PocketBase Cloud part is now step by step, matching PocketBase Cloud's current portal: sign in with Google, create the instance from the PocketBase tab, copy the PM login from the instance's Settings page (Admin access), finish setup in SPMS, and add a card before day 7. Each step says what done looks like, and there is a fix for a brand-new address that doesn't answer yet.
+- New "Is this safe?" box on the setup guide: no card for the first 7 days, the card starts a $0 Stripe subscription that is never charged, going over free limits pauses or slows the instance instead of billing, who runs PocketBase Cloud (an independent host, not the PocketBase project), what SPMS stores and where, how to export and delete, and the 30-day inactivity pause. Every point links to PocketBase Cloud's or PocketBase's own pages.
+- The old guide said the PM sets the superuser password and that the free instance never sleeps; both were out of date and are corrected.
+- The Claude and ChatGPT setup prompt follows the new steps. The home page price note and a new question explain the card the same way, and the hooks step in the PM setup card now says to Save and Deploy.
+
 ## 0.17.0
 - New home page: skipper551.github.io/SPMS/ now opens the student landing page (screenshots of the app in action, how it works, features, price and questions) instead of the two-card welcome. It has a new Open source section with a link to the code on GitHub, a GitHub link in the header, and it can be found by search engines.
 - Group links, personal links and the setup guide (`#start`) keep working at the same addresses, and a device that has already joined a project still opens straight into it. A member who leaves their last project on a device sees the home page again.

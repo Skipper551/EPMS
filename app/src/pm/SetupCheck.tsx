@@ -100,7 +100,7 @@ export function SetupCheckContent(props: { report: SetupReport; recheck: () => P
             <ol style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <li>Download the hooks below and unzip them.</li>
               <li>In PocketBase Cloud, open your instance and go to its <strong style={{ color: 'var(--text)', fontWeight: 500 }}>Code</strong> tab (the pb_hooks folder).</li>
-              <li>Upload every file, keeping the <code style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>epms</code> folder inside. Replace any older copies. The instance restarts by itself.</li>
+              <li>Upload every file, keeping the <code style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>epms</code> folder inside. Replace any older copies, then press <strong style={{ color: 'var(--text)', fontWeight: 500 }}>Save</strong> and <strong style={{ color: 'var(--text)', fontWeight: 500 }}>Deploy</strong>.</li>
               <li>Come back and press Check again.</li>
             </ol>
           </div>
