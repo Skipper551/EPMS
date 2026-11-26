@@ -10,15 +10,18 @@ export function setupPrompt(): string {
   return [
     "I'm a student setting up SPMS (Student Project Management System) for my group project. Guide me through setup one step at a time: give me one step, wait until I say it's done or describe what I see, then give the next. Keep it short and plain, and help me fix anything that goes wrong.",
     '',
-    'How SPMS works: the app is a website with no data of its own. The project manager (me) runs a free PocketBase instance that holds the group\'s data. Members never log in; they open a group link and pick their name.',
+    "How SPMS works: the app is a website with no data of its own. The project manager (me) runs a free PocketBase Cloud instance that holds the group's data. Members never log in; they open a group link and pick their name.",
     '',
     'Steps:',
-    '1. Sign up at https://pocketbasecloud.com.',
-    '2. Start the free plan. It asks for a card to start a Stripe subscription that costs 0; the card is never charged. One instance, 50 MB, never sleeps.',
-    "3. Create an instance, open its dashboard, and set the superuser email and password when asked. That account is my PM login. Copy the instance address (like https://abc123.pocketbasecloud.com).",
-    `4. Open ${app}, paste the address and log in with the superuser email and password.`,
-    '5. If SPMS says the instance needs setup: press Install collections. Then press Download the hooks, unzip the file, open the instance\'s Code tab (the pb_hooks folder) in PocketBase Cloud and upload every file, keeping the epms folder inside. The instance restarts by itself. Back in SPMS, press Check again.',
-    '6. Create my project, then follow the checklist on the board: add the group members, write the guidelines, plan the tasks, and share the group link in our group chat. Chat updates to Teams, Discord or Slack are optional.',
+    '1. Sign in at https://portal.pocketbasecloud.com with Google. A first project is made for me. No card is needed for the first 7 days.',
+    '2. Open the project, go to the PocketBase tab, click New PocketBase, keep or type a name, click Create. It takes 30 to 60 seconds; a new address can take a few more minutes to answer.',
+    "3. On the instance's Settings page, under Admin access, copy the admin email and generated password. That is my PM login. The address is https://NAME.pocketbasecloud.com.",
+    `4. Open ${app}, paste the address and log in.`,
+    "5. If SPMS says setup is needed: press Install collections, then Download the hooks and unzip. In the instance's Code tab, add every file to pb_hooks keeping the epms folder, Save and Deploy. Back in SPMS, press Check again.",
+    '6. Before day 7, add a card on the Plan page. It starts a $0 Stripe subscription to keep bots out and is never charged. Without it the instance pauses (nothing is deleted) until I add one.',
+    '7. Create my project, then follow the board checklist: members, guidelines, tasks, and share the group link in our chat.',
+    '',
+    "If I'm worried about the card: PocketBase Cloud is an independent host (not the PocketBase project), the card form is Stripe's, the free plan is never charged, and going over its limits pauses or slows the instance instead of billing. Source: https://pocketbasecloud.com/docs/platform/plans-and-billing/",
     '',
     "Start with step 1. Don't make up buttons or menus; if what I see doesn't match, ask me to describe it.",
   ].join('\n')
@@ -59,47 +62,179 @@ function AskAi() {
   )
 }
 
+const PORTAL = 'https://portal.pocketbasecloud.com'
+const SRC = {
+  billing: 'https://pocketbasecloud.com/docs/platform/plans-and-billing/',
+  pricing: 'https://pocketbasecloud.com/pricing/',
+  security: 'https://pocketbasecloud.com/security/',
+  privacy: 'https://pocketbasecloud.com/privacy/',
+  terms: 'https://pocketbasecloud.com/terms/',
+  about: 'https://pocketbasecloud.com/about/',
+  deploy: 'https://pocketbasecloud.com/docs/pocketbase/deploying-pocketbase/',
+  manage: 'https://pocketbasecloud.com/docs/pocketbase/managing-your-instance/',
+  pbRepo: 'https://github.com/pocketbase/pocketbase',
+  pbSite: 'https://pocketbase.io',
+}
+
+function Ext(props: { href: string; children: any }) {
+  return <a href={props.href} target="_blank" rel="noopener noreferrer">{props.children}</a>
+}
+
+function Code(props: { children: any }) {
+  return <code style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>{props.children}</code>
+}
+
+function B(props: { children: any }) {
+  return <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{props.children}</strong>
+}
+
+/** "Is this safe?": what the card is for, what can cost money, who runs PocketBase Cloud, and how to leave. Every claim links to its source. */
+function IsThisSafe() {
+  return (
+    <details class="safe-box">
+      <summary>
+        <span>Is this safe? What the card is for, what can cost money, and who runs it</span>
+      </summary>
+      <div class="safe-body small soft">
+        <section>
+          <h3>The card</h3>
+          <p>
+            You don't need a card for the first 7 days. To keep the free plan after that, PocketBase Cloud asks for one: it starts a subscription that costs $0,
+            which is how they keep bots and abuse out. You are not charged. (<Ext href={SRC.billing}>Plans and billing</Ext>)
+          </p>
+          <p>
+            The card form is Stripe's, the same payment company many online shops use. PocketBase Cloud keeps a Stripe customer id and subscription id and nothing
+            else about your card. (<Ext href={SRC.security}>Security</Ext>)
+          </p>
+        </section>
+        <section>
+          <h3>What could cost money</h3>
+          <p>
+            Only a paid plan you pick yourself (they start at $10 a month). Going over the free limits doesn't bill you: past 5,000 requests an hour the instance
+            answers "too many requests" until the next hour, and an instance over 50 MB is paused, with an email before anything is removed. A group project uses a
+            small part of that. (<Ext href={SRC.pricing}>Pricing</Ext>, <Ext href={SRC.terms}>Terms</Ext>)
+          </p>
+        </section>
+        <section>
+          <h3>Who runs it</h3>
+          <p>
+            PocketBase Cloud is an independent hosting service run by a small team (founder Tom Nguyen). It is not part of the PocketBase project.
+            (<Ext href={SRC.about}>About</Ext>, <Ext href={SRC.terms}>Terms</Ext>)
+          </p>
+          <p>
+            What it hosts is PocketBase, free open source software under the MIT licence, public on GitHub since 2022 with over 60,000 stars.
+            (<Ext href={SRC.pbRepo}>GitHub</Ext>, <Ext href={SRC.pbSite}>pocketbase.io</Ext>)
+          </p>
+          <p>
+            It's a small service, not a big company: it has no SOC 2 or ISO 27001 certificate, and support is on Discord. That's fine for coursework; don't use it
+            for anything sensitive. (<Ext href={SRC.security}>Security</Ext>, <Ext href={SRC.about}>About</Ext>)
+          </p>
+        </section>
+        <section>
+          <h3>What's stored, and where</h3>
+          <p>
+            Your instance holds only what you type into SPMS: project name and guidelines, members' names and roles, tasks, notes, activity, and retrospective totals and comments. Member PINs
+            are stored hashed, never as typed. No student numbers, no member emails or passwords. Free instances run on Hetzner servers in Germany, Finland, the US or
+            Singapore, served over HTTPS. They don't sell data. (<Ext href={SRC.security}>Security</Ext>, <Ext href={SRC.privacy}>Privacy</Ext>)
+          </p>
+        </section>
+        <section>
+          <h3>Leaving</h3>
+          <p>
+            Download everything at any time from <B>Settings, Backups</B> in the instance's dashboard. Delete the instance from its <B>Delete</B> page. Deleting your
+            account is self-service in the portal and cancels the $0 subscription in the same step. (<Ext href={SRC.security}>Security</Ext>,{' '}
+            <Ext href={SRC.manage}>Managing your instance</Ext>)
+          </p>
+        </section>
+        <section>
+          <h3>Good to know</h3>
+          <p>
+            An instance with no activity for 30 days is paused after email reminders and removed 15 days later; one click resumes it before then. If your group takes a
+            long break, open SPMS once in a while or download a backup. The free plan has no automatic point-in-time backup. (<Ext href={SRC.pricing}>Pricing</Ext>)
+          </p>
+        </section>
+      </div>
+    </details>
+  )
+}
+
 export function StartGuide() {
   const steps = [
     {
-      title: 'Create a free PocketBase Cloud account',
+      title: 'Sign in to PocketBase Cloud with Google',
       body: (
         <>
-          Go to <a href="https://pocketbasecloud.com" target="_blank" rel="noopener noreferrer">pocketbasecloud.com</a> and sign up. SPMS keeps your projects in
-          your own PocketBase instance, so nobody else holds your group's data.
+          <p>
+            Go to <Ext href={PORTAL}>portal.pocketbasecloud.com</Ext> and sign in with your Google account. A first project is created for you, so you land on the{' '}
+            <B>Projects</B> page.
+          </p>
+          <p>No card yet: the free plan starts with 7 days without one. You'll add it in step 5, and it's never charged.</p>
         </>
       ),
     },
     {
-      title: 'Start the free plan',
+      title: 'Create your instance',
       body: (
         <>
-          The free plan asks for a card to start a subscription through Stripe that costs 0. The card is never charged. You get one instance with 50 MB, which is
-          plenty for many group projects, and it never goes to sleep.
+          <p>
+            Open your project, click the <B>PocketBase</B> tab, then <B>New PocketBase</B>. Keep the name it suggests or type your own, such as{' '}
+            <Code>brand-report</Code>; it becomes your address. Leave <B>Advanced Configuration</B> alone and click <B>Create</B>.
+          </p>
+          <p>
+            It takes 30 to 60 seconds. Done when the status reads <B>running</B>. Your address is <Code>https://NAME.pocketbasecloud.com</Code>. A brand-new address can
+            take a few more minutes to open while its certificate is issued; that's normal.
+          </p>
         </>
       ),
     },
     {
-      title: 'Create your instance and its superuser',
+      title: 'Copy your PM login',
       body: (
         <>
-          Create an instance, open its dashboard, and set the superuser email and password when it asks. That account is your PM login for SPMS. Copy the instance's
-          address too; it looks like <code style={{ fontFamily: 'var(--mono)', fontSize: '12px' }}>https://abc123.pocketbasecloud.com</code>.
+          <p>
+            Open the instance's <B>Settings</B> page. Under <B>Admin access</B> you'll find an email (your Google email) and a generated password. That pair is your PM
+            login for SPMS. To pick your own password, use <B>Reset Password</B> there (12 to 20 characters).
+          </p>
         </>
       ),
     },
     {
-      title: 'Log in to SPMS',
+      title: 'Log in to SPMS and finish setup',
       body: (
         <>
-          Paste the address and log in with the superuser email and password. SPMS checks your instance, sets up its collections with one click, and gives you the
-          hook files to upload in the instance's Code tab.
+          <p>
+            Open <a href="./pm.html">the PM login</a>, paste the address, email and password. SPMS checks your instance and shows a setup card the first time:
+          </p>
+          <ol class="sub-steps">
+            <li>Press <B>Install collections</B>.</li>
+            <li>Press <B>Download the hooks</B> and unzip the file.</li>
+            <li>
+              In PocketBase Cloud, open the instance's <B>Code</B> tab. Add every file to the <Code>pb_hooks</Code> folder, keeping the <Code>epms</Code> folder inside,
+              then <B>Save</B> and <B>Deploy</B>.
+            </li>
+            <li>Back in SPMS, press <B>Check again</B>. Done when every line reads Installed.</li>
+          </ol>
+          <p>
+            Seeing "There's no PocketBase instance at..."? A brand-new address can take a few minutes to start answering. Wait, then check the name matches the address
+            on the instance's page in the portal.
+          </p>
+        </>
+      ),
+    },
+    {
+      title: 'Add a card before day 7',
+      body: (
+        <>
+          <p>
+            In the portal, open the <B>Plan</B> page and add a card. It starts a $0 Stripe subscription to keep bots out; you are not charged. If you forget, nothing is
+            deleted: the instance pauses until you add one, then restarts by itself, usually within the hour.
+          </p>
         </>
       ),
     },
     {
       title: 'Create your project and share the group link',
-      body: <>A short checklist on your board takes it from there: your group, the guidelines, the tasks, and the link for your group chat.</>,
+      body: <p>A short checklist on your board takes it from there: your group, the guidelines, the tasks, and the link for your group chat.</p>,
     },
   ]
 
@@ -112,24 +247,25 @@ export function StartGuide() {
             <span class="muted small">For project managers</span>
             <h1 class="h1-xl">Set up SPMS for your group</h1>
             <p class="muted" style={{ margin: 0 }}>
-              Free, private, about 10 minutes. You run your own copy of the backend; this site is only the app, with no data of its own.
+              Free, private, about 10 minutes. You run your own copy of the backend on PocketBase Cloud's free plan; this site is only the app, with no data of its own.
             </p>
           </div>
           <AskAi />
-          <ol class="getting-started" style={{ gap: 0 }}>
+          <IsThisSafe />
+          <ol class="getting-started start-steps" style={{ gap: 0 }}>
             {steps.map((s, i) => (
               <li key={i} style={{ alignItems: 'flex-start' }}>
                 <span class="gs-mark" aria-hidden="true">{i + 1}</span>
-                <div class="grow stack-sm" style={{ gap: '4px' }}>
+                <div class="grow stack-sm" style={{ gap: '4px', minWidth: 0 }}>
                   <strong style={{ fontWeight: 600 }}>{s.title}</strong>
-                  <span class="soft small">{s.body}</span>
+                  <div class="soft small step-body">{s.body}</div>
                 </div>
               </li>
             ))}
           </ol>
           <div class="row">
             <a class="btn btn-primary btn-lg" href="./pm.html">I have an instance: log in</a>
-            <a class="btn btn-soft btn-lg" href="https://pocketbasecloud.com" target="_blank" rel="noopener noreferrer">Open PocketBase Cloud</a>
+            <a class="btn btn-soft btn-lg" href={PORTAL} target="_blank" rel="noopener noreferrer">Open PocketBase Cloud</a>
           </div>
           <p class="muted xsmall" style={{ margin: 0 }}>
             Prefer to run it yourself? PocketBase is free, open source software you can host anywhere; SPMS works with any PocketBase instance.

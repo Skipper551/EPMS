@@ -554,3 +554,27 @@ h1, h2, h3 { margin: 0; }
 }
 .ai-chip:hover { border-color: var(--line-strong); }
 .ai-chip:focus-visible { outline: 2px solid var(--accent, #6CA0FF); outline-offset: 2px; }
+
+/* #start guide: step bodies with paragraphs and sub-steps, and the "Is this safe?" box */
+.start-steps .step-body p { margin: 0 0 6px; }
+.start-steps .step-body p:last-child { margin-bottom: 0; }
+.start-steps .step-body code { overflow-wrap: anywhere; }
+.sub-steps { margin: 2px 0 8px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.getting-started .sub-steps li { display: list-item; padding: 0; border-top: 0; }
+.safe-box { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.safe-box > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; min-height: 44px; box-sizing: border-box; font-size: 14px; font-weight: 600; color: var(--text);
+}
+.safe-box > summary::-webkit-details-marker { display: none; }
+.safe-box > summary::before {
+  content: ''; flex: none; width: 7px; height: 7px; margin: 0 3px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg); transition: transform .15s;
+}
+.safe-box[open] > summary::before { transform: rotate(45deg); }
+.safe-box > summary:focus-visible { outline: 2px solid var(--accent, #6CA0FF); outline-offset: 2px; border-radius: 12px; }
+.safe-body { padding: 0 14px 14px 36px; display: flex; flex-direction: column; gap: 12px; }
+.safe-body h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--text); }
+.safe-body p { margin: 0 0 6px; }
+.safe-body p:last-child { margin-bottom: 0; }
+@media (max-width: 560px) { .safe-body { padding-left: 14px; } }

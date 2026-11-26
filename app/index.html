@@ -240,7 +240,7 @@
       <div>
         <span class="eyebrow">Price</span>
         <h2 class="h2">0 PLN. For the whole group.</h2>
-        <p class="muted">SPMS is free and <a href="https://github.com/Skipper551/SPMS">open source</a>. It runs on PocketBase Cloud's free plan, so there's nothing to pay and no trial that runs out. PocketBase Cloud asks for a card to start the free plan, but it is never charged.</p>
+        <p class="muted">SPMS is free and <a href="https://github.com/Skipper551/SPMS">open source</a>. It runs on PocketBase Cloud's free plan, so there's nothing to pay and no trial that runs out. You don't need a card for the first 7 days; after that PocketBase Cloud asks for one to keep bots out, and it is never charged.</p>
       </div>
       <a class="btn btn-primary btn-lg" href="#start">Set up SPMS for your group</a>
     </div>
@@ -265,6 +265,10 @@
         <details>
           <summary>Where is our data kept?</summary>
           <p>In your group's own PocketBase instance, set up by your PM. SPMS has no central server collecting it.</p>
+        </details>
+        <details>
+          <summary>Why does PocketBase Cloud ask for a card?</summary>
+          <p>Not for the first 7 days. After that, adding a card starts a $0 Stripe subscription, which is how PocketBase Cloud keeps bots out of its free plan. You are not charged, and going over the free limits pauses or slows the instance instead of billing you. The <a href="#start">setup guide</a> explains who runs it and how to leave, with links to their <a href="https://pocketbasecloud.com/docs/platform/plans-and-billing/">billing</a> and <a href="https://pocketbasecloud.com/security/">security</a> pages.</p>
         </details>
         <details>
           <summary>Does it work on a phone?</summary>
