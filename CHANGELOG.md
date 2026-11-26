@@ -8,6 +8,9 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.16.3
+- Board cards: the start and due dates no longer slide under the assignee's avatar on narrow cards. The avatars keep their size, and when the name and dates don't fit on one line the dates move to a second line.
+
 ## 0.16.2
 - Board cards: the tags next to a task title (Everyone, Urgent, No lead, Behind) now stack in a column, with Everyone on top and the priority under it, instead of sitting side by side. On phones the side-by-side tags left long titles only a few letters wide.
 
