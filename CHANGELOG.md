@@ -8,6 +8,9 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.16.1
+- Setup guide: the Claude, ChatGPT and Copy prompt buttons are now small chips with the Claude and ChatGPT logos, placed above the first setup step.
+
 ## 0.16.0
 - Setup guide: the "Set up SPMS for your group" page has Open in Claude and Open in ChatGPT buttons. Each opens a new chat already holding the setup steps, so the AI walks the PM through PocketBase Cloud, logging in, collections and hooks one step at a time. Copy the prompt pastes it anywhere else.
 
