@@ -233,6 +233,9 @@ h1, h2, h3 { margin: 0; }
 .tcard.dragging { opacity: 0.4; }
 .tcard-open { background: none; border: 0; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 10px; color: inherit; width: 100%; }
 .tcard-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.tcard-title-row h3 { flex: 1; min-width: 0; }
+.tcard-tags { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.tcard-tags:empty { display: none; }
 .tcard h3 { font-size: 14px; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
 .tcard-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; font-size: 13px; color: var(--muted); }
 .tcard-owner { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -540,3 +543,14 @@ h1, h2, h3 { margin: 0; }
   .retro-scale-label { font-size: 11px; }
   .retro-task { flex-wrap: wrap; }
 }
+
+/* #start: compact "set up with a guide" chips (Claude, ChatGPT, copy prompt) */
+.ai-setup { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ai-chip {
+  display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+  color: var(--text); font: inherit; font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.ai-chip:hover { border-color: var(--line-strong); }
+.ai-chip:focus-visible { outline: 2px solid var(--accent, #6CA0FF); outline-offset: 2px; }

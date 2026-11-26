@@ -8,8 +8,17 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
-## 0.15.2
+## 0.16.3
 - Board cards: the start and due dates no longer slide under the assignee's avatar on narrow cards. The avatars keep their size, and when the name and dates don't fit on one line the dates move to a second line.
+
+## 0.16.2
+- Board cards: the tags next to a task title (Everyone, Urgent, No lead, Behind) now stack in a column, with Everyone on top and the priority under it, instead of sitting side by side. On phones the side-by-side tags left long titles only a few letters wide.
+
+## 0.16.1
+- Setup guide: the Claude, ChatGPT and Copy prompt buttons are now small chips with the Claude and ChatGPT logos, placed above the first setup step.
+
+## 0.16.0
+- Setup guide: the "Set up SPMS for your group" page has Open in Claude and Open in ChatGPT buttons. Each opens a new chat already holding the setup steps, so the AI walks the PM through PocketBase Cloud, logging in, collections and hooks one step at a time. Copy the prompt pastes it anywhere else.
 
 ## 0.15.0
 - Wrap up project: when the project is over, the PM chooses "Wrap up project" (project menu or Project settings) and sets a retrospective due date (3 days by default). Every open task is closed (the archive remembers which ones were still open), the board and project become read-only for everyone, and the group chat gets a message that the retrospective is open.
