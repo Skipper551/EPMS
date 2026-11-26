@@ -8,6 +8,9 @@ SPMS uses version numbers like 0.6.1. Every pull request that changes the app bu
 
 The footer of every page shows the version and the commit it was built from, for example "SPMS v0.6.1 · ebbf81d".
 
+## 0.16.2
+- Board cards: the tags next to a task title (Everyone, Urgent, No lead, Behind) now stack in a column, with Everyone on top and the priority under it, instead of sitting side by side. On phones the side-by-side tags left long titles only a few letters wide.
+
 ## 0.16.1
 - Setup guide: the Claude, ChatGPT and Copy prompt buttons are now small chips with the Claude and ChatGPT logos, placed above the first setup step.
 
