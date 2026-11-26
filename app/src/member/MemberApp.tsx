@@ -87,6 +87,8 @@ function NoLink() {
   const hash = location.hash.replace(/^#/, '')
   const broken = !!hash
   const noInstance = /(^|&)p=/.test(hash) && !/(^|&)pb=/.test(hash)
+  // Nothing to open on this device any more (the member left their last project): show the landing page instead.
+  useEffect(() => { if (!broken && sessions().length === 0) location.reload() }, [])
   if (broken) {
     return (
       <Shell>
